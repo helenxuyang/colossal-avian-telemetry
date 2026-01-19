@@ -1,31 +1,27 @@
 import styled from "styled-components";
-import { getColor, type Measurement } from "./data";
-
-const svgWidth = 400;
-const outerStrokeWidth = 100;
-
+import { getColor, getLatestValue, type Measurement } from "./data";
 type Props = {
   outerMeasurement: Measurement;
   innerMeasurement: Measurement;
   className?: string;
 };
 
-const GraphDisplay = styled.div`
+const GraphDisplay = styled.div<{ $svgWidth: number }>`
   position: relative;
+  margin: ${({ $svgWidth }) => `0 ${-$svgWidth / 4 + 16}px`};
 `;
 
 const OuterLabel = styled.p`
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
   color: black;
   font-size: 30px;
   font-weight: bold;
-  top: 8%;
+  top: 15%;
 `;
-const Arc = styled.svg`
-  stroke-width: ${outerStrokeWidth};
+const Arc = styled.svg<{ $strokeWidth: number }>`
+  stroke-width: ${({ $strokeWidth }) => $strokeWidth / 2};
   fill: none;
 `;
 
@@ -39,9 +35,6 @@ const ArcFill = styled.path<{ $color: string }>`
 
 const InnerArcHolder = styled.div`
   position: absolute;
-  svg {
-    stroke-width: ${outerStrokeWidth / 2};
-  }
   top: 0;
 `;
 
@@ -59,7 +52,7 @@ const convertValueToCoord = (
   min: number,
   max: number,
   displaySize: number,
-  radius: number
+  radius: number,
 ) => {
   const percent = Math.min((value - min) / (max - min), 1);
   const angle = (1 - percent) * Math.PI;
@@ -78,27 +71,32 @@ export const ArcDisplay = ({
   innerMeasurement: inner,
   className,
 }: Props) => {
+  const svgWidth = 400;
+  const outerStrokeWidth = 200;
+
   const svgHeight = svgWidth / 2;
   const outerDiameter = svgWidth;
   const outerRadius = outerDiameter / 2;
-  const innerDiameter = outerDiameter * 0.5;
+
+  const innerScale = 0.5;
+  const innerDiameter = outerDiameter * innerScale;
   const innerRadius = innerDiameter / 2;
-  const outerValue = outer.values.at(-1) ?? 0;
+  const outerValue = getLatestValue(outer);
   const { x: outerArcX, y: outerArcY } = convertValueToCoord(
     outerValue,
     outer.min,
     outer.max,
     svgWidth,
-    outerRadius
+    outerRadius,
   );
 
-  const innerValue = inner.values.at(-1) ?? 0;
+  const innerValue = getLatestValue(inner);
   const { x: innerArcX, y: innerArcY } = convertValueToCoord(
     innerValue,
     inner.min,
     inner.max,
     svgWidth,
-    innerRadius
+    innerRadius,
   );
 
   const outerStart = `0 ${svgHeight}`;
@@ -116,8 +114,13 @@ export const ArcDisplay = ({
 
   return (
     <div>
-      <GraphDisplay className={className}>
-        <Arc width={svgWidth} height={svgHeight} viewBox={viewBox}>
+      <GraphDisplay className={className} $svgWidth={svgWidth}>
+        <Arc
+          width={svgWidth}
+          height={svgHeight}
+          viewBox={viewBox}
+          $strokeWidth={outerStrokeWidth}
+        >
           <ArcBase
             d={`M ${outerStart} A ${outerRadius} ${outerRadius} 0 0 1 ${outerBaseEnd}`}
           />
@@ -130,7 +133,12 @@ export const ArcDisplay = ({
           {outerValue} {outer.unit}
         </OuterLabel>
         <InnerArcHolder>
-          <Arc width={svgWidth} height={svgHeight} viewBox={viewBox}>
+          <Arc
+            width={svgWidth}
+            height={svgHeight}
+            viewBox={viewBox}
+            $strokeWidth={outerStrokeWidth / 2}
+          >
             <ArcBase
               d={`M ${innerStart} A ${innerRadius} ${innerRadius} 0 0 1 ${innerBaseEnd}`}
             />

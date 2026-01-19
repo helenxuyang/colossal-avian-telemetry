@@ -6,8 +6,9 @@ import {
   type Robot,
 } from "./data";
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
-import { DriveESCDisplay } from "./DriveESCDIsplay";
+import { DriveESCDisplay } from "./DriveESCDisplay";
 import { WeaponESCDisplay } from "./WeaponESCDisplay";
+import { VoltageDisplay } from "./VoltageDisplay";
 
 const Layout = styled.div`
   display: flex;
@@ -46,7 +47,6 @@ const DriveRightESCSection = styled(DriveESCDisplay)`
 const RobotSection = styled.div`
   background-color: #ccc;
   padding: 16px;
-  border-radius: 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -56,6 +56,7 @@ const RobotSection = styled.div`
 const RobotLayout = styled.div`
   display: flex;
   gap: 8px;
+  justify-content: space-evenly;
 `;
 
 type Props = {
@@ -74,7 +75,8 @@ export const RobotDisplay = ({ robot, controls }: Props) => {
         <RobotSection>
           <h1>Colossal Avian</h1>
           <RobotLayout>
-            {Object.values(robot.measurements)
+            <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
+            {Object.values(robot.derivedValues)
               .filter((measurement) => measurement.shouldShow !== false)
               .map((measurement) => {
                 return (

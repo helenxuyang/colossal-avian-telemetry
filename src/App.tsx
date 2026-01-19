@@ -23,7 +23,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
 );
 
 const DisplayHolder = styled.div`
@@ -31,7 +31,7 @@ const DisplayHolder = styled.div`
 `;
 
 function App() {
-  const useFakeData = false;
+  const useFakeData = true;
   return (
     <DisplayHolder>
       {useFakeData ? <MockDataDisplay /> : <ConnectedDataDisplay />}

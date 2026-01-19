@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  calculateDerivedValues,
   DRIVE_LEFT_ESC,
   getInitColossalAvian,
   RPM,
@@ -13,7 +14,7 @@ export const MockDataDisplay = () => {
   const intervalMs = 30;
   const mockDataCallback = useRef<() => void | null>(null);
   const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
-    null
+    null,
   );
   const [temperatureMock, setTemperatureMock] = useState<string | null>(null);
   const [mockRPMReady, setMockRPMReady] = useState<boolean>(false);
@@ -31,9 +32,10 @@ export const MockDataDisplay = () => {
       nextValue = max;
     } else {
       const sign = Math.random() > 0.5 ? 1 : -1;
-      const delta = Math.random() * ((min - max) * 0.05);
+      const deltaRange = (min - max) * 0.05;
+      const delta = Math.random() * (deltaRange < 1 ? 1 : deltaRange);
       nextValue = Math.round(
-        Math.min(max, Math.max(min, lastValue + delta * sign))
+        Math.min(max, Math.max(min, lastValue + delta * sign)),
       );
     }
 
@@ -41,16 +43,16 @@ export const MockDataDisplay = () => {
   };
 
   const generateFakeData = () => {
-    const newRobot = { ...robot };
-    Object.values(robot.escs).forEach((esc) => {
-      Object.values(esc.measurements).forEach((measurement) => {
-        measurement.values.push(getNextValue(measurement));
+    setRobot((robot) => {
+      let newRobot = { ...robot };
+      Object.values(newRobot.escs).forEach((esc) => {
+        Object.values(esc.measurements).forEach((measurement) => {
+          measurement.values.push(getNextValue(measurement));
+        });
       });
+      newRobot = calculateDerivedValues(newRobot);
+      return newRobot;
     });
-    Object.values(robot.measurements).forEach((measurement) => {
-      measurement.values.push(getNextValue(measurement));
-    });
-    setRobot(newRobot);
   };
 
   const startData = () => {
@@ -73,7 +75,7 @@ export const MockDataDisplay = () => {
       <legend>Temperature</legend>
       {Object.keys(
         robot.escs[DRIVE_LEFT_ESC].measurements[TEMPERATURE].colorThresholds ??
-          []
+          [],
       ).map((color) => {
         return (
           <div key={color}>

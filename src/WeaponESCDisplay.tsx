@@ -2,18 +2,14 @@ import styled from "styled-components";
 import { CURRENT, INPUT, RPM, TEMPERATURE, type ESC } from "./data";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 import { ArcDisplay } from "./ArcDisplay";
-import { BACKGROUND } from "./colors";
+import { Container } from "./styles";
 
-const DisplayHolder = styled.div`
-  background-color: ${BACKGROUND};
-  color: white;
+const DisplayHolder = styled(Container)`
   display: flex;
   flex-direction: column;
   justify-content: start;
   align-items: center;
   position: relative;
-  padding: 8px;
-  border-radius: 16px;
   gap: 16px;
 `;
 

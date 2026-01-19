@@ -1,5 +1,6 @@
 import {
   ARM_ESC,
+  calculateDerivedValues,
   CONSUMPTION,
   CURRENT,
   DRIVE_LEFT_ESC,
@@ -9,6 +10,7 @@ import {
   TEMPERATURE,
   VOLTAGE,
   WEAPON_ESC,
+  type Robot,
 } from "./data";
 
 const mergeBytes = (byte1: number, byte2: number) => {
@@ -16,6 +18,8 @@ const mergeBytes = (byte1: number, byte2: number) => {
 };
 
 type EscId = "a" | "b" | "c" | "d" | "w" | "x" | "y" | "z";
+const escDataIds = ["a", "b", "c", "d"];
+const escInputIds = ["w", "x", "y", "z"];
 const idToEscMap: Record<EscId, string> = {
   a: DRIVE_LEFT_ESC,
   b: DRIVE_RIGHT_ESC,
@@ -31,21 +35,19 @@ const escToIdMap: Record<string, EscId> = Object.entries(idToEscMap).reduce(
     acc[val] = key as EscId;
     return acc;
   },
-  {} as Record<string, EscId>
+  {} as Record<string, EscId>,
 );
 
 type ParsedData = {
   escName: string;
-  [TEMPERATURE]: number;
-  [VOLTAGE]: number;
-  [CURRENT]: number;
-  [CONSUMPTION]: number;
-  [RPM]: number;
-};
-
-type ParsedInputData = {
-  escName: string;
-  [INPUT]: number;
+  escData: {
+    [TEMPERATURE]?: number;
+    [VOLTAGE]?: number;
+    [CURRENT]?: number;
+    [CONSUMPTION]?: number;
+    [RPM]?: number;
+    [INPUT]?: number;
+  };
 };
 
 export const parseData = (data: string) => {
@@ -78,8 +80,6 @@ export const parseData = (data: string) => {
  */
 
   const splitData = data.slice(1, data.length - 1).split(" ");
-  const escDataIds = ["a", "b", "c", "d"];
-  const escInputIds = ["w", "x", "y", "z"];
   const escId = splitData[0];
   const escData = splitData.slice(1).map((entry) => Number("0x" + entry));
 
@@ -90,19 +90,37 @@ export const parseData = (data: string) => {
         : 1 / 6;
     const parsedData: ParsedData = {
       escName: idToEscMap[escId as EscId],
-      [TEMPERATURE]: escData[0],
-      [VOLTAGE]: mergeBytes(escData[1], escData[2]) / 100,
-      [CURRENT]: mergeBytes(escData[3], escData[4]) / 100,
-      [CONSUMPTION]: mergeBytes(escData[5], escData[6]),
-      [RPM]: Math.round(mergeBytes(escData[7], escData[8]) * 100 * rpmFactor),
+      escData: {
+        [TEMPERATURE]: escData[0],
+        [VOLTAGE]: mergeBytes(escData[1], escData[2]) / 100,
+        [CURRENT]: mergeBytes(escData[3], escData[4]) / 100,
+        [CONSUMPTION]: mergeBytes(escData[5], escData[6]),
+        [RPM]: Math.round(mergeBytes(escData[7], escData[8]) * 100 * rpmFactor),
+      },
     };
     return parsedData;
   } else if (escInputIds.includes(escId)) {
-    const parsedData: ParsedInputData = {
+    const parsedData: ParsedData = {
       escName: idToEscMap[escId as EscId],
-      [INPUT]: escData[0],
+      escData: {
+        [INPUT]: escData[0],
+      },
     };
     return parsedData;
   }
   return null;
+};
+
+export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
+  const { escName, escData } = data;
+  let newRobot = { ...robot };
+
+  Object.entries(escData).forEach(([measurementKey, measurementValue]) => {
+    newRobot.escs[escName].measurements[measurementKey].values.push(
+      measurementValue,
+    );
+  });
+
+  newRobot = calculateDerivedValues(newRobot);
+  return newRobot;
 };

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type Robot, getInitColossalAvian } from "./data";
 import { RobotDisplay } from "./RobotDisplay";
 import { useWebSocket } from "./useWebSocket";
-import { parseData } from "./dataUtils";
+import { getUpdatedRobot, parseData } from "./dataUtils";
 
 export const ConnectedDataDisplay = () => {
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
@@ -14,22 +14,10 @@ export const ConnectedDataDisplay = () => {
       const parsedData = parseData(data);
       console.log(parsedData);
       if (parsedData) {
-        // console.log("parsed", parsedData);
-        const { escName, ...escData } = parsedData;
-        const newRobot = { ...robot };
-
-        Object.entries(escData).forEach(
-          ([measurementKey, measurementValue]) => {
-            newRobot.escs[escName].measurements[measurementKey].values.push(
-              measurementValue
-            );
-          }
-        );
-        console.log(newRobot);
-        setRobot(newRobot);
+        setRobot(getUpdatedRobot(parsedData, robot));
       }
     },
-    [robot]
+    [robot],
   );
 
   useEffect(() => {

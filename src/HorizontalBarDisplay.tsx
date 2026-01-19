@@ -1,10 +1,16 @@
-import styled, { css } from "styled-components";
-import { getColor, type Measurement } from "./data";
+import styled from "styled-components";
+import {
+  getColor,
+  getLatestPercent,
+  getLatestValue,
+  type Measurement,
+} from "./data";
 import { LineGraphDisplay } from "./LineGraphDisplay";
+import { Container } from "./styles";
 
-type Props = {
-  measurement: Measurement;
-};
+const StyledContainer = styled(Container)`
+  width: 100%;
+`;
 
 const BarDisplay = styled.div`
   display: flex;
@@ -29,24 +35,6 @@ const Bar = styled.div<{ $percent: number; $color: string }>`
   width: ${({ $percent }) => `${$percent}%`};
 `;
 
-const DisplayHolder = styled.div<{ $highlight: boolean }>`
-  width: 100%;
-  background-color: ${({ $highlight }) => ($highlight ? "lightgreen" : "#444")};
-  padding: 8px;
-  color: ${({ $highlight }) => ($highlight ? "black" : "white")};
-
-  ${({ $highlight }) =>
-    $highlight &&
-    css`
-      ${Bar}::after {
-        content: "READY!";
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-      }
-    `};
-`;
-
 const RangeText = styled.p`
   font-size: 12px;
 `;
@@ -58,20 +46,19 @@ const Value = styled.p`
   font-size: 24px;
 `;
 
+type Props = {
+  measurement: Measurement;
+};
+
 export const HorizontalBarDisplay = ({ measurement }: Props) => {
-  const { name, min, max, values, unit, highlightThreshold, shouldPlot } =
-    measurement;
-  const latestValue = values.at(-1) ?? 0;
+  const { name, min, max, values, unit, shouldPlot } = measurement;
+  const latestValue = getLatestValue(measurement);
 
-  const shouldHighlight = highlightThreshold
-    ? latestValue >= highlightThreshold
-    : false;
-
-  const percent = Math.min(((latestValue - min) / (max - min)) * 100, 100);
+  const percent = getLatestPercent(measurement);
   const barColor = getColor(measurement);
 
   return (
-    <DisplayHolder $highlight={shouldHighlight}>
+    <StyledContainer>
       <h4>{name}</h4>
       <BarDisplay>
         <RangeText>{min}</RangeText>
@@ -82,6 +69,6 @@ export const HorizontalBarDisplay = ({ measurement }: Props) => {
       </BarDisplay>
       <Value>{latestValue + (unit ? ` ${unit}` : "")}</Value>
       {shouldPlot && <LineGraphDisplay values={values} />}
-    </DisplayHolder>
+    </StyledContainer>
   );
 };

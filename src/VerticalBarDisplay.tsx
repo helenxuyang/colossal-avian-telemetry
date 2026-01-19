@@ -1,6 +1,12 @@
-import styled, { css } from "styled-components";
-import { getColor, type Measurement } from "./data";
+import styled from "styled-components";
+import {
+  getColor,
+  getLatestPercent,
+  getLatestValue,
+  type Measurement,
+} from "./data";
 import { LineGraphDisplay } from "./LineGraphDisplay";
+import { Container } from "./styles";
 
 type Props = {
   measurement: Measurement;
@@ -29,22 +35,6 @@ const Bar = styled.div<{ $percent: number; $color: string }>`
   width: 100%;
 `;
 
-const DisplayHolder = styled.div<{ $highlight: boolean }>`
-  padding: 8px;
-  min-width: 100px;
-  color: ${({ $highlight }) => ($highlight ? "black" : "white")};
-  ${({ $highlight }) =>
-    $highlight &&
-    css`
-      ${Bar}::after {
-        content: "READY!";
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-      }
-    `};
-`;
-
 const RangeText = styled.p`
   font-size: 12px;
 `;
@@ -57,19 +47,14 @@ const Value = styled.p`
 `;
 
 export const VerticalBarDisplay = ({ measurement }: Props) => {
-  const { name, min, max, values, unit, highlightThreshold, shouldPlot } =
-    measurement;
-  const latestValue = values.at(-1) ?? 0;
+  const { name, min, max, values, unit, shouldPlot } = measurement;
+  const latestValue = getLatestValue(measurement);
 
-  const shouldHighlight = highlightThreshold
-    ? latestValue >= highlightThreshold
-    : false;
-
-  const percent = Math.min(100, ((latestValue - min) / (max - min)) * 100);
+  const percent = getLatestPercent(measurement);
   const barColor = getColor(measurement);
   return (
     <div>
-      <DisplayHolder $highlight={shouldHighlight}>
+      <Container>
         <h4>{name}</h4>
         <BarDisplay>
           <RangeText>{max}</RangeText>
@@ -79,7 +64,7 @@ export const VerticalBarDisplay = ({ measurement }: Props) => {
           <RangeText>{min}</RangeText>
         </BarDisplay>
         <Value>{latestValue + (unit ? ` ${unit}` : "")}</Value>
-      </DisplayHolder>
+      </Container>
       {shouldPlot && <LineGraphDisplay values={values} />}
     </div>
   );

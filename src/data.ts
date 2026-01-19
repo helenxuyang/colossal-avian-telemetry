@@ -18,6 +18,23 @@ export const CURRENT = "Current";
 export const CONSUMPTION = "Consumption";
 export const INPUT = "Input";
 
+export const BATTERY_VOLTAGE = "Battery Voltage";
+export const TOTAL_CURRENT = "Total Current";
+export const TOTAL_CONSUMPTION = "Total Consumption";
+
+export type BatteryVoltageRange = {
+  min: number;
+  max: number;
+};
+export type BatteryVoltageMeasurement = {
+  name: string;
+  unit: string;
+  min: number;
+  max: number;
+  minValues: number[];
+  maxValues: number[];
+};
+
 export type ESC = {
   name: string;
   measurements: Record<string, Measurement>;
@@ -56,10 +73,10 @@ export const getInitEscMeasurements = ({
     [VOLTAGE]: {
       name: VOLTAGE,
       unit: "V",
-      min: 5,
-      max: 28,
+      min: 16,
+      max: 26,
       values: [],
-      shouldShow: true,
+      shouldShow: false,
     },
     [CURRENT]: {
       name: CURRENT,
@@ -92,7 +109,8 @@ export const getInitEscMeasurements = ({
 export type Robot = {
   name: string;
   escs: Record<string, ESC>;
-  measurements: Record<string, Measurement>;
+  derivedValues: Record<string, Measurement>;
+  batteryVoltage: BatteryVoltageMeasurement;
 };
 
 export const DRIVE_LEFT_ESC = "DriveLeft";
@@ -113,42 +131,44 @@ export const getInitColossalAvian = () => {
       };
       return acc;
     },
-    {} as Record<string, ESC>
+    {} as Record<string, ESC>,
   );
-  const measurements: Record<string, Measurement> = {
-    batteryVoltage: {
-      name: "Battery Voltage",
-      unit: "V",
-      min: 5,
-      max: 28,
-      values: [],
-    },
-    totalCurrent: {
-      name: "Total Current",
+  const derivedValues: Record<string, Measurement> = {
+    [TOTAL_CURRENT]: {
+      name: TOTAL_CURRENT,
       unit: "A",
       min: 0,
       max: 400,
       values: [],
     },
-    totalConsumption: {
-      name: "Total Consumption",
+    [TOTAL_CONSUMPTION]: {
+      name: TOTAL_CONSUMPTION,
       unit: "mAh",
       min: 0,
       max: 0,
       values: [],
     },
   };
+  const batteryVoltage: BatteryVoltageMeasurement = {
+    name: BATTERY_VOLTAGE,
+    unit: "V",
+    min: 16,
+    max: 26,
+    minValues: [],
+    maxValues: [],
+  };
   return {
     name: "Colossal Avian",
     escs,
-    measurements,
+    derivedValues,
+    batteryVoltage,
   };
 };
 
 export const getColor = (measurement: Measurement) => {
-  const { colorThresholds, highlightThreshold, values } = measurement;
+  const { colorThresholds, highlightThreshold } = measurement;
   let barColor = "skyblue";
-  const latestValue = values.at(-1) ?? 0;
+  const latestValue = getLatestValue(measurement);
 
   const shouldHighlight = highlightThreshold
     ? latestValue >= highlightThreshold
@@ -163,7 +183,7 @@ export const getColor = (measurement: Measurement) => {
     const sortedColorThresholds = [...Object.keys(colorThresholds)].sort(
       (color1, color2) => {
         return colorThresholds[color1] > colorThresholds[color2] ? 1 : -1;
-      }
+      },
     );
     sortedColorThresholds.forEach((color) => {
       const threshold = colorThresholds[color];
@@ -175,10 +195,49 @@ export const getColor = (measurement: Measurement) => {
   return barColor;
 };
 
+export const getPercent = (value: number, min: number, max: number) => {
+  return Math.round(Math.min(((value - min) / (max - min)) * 100, 100));
+};
+
 export const getLatestValue = (measurement: Measurement) => {
   const { values, shouldShowPercent, min, max } = measurement;
   const latestValue = values.at(-1) ?? 0;
   if (shouldShowPercent) {
-    return Math.min(100, ((latestValue - min) / (max - min)) * 100);
+    return getPercent(latestValue, min, max);
   }
+  return values.at(-1) ?? 0;
+};
+
+export const getLatestPercent = (measurement: Measurement) => {
+  return getPercent(
+    getLatestValue(measurement),
+    measurement.min,
+    measurement.max,
+  );
+};
+
+export const calculateTotal = (measurementName: string, robot: Robot) => {
+  const values = Object.values(robot.escs).map((esc) =>
+    getLatestValue(esc.measurements[measurementName]),
+  );
+  const total = values.reduce((sum, curr) => sum + curr, 0);
+  return total;
+};
+
+export const calculateDerivedValues = (robot: Robot) => {
+  const newRobot = { ...robot };
+  const voltages = Object.values(robot.escs).map((esc) =>
+    getLatestValue(esc.measurements[VOLTAGE]),
+  );
+  console.log(voltages);
+  newRobot.batteryVoltage.minValues.push(Math.min(...voltages));
+  newRobot.batteryVoltage.maxValues.push(Math.max(...voltages));
+
+  newRobot.derivedValues[TOTAL_CURRENT].values.push(
+    calculateTotal(CURRENT, robot),
+  );
+  newRobot.derivedValues[TOTAL_CONSUMPTION].values.push(
+    calculateTotal(CONSUMPTION, robot),
+  );
+  return newRobot;
 };

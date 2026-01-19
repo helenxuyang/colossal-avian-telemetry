@@ -1,20 +1,13 @@
 import styled from "styled-components";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 import { type ESC } from "./data";
-import { BACKGROUND } from "./colors";
+import { Container } from "./styles";
 
 type Props = {
   esc: ESC;
   className?: string;
   showColumnAfter?: boolean;
 };
-
-const DisplayHolder = styled.div`
-  background-color: ${BACKGROUND};
-  color: white;
-  padding: 8px;
-  border-radius: 16px;
-`;
 
 const MeasurementHolder = styled.div<{ $flip: boolean }>`
   display: grid;
@@ -29,13 +22,13 @@ export const DriveESCDisplay = ({
   showColumnAfter = false,
 }: Props) => {
   return (
-    <DisplayHolder className={className}>
+    <Container className={className}>
       <h3>{esc.name}</h3>
       <MeasurementHolder $flip={showColumnAfter}>
         {Object.keys(esc.measurements)
           .filter(
             (measurementName) =>
-              esc.measurements[measurementName].shouldShow !== false
+              esc.measurements[measurementName].shouldShow !== false,
           )
           .map((measurementName) => {
             const measurement = esc.measurements[measurementName];
@@ -47,6 +40,6 @@ export const DriveESCDisplay = ({
             );
           })}
       </MeasurementHolder>
-    </DisplayHolder>
+    </Container>
   );
 };
