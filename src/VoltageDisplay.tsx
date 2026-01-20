@@ -1,15 +1,19 @@
 import styled from "styled-components";
 import { getPercent, type BatteryVoltageMeasurement } from "./data";
-import { Container } from "./styles";
+import { Container, SMALL_VIEWPORT, Value } from "./styles";
 
 const StyledContainer = styled(Container)`
   width: 100%;
+  @media (max-width: ${SMALL_VIEWPORT}px) {
+    width: auto;
+  }
 `;
 
 const BarDisplay = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+  margin-bottom: 4px;
 `;
 
 const BarHolder = styled.div`
@@ -33,6 +37,7 @@ const ValueText = styled.p<{ $percent: number }>`
   position: absolute;
   left: ${({ $percent }) => `${$percent}%`};
   top: 100%;
+  font-size: 12px;
 `;
 
 const MaxBar = styled.div<{ $minPercent: number; $maxPercent: number }>`
@@ -45,14 +50,6 @@ const MaxBar = styled.div<{ $minPercent: number; $maxPercent: number }>`
 
 const RangeText = styled.p`
   font-size: 12px;
-`;
-
-const Value = styled.p`
-  padding-top: 4px;
-  flex: 1;
-  z-index: 2;
-  font-weight: bold;
-  font-size: 24px;
 `;
 
 type Props = {

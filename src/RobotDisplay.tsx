@@ -9,6 +9,8 @@ import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
 import { DriveESCDisplay } from "./DriveESCDisplay";
 import { WeaponESCDisplay } from "./WeaponESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";
+import { SMALL_VIEWPORT } from "./styles";
+import { ConsumptionDonut } from "./ConsumptionDonut";
 
 const Layout = styled.div`
   display: flex;
@@ -24,8 +26,13 @@ const ESCSection = styled.div`
 const ESCGrid = styled.div`
   display: grid;
   gap: 8px;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 2fr 3fr 2fr;
   grid-template-areas: "driveLeft weapon driveRight";
+
+  @media (max-width: ${SMALL_VIEWPORT}px) {
+    grid-template-columns: 1fr;
+    grid-template-areas: "driveLeft" "weapon" "driveRight";
+  }
 `;
 
 const DriveLeftESCSection = styled(DriveESCDisplay)`
@@ -46,7 +53,7 @@ const DriveRightESCSection = styled(DriveESCDisplay)`
 
 const RobotSection = styled.div`
   background-color: #ccc;
-  padding: 16px;
+  padding: 8px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -57,6 +64,17 @@ const RobotLayout = styled.div`
   display: flex;
   gap: 8px;
   justify-content: space-evenly;
+
+  > * {
+    width: 100%;
+  }
+
+  @media (max-width: ${SMALL_VIEWPORT}px) {
+    flex-direction: column;
+    > * {
+      width: auto;
+    }
+  }
 `;
 
 type Props = {
@@ -70,34 +88,33 @@ export const RobotDisplay = ({ robot, controls }: Props) => {
   const weaponEsc = robot.escs[WEAPON_ESC];
 
   return (
-    <>
-      <Layout>
-        <RobotSection>
-          <h1>Colossal Avian</h1>
-          <RobotLayout>
-            <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
-            {Object.values(robot.derivedValues)
-              .filter((measurement) => measurement.shouldShow !== false)
-              .map((measurement) => {
-                return (
-                  <HorizontalBarDisplay
-                    key={`${robot.name}-${measurement.name}`}
-                    measurement={measurement}
-                  />
-                );
-              })}
-          </RobotLayout>
-        </RobotSection>
-        <ESCSection>
-          <ESCGrid>
-            <DriveLeftESCSection esc={driveLeftEsc} />
-            <WeaponESCSection esc={weaponEsc} />
-            <DriveRightESCSection esc={driveRightEsc} showColumnAfter={true} />
-          </ESCGrid>
-        </ESCSection>
-        <h2>Controls</h2>
-        {controls}
-      </Layout>
-    </>
+    <Layout>
+      <RobotSection>
+        <h1>Colossal Avian</h1>
+        <RobotLayout>
+          <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
+          {Object.values(robot.derivedValues)
+            .filter((measurement) => measurement.shouldShow !== false)
+            .map((measurement) => {
+              return (
+                <HorizontalBarDisplay
+                  key={`${robot.name}-${measurement.name}`}
+                  measurement={measurement}
+                />
+              );
+            })}
+          <ConsumptionDonut robot={robot} />
+        </RobotLayout>
+      </RobotSection>
+      <ESCSection>
+        <ESCGrid>
+          <DriveLeftESCSection esc={driveLeftEsc} />
+          <WeaponESCSection esc={weaponEsc} />
+          <DriveRightESCSection esc={driveRightEsc} showColumnAfter={true} />
+        </ESCGrid>
+      </ESCSection>
+      <h2>Data Controls</h2>
+      {controls}
+    </Layout>
   );
 };

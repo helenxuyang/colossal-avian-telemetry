@@ -5,11 +5,12 @@ import {
   getLatestValue,
   type Measurement,
 } from "./data";
-import { LineGraphDisplay } from "./LineGraphDisplay";
-import { Container } from "./styles";
+import { Container, MEDIUM_VIEWPORT, Value } from "./styles";
+import { LineChart } from "./LineChart";
 
 type Props = {
   measurement: Measurement;
+  className?: string;
 };
 
 const BarDisplay = styled.div`
@@ -23,10 +24,14 @@ const BarHolder = styled.div`
   position: relative;
   display: flex;
   align-items: end;
-  height: 100px;
+  height: 75px;
   width: 30px;
   background-color: white;
   margin: 8px;
+
+  @media (max-width: ${MEDIUM_VIEWPORT}px) {
+    width: 20px;
+  }
 `;
 
 const Bar = styled.div<{ $percent: number; $color: string }>`
@@ -39,21 +44,14 @@ const RangeText = styled.p`
   font-size: 12px;
 `;
 
-const Value = styled.p`
-  flex: 1;
-  z-index: 2;
-  font-weight: bold;
-  font-size: 24px;
-`;
-
-export const VerticalBarDisplay = ({ measurement }: Props) => {
-  const { name, min, max, values, unit, shouldPlot } = measurement;
+export const VerticalBarDisplay = ({ measurement, className = "" }: Props) => {
+  const { name, min, max, unit, shouldPlot } = measurement;
   const latestValue = getLatestValue(measurement);
 
   const percent = getLatestPercent(measurement);
   const barColor = getColor(measurement);
   return (
-    <div>
+    <div className={className}>
       <Container>
         <h4>{name}</h4>
         <BarDisplay>
@@ -65,7 +63,7 @@ export const VerticalBarDisplay = ({ measurement }: Props) => {
         </BarDisplay>
         <Value>{latestValue + (unit ? ` ${unit}` : "")}</Value>
       </Container>
-      {shouldPlot && <LineGraphDisplay values={values} />}
+      {shouldPlot && <LineChart measurement={measurement} />}
     </div>
   );
 };

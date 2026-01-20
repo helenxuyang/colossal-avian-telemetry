@@ -9,7 +9,21 @@ import {
   type Robot,
 } from "./data";
 import { RobotDisplay } from "./RobotDisplay";
+import styled from "styled-components";
 
+const ButtonsHolder = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+`;
+
+const DataControlsHolder = styled.div`
+  display: flex;
+  justify-content: center;
+  fieldset {
+    display: flex;
+  }
+`;
 export const MockDataDisplay = () => {
   const intervalMs = 30;
   const mockDataCallback = useRef<() => void | null>(null);
@@ -98,9 +112,9 @@ export const MockDataDisplay = () => {
   );
 
   const RPMMock = (
-    <div>
+    <fieldset>
+      <legend>RPM</legend>
       <label>
-        {/* Bind the checked prop to the state and the onChange handler to the function */}
         <input
           type="checkbox"
           checked={mockRPMReady}
@@ -108,24 +122,26 @@ export const MockDataDisplay = () => {
         />
         Mock RPM highlight
       </label>
-    </div>
+    </fieldset>
   );
 
   const controls = (
     <div>
-      {mockDataIntervalId ? StopButton : StartButton}
-      <button
-        onClick={() => {
-          setRobot(getInitColossalAvian());
-        }}
-      >
-        Clear mock data
-      </button>
+      <ButtonsHolder>
+        {mockDataIntervalId ? StopButton : StartButton}
+        <button
+          onClick={() => {
+            setRobot(getInitColossalAvian());
+          }}
+        >
+          Clear mock data
+        </button>
+      </ButtonsHolder>
       {!mockDataIntervalId && (
-        <>
+        <DataControlsHolder>
           {TemperatureMock}
           {RPMMock}
-        </>
+        </DataControlsHolder>
       )}
     </div>
   );

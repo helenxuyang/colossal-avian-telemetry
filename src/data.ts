@@ -37,6 +37,7 @@ export type BatteryVoltageMeasurement = {
 
 export type ESC = {
   name: string;
+  abbreviation: string;
   measurements: Record<string, Measurement>;
 };
 
@@ -48,19 +49,6 @@ export const getInitEscMeasurements = ({
   rpmHighlight?: number;
 }): Record<string, Measurement> => {
   return {
-    [TEMPERATURE]: {
-      name: TEMPERATURE,
-      unit: "°C",
-      min: 25,
-      max: 100,
-      values: [],
-      colorThresholds: {
-        gold: 68,
-        orange: 75,
-        red: 85,
-      },
-      shouldPlot: true,
-    },
     [RPM]: {
       name: RPM,
       unit: "RPM",
@@ -90,9 +78,22 @@ export const getInitEscMeasurements = ({
       name: CONSUMPTION,
       unit: "mAh",
       min: 0,
-      max: 30,
+      max: 3000,
       values: [],
       shouldShow: false,
+    },
+    [TEMPERATURE]: {
+      name: TEMPERATURE,
+      unit: "°C",
+      min: 25,
+      max: 100,
+      values: [],
+      colorThresholds: {
+        gold: 68,
+        orange: 75,
+        red: 85,
+      },
+      shouldPlot: true,
     },
     [INPUT]: {
       name: INPUT,
@@ -119,10 +120,14 @@ export const ARM_ESC = "Arm";
 export const WEAPON_ESC = "Weapon";
 
 export const getInitColossalAvian = () => {
-  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, ARM_ESC, WEAPON_ESC].reduce(
+  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC].reduce(
     (acc, name) => {
       acc[name] = {
         name,
+        abbreviation: name
+          .split("")
+          .filter((char) => char.toUpperCase() === char)
+          .join(""),
         measurements: getInitEscMeasurements({
           rpmMax:
             name === DRIVE_LEFT_ESC || name === DRIVE_RIGHT_ESC ? 35000 : 20000,
@@ -145,8 +150,9 @@ export const getInitColossalAvian = () => {
       name: TOTAL_CONSUMPTION,
       unit: "mAh",
       min: 0,
-      max: 0,
+      max: 12000,
       values: [],
+      shouldShow: false,
     },
   };
   const batteryVoltage: BatteryVoltageMeasurement = {
@@ -196,7 +202,8 @@ export const getColor = (measurement: Measurement) => {
 };
 
 export const getPercent = (value: number, min: number, max: number) => {
-  return Math.round(Math.min(((value - min) / (max - min)) * 100, 100));
+  const percent = ((value - min) / (max - min)) * 100;
+  return Math.round(Math.max(Math.min(percent, 100), 0));
 };
 
 export const getLatestValue = (measurement: Measurement) => {
@@ -229,7 +236,6 @@ export const calculateDerivedValues = (robot: Robot) => {
   const voltages = Object.values(robot.escs).map((esc) =>
     getLatestValue(esc.measurements[VOLTAGE]),
   );
-  console.log(voltages);
   newRobot.batteryVoltage.minValues.push(Math.min(...voltages));
   newRobot.batteryVoltage.maxValues.push(Math.max(...voltages));
 

@@ -14,6 +14,8 @@ import {
   ArcElement,
 } from "chart.js";
 import { ConnectedDataDisplay } from "./ConnectedDataDisplay";
+import { useState } from "react";
+import { FullscreenButton } from "./FullscreenButton";
 
 ChartJS.register(
   CategoryScale,
@@ -26,16 +28,36 @@ ChartJS.register(
   ArcElement,
 );
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+`;
+
 const DisplayHolder = styled.div`
   width: 100%;
 `;
 
+const ControlsHolder = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+`;
 function App() {
-  const useFakeData = true;
+  const [isUsingFakeData, setIsUsingFakeData] = useState(true);
   return (
-    <DisplayHolder>
-      {useFakeData ? <MockDataDisplay /> : <ConnectedDataDisplay />}
-    </DisplayHolder>
+    <Container>
+      <DisplayHolder>
+        {isUsingFakeData ? <MockDataDisplay /> : <ConnectedDataDisplay />}
+      </DisplayHolder>
+      <h2>App Controls</h2>
+      <ControlsHolder>
+        <button onClick={() => setIsUsingFakeData((isFake) => !isFake)}>
+          Use {isUsingFakeData ? "real" : "fake"} data
+        </button>
+        <FullscreenButton />
+      </ControlsHolder>
+    </Container>
   );
 }
 

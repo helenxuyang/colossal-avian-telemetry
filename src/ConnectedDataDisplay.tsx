@@ -24,12 +24,22 @@ export const ConnectedDataDisplay = () => {
     handleReceiveDataCallback.current = handleReceiveData;
   }, [handleReceiveData]);
 
-  const connection = useWebSocket(handleReceiveDataCallback);
+  const { connection, status, closeCodes } = useWebSocket(
+    handleReceiveDataCallback,
+  );
 
   const closeConnection = () => {
     connection.current?.close();
   };
 
-  const controls = <button onClick={closeConnection}>Close connection</button>;
+  const controls = (
+    <div>
+      <p>WebSocket status: {status ?? "none"}</p>
+      <p>Close codes received: {closeCodes ?? "none"}</p>
+      {status === WebSocket.OPEN && (
+        <button onClick={closeConnection}>Close connection</button>
+      )}
+    </div>
+  );
   return <RobotDisplay robot={robot} controls={controls} />;
 };

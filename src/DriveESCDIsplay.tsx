@@ -9,22 +9,17 @@ type Props = {
   showColumnAfter?: boolean;
 };
 
-const MeasurementHolder = styled.div<{ $flip: boolean }>`
+const MeasurementHolder = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  flex-direction: ${({ $flip }) => ($flip ? "row-reverse" : "row")};
-  gap: 8px;
+  gap: 4px;
 `;
 
-export const DriveESCDisplay = ({
-  esc,
-  className = "",
-  showColumnAfter = false,
-}: Props) => {
+export const DriveESCDisplay = ({ esc, className = "" }: Props) => {
   return (
     <Container className={className}>
       <h3>{esc.name}</h3>
-      <MeasurementHolder $flip={showColumnAfter}>
+      <MeasurementHolder>
         {Object.keys(esc.measurements)
           .filter(
             (measurementName) =>

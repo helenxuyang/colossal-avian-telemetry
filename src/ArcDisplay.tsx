@@ -1,28 +1,24 @@
 import styled from "styled-components";
 import { getColor, getLatestValue, type Measurement } from "./data";
+
 type Props = {
   outerMeasurement: Measurement;
   innerMeasurement: Measurement;
   className?: string;
 };
 
-const GraphDisplay = styled.div<{ $svgWidth: number }>`
+const GraphDisplay = styled.div`
   position: relative;
-  margin: ${({ $svgWidth }) => `0 ${-$svgWidth / 4 + 16}px`};
 `;
 
 const OuterLabel = styled.p`
-  position: absolute;
-  left: 0;
-  right: 0;
-  color: black;
   font-size: 30px;
   font-weight: bold;
-  top: 15%;
 `;
 const Arc = styled.svg<{ $strokeWidth: number }>`
-  stroke-width: ${({ $strokeWidth }) => $strokeWidth / 2};
+  stroke-width: ${({ $strokeWidth }) => $strokeWidth};
   fill: none;
+  max-width: 100%;
 `;
 
 const ArcBase = styled.path`
@@ -40,7 +36,7 @@ const InnerArcHolder = styled.div`
 
 const InnerLabel = styled.p`
   position: absolute;
-  bottom: 20%;
+  bottom: 10%;
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -72,13 +68,13 @@ export const ArcDisplay = ({
   className,
 }: Props) => {
   const svgWidth = 400;
-  const outerStrokeWidth = 200;
+  const outerStrokeWidth = 75;
 
   const svgHeight = svgWidth / 2;
   const outerDiameter = svgWidth;
   const outerRadius = outerDiameter / 2;
 
-  const innerScale = 0.5;
+  const innerScale = 0.6;
   const innerDiameter = outerDiameter * innerScale;
   const innerRadius = innerDiameter / 2;
   const outerValue = getLatestValue(outer);
@@ -108,13 +104,14 @@ export const ArcDisplay = ({
   const innerColor = getColor(inner);
 
   const viewBoxOffset = outerStrokeWidth / 2;
-  const viewBox = `${-viewBoxOffset} ${-viewBoxOffset} ${
-    svgWidth + 2 * viewBoxOffset
-  } ${svgHeight + 2 * viewBoxOffset}`;
+  const viewBox = `-${viewBoxOffset} -${viewBoxOffset} ${svgWidth + 2 * viewBoxOffset} ${svgHeight + viewBoxOffset}`;
 
   return (
-    <div>
-      <GraphDisplay className={className} $svgWidth={svgWidth}>
+    <div className={className}>
+      <OuterLabel>
+        {outerValue} {outer.unit}
+      </OuterLabel>
+      <GraphDisplay>
         <Arc
           width={svgWidth}
           height={svgHeight}
@@ -129,9 +126,6 @@ export const ArcDisplay = ({
             $color={outerColor}
           />
         </Arc>
-        <OuterLabel>
-          {outerValue} {outer.unit}
-        </OuterLabel>
         <InnerArcHolder>
           <Arc
             width={svgWidth}

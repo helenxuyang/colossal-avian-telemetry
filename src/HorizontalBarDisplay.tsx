@@ -5,11 +5,13 @@ import {
   getLatestValue,
   type Measurement,
 } from "./data";
-import { LineGraphDisplay } from "./LineGraphDisplay";
-import { Container } from "./styles";
+import { Container, SMALL_VIEWPORT, Value } from "./styles";
+import { LineChart } from "./LineChart";
 
 const StyledContainer = styled(Container)`
-  width: 100%;
+  @media (max-width: ${SMALL_VIEWPORT}px) {
+    width: auto;
+  }
 `;
 
 const BarDisplay = styled.div`
@@ -39,19 +41,12 @@ const RangeText = styled.p`
   font-size: 12px;
 `;
 
-const Value = styled.p`
-  flex: 1;
-  z-index: 2;
-  font-weight: bold;
-  font-size: 24px;
-`;
-
 type Props = {
   measurement: Measurement;
 };
 
 export const HorizontalBarDisplay = ({ measurement }: Props) => {
-  const { name, min, max, values, unit, shouldPlot } = measurement;
+  const { name, min, max, unit, shouldPlot } = measurement;
   const latestValue = getLatestValue(measurement);
 
   const percent = getLatestPercent(measurement);
@@ -68,7 +63,7 @@ export const HorizontalBarDisplay = ({ measurement }: Props) => {
         <RangeText>{max}</RangeText>
       </BarDisplay>
       <Value>{latestValue + (unit ? ` ${unit}` : "")}</Value>
-      {shouldPlot && <LineGraphDisplay values={values} />}
+      {shouldPlot && <LineChart measurement={measurement} />}
     </StyledContainer>
   );
 };
