@@ -24,7 +24,7 @@ const BarHolder = styled.div`
   position: relative;
   display: flex;
   align-items: end;
-  height: 75px;
+  height: 120px;
   width: 30px;
   background-color: white;
   margin: 8px;

@@ -6,7 +6,6 @@ import {
   type Robot,
 } from "./data";
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
-import { DriveESCDisplay } from "./DriveESCDisplay";
 import { WeaponESCDisplay } from "./WeaponESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";
 import { SMALL_VIEWPORT } from "./styles";
@@ -35,7 +34,7 @@ const ESCGrid = styled.div`
   }
 `;
 
-const DriveLeftESCSection = styled(DriveESCDisplay)`
+const DriveLeftESCSection = styled(WeaponESCDisplay)`
   grid-area: driveLeft;
 `;
 
@@ -47,7 +46,7 @@ const WeaponESCSection = styled(WeaponESCDisplay)`
 //   grid-area: arm;
 // `;
 
-const DriveRightESCSection = styled(DriveESCDisplay)`
+const DriveRightESCSection = styled(WeaponESCDisplay)`
   grid-area: driveRight;
 `;
 
@@ -110,7 +109,7 @@ export const RobotDisplay = ({ robot, controls }: Props) => {
         <ESCGrid>
           <DriveLeftESCSection esc={driveLeftEsc} />
           <WeaponESCSection esc={weaponEsc} />
-          <DriveRightESCSection esc={driveRightEsc} showColumnAfter={true} />
+          <DriveRightESCSection esc={driveRightEsc} />
         </ESCGrid>
       </ESCSection>
       <h2>Data Controls</h2>

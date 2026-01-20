@@ -14,13 +14,14 @@ const DisplayHolder = styled(Container)`
 `;
 
 const DisplayLayout = styled.div`
-  /* display: flex;
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
-  gap: 16px; */
+  align-items: end;
+  gap: 16px;
 
-  display: grid;
-  grid-template-areas: "arc arc" "temp input";
+  /* display: grid;
+  grid-template-areas: "arc arc" "temp input"; */
 `;
 
 const TempDisplay = styled(VerticalBarDisplay)`
@@ -40,11 +41,11 @@ export const WeaponESCDisplay = ({ esc }: Props) => {
     <DisplayHolder>
       <h3>{esc.name}</h3>
       <DisplayLayout>
+        <TempDisplay measurement={esc.measurements[TEMPERATURE]} />
         <RPMCurrentDisplay
           outerMeasurement={esc.measurements[RPM]}
           innerMeasurement={esc.measurements[CURRENT]}
         />
-        <TempDisplay measurement={esc.measurements[TEMPERATURE]} />
         <InputDisplay measurement={esc.measurements[INPUT]} />
       </DisplayLayout>
     </DisplayHolder>

@@ -40,7 +40,8 @@ const InnerLabel = styled.p`
   left: 0;
   right: 0;
   margin: 0 auto;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: bold;
 `;
 
 const convertValueToCoord = (

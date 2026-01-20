@@ -56,7 +56,7 @@ export const getInitEscMeasurements = ({
       max: rpmMax,
       values: [],
       highlightThreshold: rpmHighlight,
-      shouldPlot: true,
+      shouldPlot: false,
     },
     [VOLTAGE]: {
       name: VOLTAGE,
@@ -72,7 +72,7 @@ export const getInitEscMeasurements = ({
       min: 0,
       max: 30,
       values: [],
-      shouldPlot: true,
+      shouldPlot: false,
     },
     [CONSUMPTION]: {
       name: CONSUMPTION,
@@ -93,7 +93,7 @@ export const getInitEscMeasurements = ({
         orange: 75,
         red: 85,
       },
-      shouldPlot: true,
+      shouldPlot: false,
     },
     [INPUT]: {
       name: INPUT,
@@ -101,7 +101,7 @@ export const getInitEscMeasurements = ({
       min: 1000,
       max: 2000,
       values: [],
-      shouldPlot: true,
+      shouldPlot: false,
       shouldShowPercent: true,
     },
   };
