@@ -40,6 +40,10 @@ const ValueText = styled.p<{ $percent: number }>`
   font-size: 12px;
 `;
 
+const MinValueText = styled(ValueText)`
+  transform: translateX(-110%);
+`;
+
 const MaxBar = styled.div<{ $minPercent: number; $maxPercent: number }>`
   position: absolute;
   left: ${({ $minPercent }) => `${$minPercent}%`};
@@ -71,7 +75,7 @@ export const VoltageDisplay = ({ batteryVoltage }: Props) => {
         <BarHolder>
           <MinBar $percent={minPercent} />
           <MaxBar $minPercent={minPercent} $maxPercent={maxPercent} />
-          <ValueText $percent={minPercent}>{minValue}</ValueText>
+          <MinValueText $percent={minPercent}>{minValue}</MinValueText>
           <ValueText $percent={maxPercent}>{maxValue}</ValueText>
         </BarHolder>
         <RangeText>{max}</RangeText>

@@ -51,18 +51,13 @@ const DriveRightESCSection = styled(WeaponESCDisplay)`
 `;
 
 const RobotSection = styled.div`
-  background-color: #ccc;
-  padding: 8px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 `;
 
 const RobotLayout = styled.div`
   display: flex;
-  gap: 8px;
-  justify-content: space-evenly;
 
   > * {
     width: 100%;
@@ -74,6 +69,11 @@ const RobotLayout = styled.div`
       width: auto;
     }
   }
+`;
+
+const BarsHolder = styled.div`
+  display: flex;
+  flex-direction: column;
 `;
 
 type Props = {
@@ -91,17 +91,19 @@ export const RobotDisplay = ({ robot, controls }: Props) => {
       <RobotSection>
         <h1>Colossal Avian</h1>
         <RobotLayout>
-          <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
-          {Object.values(robot.derivedValues)
-            .filter((measurement) => measurement.shouldShow !== false)
-            .map((measurement) => {
-              return (
-                <HorizontalBarDisplay
-                  key={`${robot.name}-${measurement.name}`}
-                  measurement={measurement}
-                />
-              );
-            })}
+          <BarsHolder>
+            <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
+            {Object.values(robot.derivedValues)
+              .filter((measurement) => measurement.shouldShow !== false)
+              .map((measurement) => {
+                return (
+                  <HorizontalBarDisplay
+                    key={`${robot.name}-${measurement.name}`}
+                    measurement={measurement}
+                  />
+                );
+              })}
+          </BarsHolder>
           <ConsumptionDonut robot={robot} />
         </RobotLayout>
       </RobotSection>

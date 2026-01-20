@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { CURRENT, INPUT, RPM, TEMPERATURE, type ESC } from "./data";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 import { ArcDisplay } from "./ArcDisplay";
-import { Container } from "./styles";
+import { Container, MEDIUM_VIEWPORT } from "./styles";
 
 const DisplayHolder = styled(Container)`
   display: flex;
@@ -10,7 +10,6 @@ const DisplayHolder = styled(Container)`
   justify-content: start;
   align-items: center;
   position: relative;
-  gap: 16px;
 `;
 
 const DisplayLayout = styled.div`
@@ -18,10 +17,12 @@ const DisplayLayout = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: end;
-  gap: 16px;
+  gap: 4px;
 
-  /* display: grid;
-  grid-template-areas: "arc arc" "temp input"; */
+  @media (max-width: ${MEDIUM_VIEWPORT}px) {
+    display: grid;
+    grid-template-areas: "arc arc" "temp input";
+  }
 `;
 
 const TempDisplay = styled(VerticalBarDisplay)`

@@ -14,7 +14,9 @@ const GraphDisplay = styled.div`
 const OuterLabel = styled.p`
   font-size: 30px;
   font-weight: bold;
+  white-space: nowrap;
 `;
+
 const Arc = styled.svg<{ $strokeWidth: number }>`
   stroke-width: ${({ $strokeWidth }) => $strokeWidth};
   fill: none;

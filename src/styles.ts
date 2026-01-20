@@ -3,12 +3,12 @@ import styled from "styled-components";
 export const MEDIUM_VIEWPORT = 800;
 export const SMALL_VIEWPORT = 600;
 
-export const BACKGROUND = "#444";
+export const BACKGROUND = "#ddd";
 
 export const Container = styled.div`
   background-color: ${BACKGROUND};
   padding: 8px;
-  color: white;
+  color: black;
 `;
 
 export const Value = styled.p`
@@ -18,4 +18,5 @@ export const Value = styled.p`
   @media (max-width: ${MEDIUM_VIEWPORT}px) {
     font-size: 18px;
   }
+  white-space: nowrap;
 `;

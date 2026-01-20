@@ -5,7 +5,7 @@ import {
   getLatestValue,
   type Measurement,
 } from "./data";
-import { Container, MEDIUM_VIEWPORT, Value } from "./styles";
+import { Container, Value } from "./styles";
 import { LineChart } from "./LineChart";
 
 type Props = {
@@ -24,14 +24,10 @@ const BarHolder = styled.div`
   position: relative;
   display: flex;
   align-items: end;
-  height: 120px;
-  width: 30px;
+  height: 100px;
+  width: 20px;
   background-color: white;
   margin: 8px;
-
-  @media (max-width: ${MEDIUM_VIEWPORT}px) {
-    width: 20px;
-  }
 `;
 
 const Bar = styled.div<{ $percent: number; $color: string }>`
