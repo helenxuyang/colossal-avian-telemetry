@@ -172,13 +172,15 @@ Error generating stack: `+o.message+`
   justify-content: center;
 `,wx=at.circle`
   transform-origin: center center;
-`,Hx=at.div`
+`,Hx=at.span`
   position: absolute;
+  width: min-content;
+  white-space: nowrap;
 `,jx=at.div`
   position: absolute;
   margin: auto;
   font-weight: bold;
-`,Nx=({robot:i})=>{const s=i.derivedValues[pu],u=Vn(s),c=["cornflowerblue","blue","orange"];let r=0;const d=[],g=[];return Object.values(i.escs).forEach((m,y)=>{const b=Vn(m.measurements[gs]),_=Math.round(b/u*100),x=c[y],A=10;d.push(Y.jsx(wx,{r:50,cx:150/2,cy:150/2,stroke:x,strokeWidth:A,fill:"none",pathLength:100,strokeDasharray:`${_} ${100-_}`,strokeDashoffset:0,style:{transform:`rotate(${r}deg)`}}));const M=(r-90+_/100*360/2)*(Math.PI/180),O=50+A*2,R=Math.cos(M)*O,q=Math.sin(M)*O;g.push(Y.jsx(Hx,{style:{right:0,left:0,transform:`translate(${R}px, ${q}px)`},children:Y.jsxs("p",{children:[m.abbreviation,": ",b]})})),r+=_/100*360}),Y.jsxs(Ia,{children:[Y.jsx("h3",{children:"Consumption"}),Y.jsxs(Rx,{children:[Y.jsx(Cx,{width:150,height:150,children:d}),Y.jsxs(jx,{children:[Y.jsx("p",{children:u}),Y.jsx("p",{children:s.unit})]}),u>0&&g]})]})},Bx=at.div`
+`,Nx=({robot:i})=>{const s=i.derivedValues[pu],u=Vn(s),c=["cornflowerblue","blue","orange"];let r=0;const d=[],g=[];return Object.values(i.escs).forEach((m,y)=>{const b=Vn(m.measurements[gs]),_=Math.round(b/u*100),x=c[y],A=10;d.push(Y.jsx(wx,{r:50,cx:150/2,cy:150/2,stroke:x,strokeWidth:A,fill:"none",pathLength:100,strokeDasharray:`${_} ${100-_}`,strokeDashoffset:0,style:{transform:`rotate(${r}deg)`}}));const M=(r-90+_/100*360/2)*(Math.PI/180),O=50+A*2,R=Math.cos(M)*O,q=Math.sin(M)*O;g.push(Y.jsxs(Hx,{style:{left:"50%",bottom:"50%",transform:`translate(calc(-50% + ${R}px), calc(50% + ${q}px))`},children:[m.abbreviation,": ",b]})),r+=_/100*360}),Y.jsxs(Ia,{children:[Y.jsx("h3",{children:"Consumption"}),Y.jsxs(Rx,{children:[Y.jsx(Cx,{width:150,height:150,children:d}),Y.jsxs(jx,{children:[Y.jsx("p",{children:u}),Y.jsx("p",{children:s.unit})]}),u>0&&g]})]})},Bx=at.div`
   display: flex;
   flex-direction: column;
   gap: 8px;

@@ -24,8 +24,10 @@ const Slice = styled.circle`
   transform-origin: center center;
 `;
 
-const Label = styled.div`
+const Label = styled.span`
   position: absolute;
+  width: min-content;
+  white-space: nowrap;
 `;
 const TotalLabel = styled.div`
   position: absolute;
@@ -77,14 +79,12 @@ export const ConsumptionDonut = ({ robot }: Props) => {
     labels.push(
       <Label
         style={{
-          right: 0,
-          left: 0,
-          transform: `translate(${translateX}px, ${translateY}px)`,
+          left: "50%",
+          bottom: "50%",
+          transform: `translate(calc(-50% + ${translateX}px), calc(50% + ${translateY}px))`,
         }}
       >
-        <p>
-          {esc.abbreviation}: {value}
-        </p>
+        {esc.abbreviation}: {value}
       </Label>,
     );
     angle += (percent / 100) * 360;
