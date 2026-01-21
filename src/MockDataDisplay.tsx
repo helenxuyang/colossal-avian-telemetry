@@ -143,6 +143,26 @@ export const MockDataDisplay = () => {
           {RPMMock}
         </DataControlsHolder>
       )}
+      <details>
+        <summary>Debug</summary>
+        <div>
+          {Object.values(robot.escs).map((esc) => (
+            <div>
+              <strong>{esc.name}</strong>
+              {Object.values(esc.measurements).map((measurement) => {
+                return (
+                  <div>
+                    <p>
+                      {measurement.name}: [
+                      {measurement.values.slice(-5).join(",")}]
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
   return <RobotDisplay robot={robot} controls={controls} />;

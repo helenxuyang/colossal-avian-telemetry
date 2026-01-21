@@ -37,7 +37,7 @@ const InputDisplay = styled(VerticalBarDisplay)`
 `;
 type Props = { esc: ESC };
 
-export const WeaponESCDisplay = ({ esc }: Props) => {
+export const ESCDisplay = ({ esc }: Props) => {
   return (
     <DisplayHolder>
       <h3>{esc.name}</h3>

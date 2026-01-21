@@ -92,8 +92,12 @@ export const parseData = (data: string) => {
       escName: idToEscMap[escId as EscId],
       escData: {
         [TEMPERATURE]: escData[0],
-        [VOLTAGE]: mergeBytes(escData[1], escData[2]) / 100,
-        [CURRENT]: mergeBytes(escData[3], escData[4]) / 100,
+        [VOLTAGE]: Number(
+          (mergeBytes(escData[1], escData[2]) / 100).toFixed(2),
+        ),
+        [CURRENT]: Number(
+          (mergeBytes(escData[3], escData[4]) / 100).toFixed(2),
+        ),
         [CONSUMPTION]: mergeBytes(escData[5], escData[6]),
         [RPM]: Math.round(mergeBytes(escData[7], escData[8]) * 100 * rpmFactor),
       },

@@ -6,7 +6,7 @@ import {
   type Robot,
 } from "./data";
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
-import { WeaponESCDisplay } from "./WeaponESCDisplay";
+import { ESCDisplay } from "./ESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";
 import { SMALL_VIEWPORT } from "./styles";
 import { ConsumptionDonut } from "./ConsumptionDonut";
@@ -34,11 +34,11 @@ const ESCGrid = styled.div`
   }
 `;
 
-const DriveLeftESCSection = styled(WeaponESCDisplay)`
+const DriveLeftESCSection = styled(ESCDisplay)`
   grid-area: driveLeft;
 `;
 
-const WeaponESCSection = styled(WeaponESCDisplay)`
+const WeaponESCSection = styled(ESCDisplay)`
   grid-area: weapon;
 `;
 
@@ -46,7 +46,7 @@ const WeaponESCSection = styled(WeaponESCDisplay)`
 //   grid-area: arm;
 // `;
 
-const DriveRightESCSection = styled(WeaponESCDisplay)`
+const DriveRightESCSection = styled(ESCDisplay)`
   grid-area: driveRight;
 `;
 
@@ -77,11 +77,12 @@ const BarsHolder = styled.div`
 `;
 
 type Props = {
+  status?: React.ReactNode;
   robot: Robot;
-  controls: React.ReactNode;
+  controls?: React.ReactNode;
 };
 
-export const RobotDisplay = ({ robot, controls }: Props) => {
+export const RobotDisplay = ({ status, robot, controls }: Props) => {
   const driveLeftEsc = robot.escs[DRIVE_LEFT_ESC];
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
@@ -91,6 +92,7 @@ export const RobotDisplay = ({ robot, controls }: Props) => {
       <RobotSection>
         <h1>Colossal Avian</h1>
         <RobotLayout>
+          {status}
           <BarsHolder>
             <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
             {Object.values(robot.derivedValues)
@@ -114,8 +116,12 @@ export const RobotDisplay = ({ robot, controls }: Props) => {
           <DriveRightESCSection esc={driveRightEsc} />
         </ESCGrid>
       </ESCSection>
-      <h2>Data Controls</h2>
-      {controls}
+      {controls && (
+        <>
+          <h2>Data Controls</h2>
+          {controls}
+        </>
+      )}
     </Layout>
   );
 };

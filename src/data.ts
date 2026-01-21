@@ -120,7 +120,7 @@ export const ARM_ESC = "Arm";
 export const WEAPON_ESC = "Weapon";
 
 export const getInitColossalAvian = () => {
-  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC].reduce(
+  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC, ARM_ESC].reduce(
     (acc, name) => {
       acc[name] = {
         name,
@@ -228,7 +228,7 @@ export const calculateTotal = (measurementName: string, robot: Robot) => {
     getLatestValue(esc.measurements[measurementName]),
   );
   const total = values.reduce((sum, curr) => sum + curr, 0);
-  return total;
+  return Number(total.toFixed(2));
 };
 
 export const calculateDerivedValues = (robot: Robot) => {
