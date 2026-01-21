@@ -35,11 +35,11 @@ const RPMCurrentDisplay = styled(ArcDisplay)`
 const InputDisplay = styled(VerticalBarDisplay)`
   grid-area: input;
 `;
-type Props = { esc: ESC };
+type Props = { esc: ESC; className?: string };
 
-export const ESCDisplay = ({ esc }: Props) => {
+export const ESCDisplay = ({ esc, className }: Props) => {
   return (
-    <DisplayHolder>
+    <DisplayHolder className={className}>
       <h3>{esc.name}</h3>
       <DisplayLayout>
         <TempDisplay measurement={esc.measurements[TEMPERATURE]} />

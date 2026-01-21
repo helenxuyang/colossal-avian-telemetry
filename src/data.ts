@@ -120,7 +120,7 @@ export const ARM_ESC = "Arm";
 export const WEAPON_ESC = "Weapon";
 
 export const getInitColossalAvian = () => {
-  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC, ARM_ESC].reduce(
+  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC].reduce(
     (acc, name) => {
       acc[name] = {
         name,
@@ -207,11 +207,7 @@ export const getPercent = (value: number, min: number, max: number) => {
 };
 
 export const getLatestValue = (measurement: Measurement) => {
-  const { values, shouldShowPercent, min, max } = measurement;
-  const latestValue = values.at(-1) ?? 0;
-  if (shouldShowPercent) {
-    return getPercent(latestValue, min, max);
-  }
+  const { values } = measurement;
   return values.at(-1) ?? 0;
 };
 
@@ -221,6 +217,15 @@ export const getLatestPercent = (measurement: Measurement) => {
     measurement.min,
     measurement.max,
   );
+};
+
+export const getLatestValueDisplay = (measurement: Measurement) => {
+  const { unit } = measurement;
+  if (unit === "%") {
+    return `${getLatestPercent(measurement)}%`;
+  } else {
+    return `${getLatestValue(measurement)} ${unit}`;
+  }
 };
 
 export const calculateTotal = (measurementName: string, robot: Robot) => {

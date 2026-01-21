@@ -2,7 +2,7 @@ import styled from "styled-components";
 import {
   getColor,
   getLatestPercent,
-  getLatestValue,
+  getLatestValueDisplay,
   type Measurement,
 } from "./data";
 import { Container, Value } from "./styles";
@@ -41,11 +41,11 @@ const RangeText = styled.p`
 `;
 
 export const VerticalBarDisplay = ({ measurement, className = "" }: Props) => {
-  const { name, min, max, unit, shouldPlot } = measurement;
-  const latestValue = getLatestValue(measurement);
+  const { name, min, max, shouldPlot } = measurement;
 
   const percent = getLatestPercent(measurement);
   const barColor = getColor(measurement);
+
   return (
     <div className={className}>
       <Container>
@@ -57,7 +57,7 @@ export const VerticalBarDisplay = ({ measurement, className = "" }: Props) => {
           </BarHolder>
           <RangeText>{min}</RangeText>
         </BarDisplay>
-        <Value>{latestValue + (unit ? ` ${unit}` : "")}</Value>
+        <Value>{getLatestValueDisplay(measurement)}</Value>
       </Container>
       {shouldPlot && <LineChart measurement={measurement} />}
     </div>

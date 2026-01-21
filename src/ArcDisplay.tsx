@@ -1,5 +1,10 @@
 import styled from "styled-components";
-import { getColor, getLatestValue, type Measurement } from "./data";
+import {
+  getColor,
+  getLatestValue,
+  getLatestValueDisplay,
+  type Measurement,
+} from "./data";
 
 type Props = {
   outerMeasurement: Measurement;
@@ -111,9 +116,7 @@ export const ArcDisplay = ({
 
   return (
     <div className={className}>
-      <OuterLabel>
-        {outerValue} {outer.unit}
-      </OuterLabel>
+      <OuterLabel>{getLatestValueDisplay(outer)}</OuterLabel>
       <GraphDisplay>
         <Arc
           width={svgWidth}
@@ -145,9 +148,7 @@ export const ArcDisplay = ({
             />
           </Arc>
         </InnerArcHolder>
-        <InnerLabel>
-          {innerValue} {inner.unit}
-        </InnerLabel>
+        <InnerLabel>{getLatestValueDisplay(inner)}</InnerLabel>
       </GraphDisplay>
     </div>
   );

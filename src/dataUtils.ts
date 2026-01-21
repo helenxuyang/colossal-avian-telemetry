@@ -81,6 +81,13 @@ export const parseData = (data: string) => {
 
   const splitData = data.slice(1, data.length - 1).split(" ");
   const escId = splitData[0];
+  const escName = idToEscMap[escId as EscId];
+
+  // TODO: remove when we actually have arm
+  if (escName === ARM_ESC) {
+    return null;
+  }
+
   const escData = splitData.slice(1).map((entry) => Number("0x" + entry));
 
   if (escDataIds.includes(escId)) {
@@ -89,7 +96,7 @@ export const parseData = (data: string) => {
         ? 1 / 7
         : 1 / 6;
     const parsedData: ParsedData = {
-      escName: idToEscMap[escId as EscId],
+      escName,
       escData: {
         [TEMPERATURE]: escData[0],
         [VOLTAGE]: Number(
@@ -105,7 +112,7 @@ export const parseData = (data: string) => {
     return parsedData;
   } else if (escInputIds.includes(escId)) {
     const parsedData: ParsedData = {
-      escName: idToEscMap[escId as EscId],
+      escName,
       escData: {
         [INPUT]: escData[0],
       },

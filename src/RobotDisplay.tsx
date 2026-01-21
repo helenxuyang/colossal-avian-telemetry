@@ -42,7 +42,7 @@ const WeaponESCSection = styled(ESCDisplay)`
   grid-area: weapon;
 `;
 
-// const ArmESCSection = styled(ESCDoughnutDisplay)`
+// const ArmESCSection = styled(InputDisplay)`
 //   grid-area: arm;
 // `;
 
