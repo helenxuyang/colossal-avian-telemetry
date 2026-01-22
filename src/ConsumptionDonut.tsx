@@ -56,6 +56,7 @@ export const ConsumptionDonut = ({ robot }: Props) => {
     const strokeWidth = 10;
     slices.push(
       <Slice
+        key={esc.name}
         r={radius}
         cx={svgSize / 2}
         cy={svgSize / 2}

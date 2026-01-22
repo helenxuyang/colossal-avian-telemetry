@@ -12,7 +12,7 @@ export const useWebSocket = (
   const [closeCodes, setCloseCodes] = useState<number[]>();
 
   useEffect(() => {
-    connection.current = new WebSocket("ws://192.168.4.1:81", ["arduino"]);
+    connection.current = new WebSocket("wss://192.168.4.1:81", ["arduino"]);
     connection.current.addEventListener("open", () => {
       console.log("websocket open");
       connection.current?.send("Connect " + new Date());

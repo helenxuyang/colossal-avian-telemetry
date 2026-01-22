@@ -29,7 +29,7 @@ export const DriveESCDisplay = ({ esc, className = "" }: Props) => {
             const measurement = esc.measurements[measurementName];
             return (
               <VerticalBarDisplay
-                key={`${name}-${measurementName}`}
+                key={`${esc.name}-${measurementName}`}
                 measurement={measurement}
               />
             );

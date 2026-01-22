@@ -147,11 +147,11 @@ export const MockDataDisplay = () => {
         <summary>Debug</summary>
         <div>
           {Object.values(robot.escs).map((esc) => (
-            <div>
+            <div key={esc.name}>
               <strong>{esc.name}</strong>
               {Object.values(esc.measurements).map((measurement) => {
                 return (
-                  <div>
+                  <div key={`${esc.name}-${measurement.name}`}>
                     <p>
                       {measurement.name}: [
                       {measurement.values.slice(-5).join(",")}]
