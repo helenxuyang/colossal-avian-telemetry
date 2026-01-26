@@ -98,8 +98,8 @@ export const getInitEscMeasurements = ({
     [INPUT]: {
       name: INPUT,
       unit: "%",
-      min: 1000,
-      max: 2000,
+      min: -100,
+      max: 100,
       values: [],
       shouldPlot: false,
       shouldShowPercent: true,

@@ -88,7 +88,7 @@ export const parseData = (data: string) => {
     return null;
   }
 
-  const escData = splitData.slice(1).map((entry) => Number("0x" + entry));
+  const values = splitData.slice(1).map((entry) => Number("0x" + entry));
 
   if (escDataIds.includes(escId)) {
     const rpmFactor =
@@ -98,15 +98,11 @@ export const parseData = (data: string) => {
     const parsedData: ParsedData = {
       escName,
       escData: {
-        [TEMPERATURE]: escData[0],
-        [VOLTAGE]: Number(
-          (mergeBytes(escData[1], escData[2]) / 100).toFixed(2),
-        ),
-        [CURRENT]: Number(
-          (mergeBytes(escData[3], escData[4]) / 100).toFixed(2),
-        ),
-        [CONSUMPTION]: mergeBytes(escData[5], escData[6]),
-        [RPM]: Math.round(mergeBytes(escData[7], escData[8]) * 100 * rpmFactor),
+        [TEMPERATURE]: values[0],
+        [VOLTAGE]: Number((mergeBytes(values[1], values[2]) / 100).toFixed(2)),
+        [CURRENT]: Number((mergeBytes(values[3], values[4]) / 100).toFixed(2)),
+        [CONSUMPTION]: mergeBytes(values[5], values[6]),
+        [RPM]: Math.round(mergeBytes(values[7], values[8]) * 100 * rpmFactor),
       },
     };
     return parsedData;
@@ -114,7 +110,7 @@ export const parseData = (data: string) => {
     const parsedData: ParsedData = {
       escName,
       escData: {
-        [INPUT]: escData[0],
+        [INPUT]: 0.2 * values[0] - 300,
       },
     };
     return parsedData;

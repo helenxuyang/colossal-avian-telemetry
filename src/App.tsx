@@ -44,7 +44,7 @@ const ControlsHolder = styled.div`
   gap: 8px;
 `;
 function App() {
-  const [isUsingFakeData, setIsUsingFakeData] = useState(false);
+  const [isUsingFakeData, setIsUsingFakeData] = useState(true);
   return (
     <Container>
       <DisplayHolder>

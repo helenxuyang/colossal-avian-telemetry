@@ -82,7 +82,7 @@ export const ConsumptionDonut = ({ robot }: Props) => {
         style={{
           left: "50%",
           bottom: "50%",
-          transform: `translate(calc(-50% + ${translateX}px), calc(50% + ${translateY}px))`,
+          transform: `translate(calc(${translateX < 0 ? "-100" : "0"}% + ${translateX}px), calc(50% + ${translateY}px))`,
         }}
       >
         {esc.abbreviation}: {value}
