@@ -31,8 +31,7 @@ export type BatteryVoltageMeasurement = {
   unit: string;
   min: number;
   max: number;
-  minValues: number[];
-  maxValues: number[];
+  values: number[][];
 };
 
 export type ESC = {
@@ -56,7 +55,7 @@ export const getInitEscMeasurements = ({
       max: rpmMax,
       values: [],
       highlightThreshold: rpmHighlight,
-      shouldPlot: false,
+      shouldPlot: true,
     },
     [VOLTAGE]: {
       name: VOLTAGE,
@@ -65,6 +64,7 @@ export const getInitEscMeasurements = ({
       max: 26,
       values: [],
       shouldShow: false,
+      // shouldPlot: true,
     },
     [CURRENT]: {
       name: CURRENT,
@@ -72,7 +72,7 @@ export const getInitEscMeasurements = ({
       min: 0,
       max: 30,
       values: [],
-      shouldPlot: false,
+      shouldPlot: true,
     },
     [CONSUMPTION]: {
       name: CONSUMPTION,
@@ -160,8 +160,7 @@ export const getInitColossalAvian = () => {
     unit: "V",
     min: 16,
     max: 26,
-    minValues: [],
-    maxValues: [],
+    values: [],
   };
   return {
     name: "Colossal Avian",
@@ -241,8 +240,7 @@ export const calculateDerivedValues = (robot: Robot) => {
   const voltages = Object.values(robot.escs).map((esc) =>
     getLatestValue(esc.measurements[VOLTAGE]),
   );
-  newRobot.batteryVoltage.minValues.push(Math.min(...voltages));
-  newRobot.batteryVoltage.maxValues.push(Math.max(...voltages));
+  newRobot.batteryVoltage.values.push(voltages);
 
   newRobot.derivedValues[TOTAL_CURRENT].values.push(
     calculateTotal(CURRENT, robot),

@@ -9,6 +9,7 @@ import {
 type Props = {
   outerMeasurement: Measurement;
   innerMeasurement: Measurement;
+  barColor?: string;
   className?: string;
 };
 
@@ -28,12 +29,13 @@ const Arc = styled.svg<{ $strokeWidth: number }>`
   max-width: 100%;
 `;
 
-const ArcBase = styled.path`
-  stroke: white;
-`;
-
 const ArcFill = styled.path<{ $color: string }>`
   stroke: ${({ $color }) => $color};
+`;
+
+const TargetMarkerHolder = styled.div`
+  position: absolute;
+  top: 0;
 `;
 
 const InnerArcHolder = styled.div`
@@ -114,24 +116,60 @@ export const ArcDisplay = ({
   const viewBoxOffset = outerStrokeWidth / 2;
   const viewBox = `-${viewBoxOffset} -${viewBoxOffset} ${svgWidth + 2 * viewBoxOffset} ${svgHeight + viewBoxOffset}`;
 
+  const target = outer.highlightThreshold ?? 0;
+  const onePercent = (outer.max - outer.min) / 100;
+  const targetStart = target - onePercent / 2;
+  const targetEnd = target + onePercent / 2;
+  const { x: targetStartX, y: targetStartY } = convertValueToCoord(
+    targetStart,
+    outer.min,
+    outer.max,
+    svgWidth,
+    outerRadius,
+  );
+
+  const { x: targetEndX, y: targetEndY } = convertValueToCoord(
+    targetEnd,
+    outer.min,
+    outer.max,
+    svgWidth,
+    outerRadius,
+  );
+
   return (
     <div className={className}>
       <OuterLabel>{getLatestValueDisplay(outer)}</OuterLabel>
-      <GraphDisplay>
+      <GraphDisplay className="graph-display">
         <Arc
           width={svgWidth}
           height={svgHeight}
           viewBox={viewBox}
           $strokeWidth={outerStrokeWidth}
         >
-          <ArcBase
+          <ArcFill
             d={`M ${outerStart} A ${outerRadius} ${outerRadius} 0 0 1 ${outerBaseEnd}`}
+            $color="white"
           />
           <ArcFill
             d={`M ${outerStart} A ${outerRadius} ${outerRadius} 0 0 1 ${outerArcX} ${outerArcY}`}
             $color={outerColor}
           />
         </Arc>
+        {target > 0 && (
+          <TargetMarkerHolder className="target-marker-holder">
+            <Arc
+              width={svgWidth}
+              height={svgHeight}
+              viewBox={viewBox}
+              $strokeWidth={outerStrokeWidth}
+            >
+              <ArcFill
+                d={`M ${targetStartX} ${targetStartY} A ${outerRadius} ${outerRadius} 0 0 1 ${targetEndX} ${targetEndY}`}
+                $color="darkgreen"
+              />
+            </Arc>
+          </TargetMarkerHolder>
+        )}
         <InnerArcHolder>
           <Arc
             width={svgWidth}
@@ -139,8 +177,9 @@ export const ArcDisplay = ({
             viewBox={viewBox}
             $strokeWidth={outerStrokeWidth / 2}
           >
-            <ArcBase
+            <ArcFill
               d={`M ${innerStart} A ${innerRadius} ${innerRadius} 0 0 1 ${innerBaseEnd}`}
+              $color="white"
             />
             <ArcFill
               d={`M ${innerStart} A ${innerRadius} ${innerRadius} 0 0 1 ${innerArcX} ${innerArcY}`}

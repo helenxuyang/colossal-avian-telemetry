@@ -27,6 +27,9 @@ const DisplayLayout = styled.div`
 
 const TempDisplay = styled(VerticalBarDisplay)`
   grid-area: temp;
+  ${Container} {
+    background-color: unset;
+  }
 `;
 const RPMCurrentDisplay = styled(ArcDisplay)`
   grid-area: arc;
@@ -34,6 +37,9 @@ const RPMCurrentDisplay = styled(ArcDisplay)`
 
 const InputDisplay = styled(VerticalBarDisplay)`
   grid-area: input;
+  ${Container} {
+    background-color: unset;
+  }
 `;
 type Props = { esc: ESC; className?: string };
 

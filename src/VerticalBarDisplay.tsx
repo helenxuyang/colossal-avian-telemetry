@@ -10,6 +10,7 @@ import { LineChart } from "./LineChart";
 
 type Props = {
   measurement: Measurement;
+  barColor?: string;
   className?: string;
 };
 

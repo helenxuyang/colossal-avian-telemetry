@@ -19,4 +19,5 @@ export const Value = styled.p`
     font-size: 18px;
   }
   white-space: nowrap;
+  min-width: 65px;
 `;

@@ -101,6 +101,7 @@ export const RobotDisplay = ({ status, robot, controls }: Props) => {
                 return (
                   <HorizontalBarDisplay
                     key={`${robot.name}-${measurement.name}`}
+                    barColor="skyblue"
                     measurement={measurement}
                   />
                 );

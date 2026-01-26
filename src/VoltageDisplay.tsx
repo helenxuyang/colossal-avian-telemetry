@@ -1,13 +1,6 @@
 import styled from "styled-components";
 import { getPercent, type BatteryVoltageMeasurement } from "./data";
-import { Container, SMALL_VIEWPORT, Value } from "./styles";
-
-const StyledContainer = styled(Container)`
-  width: 100%;
-  @media (max-width: ${SMALL_VIEWPORT}px) {
-    width: auto;
-  }
-`;
+import { Container, Value } from "./styles";
 
 const BarDisplay = styled.div`
   display: flex;
@@ -52,6 +45,14 @@ const MaxBar = styled.div<{ $minPercent: number; $maxPercent: number }>`
   width: ${({ $minPercent, $maxPercent }) => `${$maxPercent - $minPercent}%`};
 `;
 
+const Marker = styled.div<{ $percent: number }>`
+  position: absolute;
+  left: ${({ $percent }) => `${$percent}%`};
+  height: 100%;
+  width: 2px;
+  background-color: black;
+`;
+
 const RangeText = styled.p`
   font-size: 12px;
 `;
@@ -61,20 +62,25 @@ type Props = {
 };
 
 export const VoltageDisplay = ({ batteryVoltage }: Props) => {
-  const { name, min, max, unit, minValues, maxValues } = batteryVoltage;
-  const minValue = minValues.at(-1) ?? 0;
-  const maxValue = maxValues.at(-1) ?? 0;
+  const { name, min, max, unit, values } = batteryVoltage;
+  const latestValues = values.at(-1) ?? [0];
+  const minValue = Math.min(...latestValues);
+  const maxValue = Math.max(...latestValues);
   const minPercent = getPercent(minValue, min, max);
   const maxPercent = getPercent(maxValue, min, max);
 
   return (
-    <StyledContainer>
+    <Container>
       <h4>{name}</h4>
       <BarDisplay>
         <RangeText>{min}</RangeText>
         <BarHolder>
           <MinBar $percent={minPercent} />
           <MaxBar $minPercent={minPercent} $maxPercent={maxPercent} />
+          {latestValues.map((value, index) => (
+            <Marker key={index} $percent={getPercent(value, min, max)} />
+          ))}
+
           <MinValueText $percent={minPercent}>{minValue}</MinValueText>
           <ValueText $percent={maxPercent}>{maxValue}</ValueText>
         </BarHolder>
@@ -83,6 +89,6 @@ export const VoltageDisplay = ({ batteryVoltage }: Props) => {
       <Value>
         {minValue}-{maxValue} {unit}
       </Value>
-    </StyledContainer>
+    </Container>
   );
 };

@@ -42,17 +42,22 @@ const RangeText = styled.p`
 `;
 
 type Props = {
+  barColor: string;
   measurement: Measurement;
+  className?: string;
 };
 
-export const HorizontalBarDisplay = ({ measurement }: Props) => {
+export const HorizontalBarDisplay = ({
+  measurement,
+  className = "",
+}: Props) => {
   const { name, min, max, shouldPlot } = measurement;
 
   const percent = getLatestPercent(measurement);
   const barColor = getColor(measurement);
 
   return (
-    <StyledContainer>
+    <StyledContainer className={className}>
       <h4>{name}</h4>
       <BarDisplay>
         <RangeText>{min}</RangeText>
