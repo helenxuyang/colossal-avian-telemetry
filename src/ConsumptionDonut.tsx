@@ -77,17 +77,19 @@ export const ConsumptionDonut = ({ robot }: Props) => {
     const labelRadius = radius + strokeWidth * 2;
     const translateX = Math.cos(labelAngleRadians) * labelRadius;
     const translateY = Math.sin(labelAngleRadians) * labelRadius;
-    labels.push(
-      <Label
-        style={{
-          left: "50%",
-          bottom: "50%",
-          transform: `translate(calc(${translateX < 0 ? "-100" : "0"}% + ${translateX}px), calc(50% + ${translateY}px))`,
-        }}
-      >
-        {esc.abbreviation}: {value}
-      </Label>,
-    );
+    if (value > 0) {
+      labels.push(
+        <Label
+          style={{
+            left: "50%",
+            bottom: "50%",
+            transform: `translate(calc(${translateX < 0 ? "-100" : "0"}% + ${translateX}px), calc(50% + ${translateY}px))`,
+          }}
+        >
+          {esc.abbreviation}: {value}
+        </Label>,
+      );
+    }
     angle += (percent / 100) * 360;
   });
 

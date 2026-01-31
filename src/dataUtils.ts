@@ -110,7 +110,7 @@ export const parseData = (data: string) => {
     const parsedData: ParsedData = {
       escName,
       escData: {
-        [INPUT]: 0.2 * values[0] - 300,
+        [INPUT]: Math.round(0.2 * values[0] - 300),
       },
     };
     return parsedData;

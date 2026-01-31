@@ -97,12 +97,12 @@ export const getInitEscMeasurements = ({
     },
     [INPUT]: {
       name: INPUT,
-      unit: "%",
+      unit: "",
       min: -100,
       max: 100,
       values: [],
       shouldPlot: false,
-      shouldShowPercent: true,
+      shouldShowPercent: false,
     },
   };
 };
