@@ -4,6 +4,7 @@ export type Measurement = {
   min: number;
   max: number;
   values: number[];
+  timestamps?: number[];
   colorThresholds?: Record<string, number>;
   highlightThreshold?: number;
   shouldShow?: boolean;
@@ -37,6 +38,7 @@ export type BatteryVoltageMeasurement = {
 export type ESC = {
   name: string;
   abbreviation: string;
+  timestamps: number[];
   measurements: Record<string, Measurement>;
 };
 
@@ -101,6 +103,7 @@ export const getInitEscMeasurements = ({
       min: -100,
       max: 100,
       values: [],
+      timestamps: [],
       shouldPlot: false,
       shouldShowPercent: false,
     },
@@ -128,6 +131,7 @@ export const getInitColossalAvian = () => {
           .split("")
           .filter((char) => char.toUpperCase() === char)
           .join(""),
+        timestamps: [],
         measurements: getInitEscMeasurements({
           rpmMax:
             name === DRIVE_LEFT_ESC || name === DRIVE_RIGHT_ESC ? 35000 : 20000,

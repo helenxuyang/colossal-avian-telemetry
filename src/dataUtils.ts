@@ -10,6 +10,7 @@ import {
   TEMPERATURE,
   VOLTAGE,
   WEAPON_ESC,
+  type ESC,
   type Robot,
 } from "./data";
 
@@ -38,8 +39,9 @@ const escToIdMap: Record<string, EscId> = Object.entries(idToEscMap).reduce(
   {} as Record<string, EscId>,
 );
 
-type ParsedData = {
+export type ParsedData = {
   escName: string;
+  timestamp: number;
   escData: {
     [TEMPERATURE]?: number;
     [VOLTAGE]?: number;
@@ -65,11 +67,18 @@ export const parseData = (data: string) => {
   Byte 7: Rpm high byte
   Byte 8: Rpm low byte
   Byte 9: Checksum (ignore for now)
-  Time: Time since start byte
+  Timestamp
 
   ESC input data: 
   ESC ID (w, x, y, z)
- 
+  Value
+  Timestamp
+
+  Error:
+  ESC ID (a, b, c, d)
+  "x" 
+  Timestamp
+
   Data conversions:
   temp: as-is, in C
   voltage: / 100, in V
@@ -95,8 +104,11 @@ export const parseData = (data: string) => {
       escId === escToIdMap[WEAPON_ESC] || escId === escToIdMap[ARM_ESC]
         ? 1 / 7
         : 1 / 6;
+    const timestamp = Number(values[10]);
+
     const parsedData: ParsedData = {
       escName,
+      timestamp,
       escData: {
         [TEMPERATURE]: values[0],
         [VOLTAGE]: Number((mergeBytes(values[1], values[2]) / 100).toFixed(2)),
@@ -107,10 +119,14 @@ export const parseData = (data: string) => {
     };
     return parsedData;
   } else if (escInputIds.includes(escId)) {
+    const value = values[0];
+    const timestamp = values[1];
+
     const parsedData: ParsedData = {
       escName,
+      timestamp,
       escData: {
-        [INPUT]: Math.round(0.2 * values[0] - 300),
+        [INPUT]: Math.round(0.2 * value - 300), // scale from [1000, 2000] -> [-100, 100]
       },
     };
     return parsedData;
@@ -119,7 +135,7 @@ export const parseData = (data: string) => {
 };
 
 export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
-  const { escName, escData } = data;
+  const { escName, timestamp, escData } = data;
   let newRobot = { ...robot };
 
   Object.entries(escData).forEach(([measurementKey, measurementValue]) => {
@@ -127,7 +143,82 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
       measurementValue,
     );
   });
+  newRobot.escs[escName].timestamps.push(timestamp);
 
   newRobot = calculateDerivedValues(newRobot);
   return newRobot;
 };
+
+export const generateMockValue = (esc: ESC, measurementName: string) => {
+  const { min, max } = esc.measurements[measurementName];
+  const previousValue = esc.measurements[measurementName].values.at(-1);
+  if (!previousValue) {
+    const randomValue = Math.round(Math.random() * (max - min) + min);
+    return randomValue;
+  }
+  const sign = Math.random() > 0.5 ? 1 : -1;
+
+  const randomValue = Math.round(
+    Math.min(max, Math.max(min, previousValue + (1 * sign))),
+  );
+  return randomValue;
+}
+
+export const generateMockValueTwoByteHex = (num: number) => {
+  const highByte = ((num & Number("0xFF00")) >> 8).toString(16);
+  const lowByte = ((num & Number("0x00FF"))).toString(16);
+  const combined = `${highByte} ${lowByte}`;
+  return combined;
+}
+
+
+export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
+  const escIds = ['a', 'b', 'c'];
+  let escIndex = 0;
+
+  const generateMockESCMessage = () => {
+    const escId = escIds[escIndex] as EscId;
+    const escName = idToEscMap[escId];
+    const esc = robot.escs[escName];
+
+    const messageComponents = [`<${escId}`];
+
+    // component 0: temp
+    const mockTemp = generateMockValue(esc, TEMPERATURE).toString(16);
+    messageComponents.push(mockTemp);
+
+    // component 1-2: voltage
+    const mockVoltage = generateMockValue(esc, VOLTAGE) * 100;
+    const mockVoltageHex = generateMockValueTwoByteHex(mockVoltage);
+    messageComponents.push(mockVoltageHex);
+
+    // component 3-4: current
+    const mockCurrent = generateMockValue(esc, CURRENT) * 100;
+    const mockCurrentHex = generateMockValueTwoByteHex(mockCurrent);
+    messageComponents.push(mockCurrentHex);
+
+    // component 5-6: consumption
+    const mockConsumption = generateMockValue(esc, CONSUMPTION);
+    const mockConsumptionHex = generateMockValueTwoByteHex(mockConsumption);
+    messageComponents.push(mockConsumptionHex);
+
+    // component 7-8: RPM
+    const mockRPM = generateMockValue(esc, RPM) / 100 * (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
+    const mockRPMHex = generateMockValueTwoByteHex(mockRPM);
+    messageComponents.push(mockRPMHex);
+
+    // component 9: checksum (ignore for now)
+    messageComponents.push('00');
+
+    // component 10: timestamp
+    messageComponents.push((Date.now() - startTime).toString());
+
+    messageComponents.push('>');
+
+    escIndex = escIndex >= escIds.length - 1 ? 0 : escIndex + 1;
+    const message = messageComponents.join(' ');
+    return message;
+  }
+
+  return () => generateMockESCMessage();
+}
