@@ -34,9 +34,14 @@ export const MockDataDisplay = () => {
   const [temperatureMock, setTemperatureMock] = useState<string | null>(null);
   const [mockRPMReady, setMockRPMReady] = useState<boolean>(false);
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
+  const [startTime, setStartTime] = useState<number | null>(0);
 
   const startData = () => {
-    const generateEscMessage = getMockEscMessageGenerator(Date.now(), robot);
+    const now = Date.now();
+    if (!startTime) {
+      setStartTime(now);
+    }
+    const generateEscMessage = getMockEscMessageGenerator(startTime || now, robot);
 
     const generateFakeData = () => {
       const data = generateEscMessage();
@@ -115,6 +120,7 @@ export const MockDataDisplay = () => {
         <button
           onClick={() => {
             setRobot(getInitColossalAvian());
+            setStartTime(null);
           }}
         >
           Clear mock data

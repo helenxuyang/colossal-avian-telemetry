@@ -11,6 +11,8 @@ import { VoltageDisplay } from "./VoltageDisplay";
 import { SMALL_VIEWPORT } from "./styles";
 import { ConsumptionDonut } from "./ConsumptionDonut";
 import { CSVDownloader } from "./CSVWriter";
+import { NavigationTabs, type Tab } from "./Tabs";
+import { GraphDisplay } from "./GraphDisplay";
 
 const Layout = styled.div`
   display: flex;
@@ -88,36 +90,51 @@ export const RobotDisplay = ({ status, robot, controls }: Props) => {
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
 
+  const liveTabContent = <Layout>
+    <RobotSection>
+      <h1>Colossal Avian</h1>
+      <RobotLayout>
+        <BarsHolder>
+          <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
+          {Object.values(robot.derivedValues)
+            .filter((measurement) => measurement.shouldShow !== false)
+            .map((measurement) => {
+              return (
+                <HorizontalBarDisplay
+                  key={`${robot.name}-${measurement.name}`}
+                  barColor="skyblue"
+                  measurement={measurement}
+                />
+              );
+            })}
+        </BarsHolder>
+        <ConsumptionDonut robot={robot} />
+      </RobotLayout>
+    </RobotSection>
+    <ESCSection>
+      <ESCGrid>
+        <DriveLeftESCSection esc={driveLeftEsc} />
+        <WeaponESCSection esc={weaponEsc} />
+        <DriveRightESCSection esc={driveRightEsc} />
+      </ESCGrid>
+    </ESCSection>
+  </Layout>;
+
+  const tabs: Tab[] = [
+    {
+      name: "Live",
+      panelContent: liveTabContent
+    },
+    {
+      name: "Graph",
+      panelContent: <GraphDisplay robot={robot} />
+    }
+  ]
   return (
-    <Layout>
-      <RobotSection>
-        <h1>Colossal Avian</h1>
-        <RobotLayout>
-          {status}
-          <BarsHolder>
-            <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
-            {Object.values(robot.derivedValues)
-              .filter((measurement) => measurement.shouldShow !== false)
-              .map((measurement) => {
-                return (
-                  <HorizontalBarDisplay
-                    key={`${robot.name}-${measurement.name}`}
-                    barColor="skyblue"
-                    measurement={measurement}
-                  />
-                );
-              })}
-          </BarsHolder>
-          <ConsumptionDonut robot={robot} />
-        </RobotLayout>
-      </RobotSection>
-      <ESCSection>
-        <ESCGrid>
-          <DriveLeftESCSection esc={driveLeftEsc} />
-          <WeaponESCSection esc={weaponEsc} />
-          <DriveRightESCSection esc={driveRightEsc} />
-        </ESCGrid>
-      </ESCSection>
+    <div>
+      <NavigationTabs tabs={tabs} />
+      {status}
+
       {controls && (
         <>
           <h2>Data Controls</h2>
@@ -125,6 +142,7 @@ export const RobotDisplay = ({ status, robot, controls }: Props) => {
           <CSVDownloader />
         </>
       )}
-    </Layout>
+    </div>
+
   );
 };

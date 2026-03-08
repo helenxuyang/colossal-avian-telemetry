@@ -1,6 +1,6 @@
 import { CSVLink } from "react-csv";
-import type { EscData, EscInputData, ParsedData } from "./dataUtils";
-import { ALL_ESCS, INPUT } from "./data";
+import type { ParsedData } from "./dataUtils";
+import { ALL_ESCS } from "./data";
 import { useState } from "react";
 
 type CSVRow = (string | number)[];
@@ -34,18 +34,22 @@ export class CSVWriterSingleton {
     }
 
     public getFormattedData(): CSVRow[] {
-        const dataRows: CSVDataRow[] = this.rawData.filter(rawData => rawData.escData[INPUT] !== undefined).map(({ escName, timestamp, escData }) => (
-            {
-                escName, timestamp, ...escData
-            }
-        ));
+        const dataRows = this.rawData.filter(rawData => rawData.escData.dataType === 'data')
+            .map(({ escName, timestamp, escData }) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { dataType, ...values } = escData;
+                return { escName, timestamp, ...values };
+
+            });
         const dataHeaders = Object.keys(dataRows.length ? dataRows[0] : []);
 
-        const inputDataRows: CSVInputDataRow[] = this.rawData.filter(rawData => rawData.escData[INPUT] === undefined).map(({ escName, timestamp, escData }) => (
-            {
-                escName, timestamp, ...escData
-            }
-        ));
+        const inputDataRows = this.rawData.filter(rawData => rawData.escData.dataType === 'input')
+            .map(({ escName, timestamp, escData }) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { dataType, ...values } = escData;
+                return { escName, timestamp, ...values }
+            });
+
         const inputHeaders = Object.keys(inputDataRows.length ? inputDataRows[0] : []);
 
         const formattedData: CSVRow[] = [];
@@ -69,16 +73,6 @@ export class CSVWriterSingleton {
         return date.toISOString();
     }
 }
-
-type CSVDataRow = {
-    escName: string;
-    timestamp: number;
-} & EscData;
-
-type CSVInputDataRow = {
-    escName: string;
-    timestamp: number;
-} & EscInputData;
 
 export const CSVDownloader = () => {
     const [fileName, setFileName] = useState<string>("");

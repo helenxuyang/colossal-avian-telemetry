@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-csv": "^2.2.2",
