@@ -39,17 +39,22 @@ const escToIdMap: Record<string, EscId> = Object.entries(idToEscMap).reduce(
   {} as Record<string, EscId>,
 );
 
+export type EscData = {
+  [TEMPERATURE]?: number;
+  [VOLTAGE]?: number;
+  [CURRENT]?: number;
+  [CONSUMPTION]?: number;
+  [RPM]?: number;
+}
+
+export type EscInputData = {
+  [INPUT]?: number;
+}
+
 export type ParsedData = {
   escName: string;
   timestamp: number;
-  escData: {
-    [TEMPERATURE]?: number;
-    [VOLTAGE]?: number;
-    [CURRENT]?: number;
-    [CONSUMPTION]?: number;
-    [RPM]?: number;
-    [INPUT]?: number;
-  };
+  escData: EscData & EscInputData
 };
 
 export const parseData = (data: string) => {

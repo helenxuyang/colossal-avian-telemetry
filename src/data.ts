@@ -122,8 +122,11 @@ export const DRIVE_RIGHT_ESC = "DriveRight";
 export const ARM_ESC = "Arm";
 export const WEAPON_ESC = "Weapon";
 
+// no arm yet
+export const ALL_ESCS = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC];
+
 export const getInitColossalAvian = () => {
-  const escs = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC].reduce(
+  const escs = ALL_ESCS.reduce(
     (acc, name) => {
       acc[name] = {
         name,

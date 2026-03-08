@@ -3,13 +3,13 @@ import {
   calculateDerivedValues,
   DRIVE_LEFT_ESC,
   getInitColossalAvian,
-  RPM,
   TEMPERATURE,
-  type Measurement,
   type Robot,
 } from "./data";
 import { RobotDisplay } from "./RobotDisplay";
 import styled from "styled-components";
+import { getMockEscMessageGenerator, getUpdatedRobot, parseData } from "./dataUtils";
+import { CSVWriterSingleton } from "./CSVWriter";
 
 const ButtonsHolder = styled.div`
   display: flex;
@@ -30,46 +30,29 @@ export const MockDataDisplay = () => {
   const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
     null,
   );
+
   const [temperatureMock, setTemperatureMock] = useState<string | null>(null);
   const [mockRPMReady, setMockRPMReady] = useState<boolean>(false);
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
 
-  const getNextValue = (measurement: Measurement) => {
-    const { name, values, max, min, colorThresholds } = measurement;
-    const lastValue =
-      values.at(-1) ?? Math.round(Math.random() * (max - min) + min);
-    let nextValue = lastValue;
+  const startData = () => {
+    const generateEscMessage = getMockEscMessageGenerator(Date.now(), robot);
 
-    if (name === TEMPERATURE && temperatureMock && colorThresholds) {
-      nextValue = colorThresholds[temperatureMock];
-    } else if (name === RPM && mockRPMReady) {
-      nextValue = max;
-    } else {
-      const sign = Math.random() > 0.5 ? 1 : -1;
-      const deltaRange = (min - max) * 0.05;
-      const delta = Math.random() * (deltaRange < 1 ? 1 : deltaRange);
-      nextValue = Math.round(
-        Math.min(max, Math.max(min, lastValue + delta * sign)),
-      );
+    const generateFakeData = () => {
+      const data = generateEscMessage();
+      if (data) {
+        const parsedData = parseData(data);
+        if (parsedData) {
+          setRobot((robot) => {
+            let newRobot = getUpdatedRobot(parsedData, robot);
+            newRobot = calculateDerivedValues(newRobot);
+            return newRobot;
+          });
+          CSVWriterSingleton.getInstance().addData(parsedData);
+        }
+      }
     }
 
-    return nextValue;
-  };
-
-  const generateFakeData = () => {
-    setRobot((robot) => {
-      let newRobot = { ...robot };
-      Object.values(newRobot.escs).forEach((esc) => {
-        Object.values(esc.measurements).forEach((measurement) => {
-          measurement.values.push(getNextValue(measurement));
-        });
-      });
-      newRobot = calculateDerivedValues(newRobot);
-      return newRobot;
-    });
-  };
-
-  const startData = () => {
     mockDataCallback.current = generateFakeData;
     setMockDataIntervalId(setInterval(mockDataCallback.current, intervalMs));
   };
@@ -89,7 +72,7 @@ export const MockDataDisplay = () => {
       <legend>Temperature</legend>
       {Object.keys(
         robot.escs[DRIVE_LEFT_ESC].measurements[TEMPERATURE].colorThresholds ??
-          [],
+        [],
       ).map((color) => {
         return (
           <div key={color}>
@@ -146,21 +129,25 @@ export const MockDataDisplay = () => {
       <details>
         <summary>Debug</summary>
         <div>
-          {Object.values(robot.escs).map((esc) => (
-            <div key={esc.name}>
-              <strong>{esc.name}</strong>
-              {Object.values(esc.measurements).map((measurement) => {
-                return (
-                  <div key={`${esc.name}-${measurement.name}`}>
-                    <p>
-                      {measurement.name}: [
-                      {measurement.values.slice(-5).join(",")}]
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+          {Object.values(robot.escs).map((esc) => {
+            const numValuesToShow = 5;
+            return (
+              <div key={esc.name}>
+                <strong>{esc.name}</strong>
+                <p> Timestamps: [{esc.timestamps.slice(-numValuesToShow).join(",")}]</p>
+                {Object.values(esc.measurements).map((measurement) => {
+                  return (
+                    <div key={`${esc.name}-${measurement.name}`}>
+                      <p>
+                        {measurement.name}: [
+                        {measurement.values.slice(-numValuesToShow).join(",")}]
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          })}
         </div>
       </details>
     </div>

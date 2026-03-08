@@ -10,6 +10,7 @@ import { ESCDisplay } from "./ESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";
 import { SMALL_VIEWPORT } from "./styles";
 import { ConsumptionDonut } from "./ConsumptionDonut";
+import { CSVDownloader } from "./CSVWriter";
 
 const Layout = styled.div`
   display: flex;
@@ -121,6 +122,7 @@ export const RobotDisplay = ({ status, robot, controls }: Props) => {
         <>
           <h2>Data Controls</h2>
           {controls}
+          <CSVDownloader />
         </>
       )}
     </Layout>
