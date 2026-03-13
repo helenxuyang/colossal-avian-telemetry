@@ -257,3 +257,15 @@ export const calculateDerivedValues = (robot: Robot) => {
   );
   return newRobot;
 };
+
+const measurementIdDelimiter = '-';
+export const getMeasurementId = (escName: string, measurementName: string) => {
+  return `${escName}${measurementIdDelimiter}${measurementName}`;
+}
+export const parseMeasurementId = (id: string) => {
+  const [escName, measurementName] = id.split(measurementIdDelimiter);
+  return {
+    escName,
+    measurementName
+  };
+}
