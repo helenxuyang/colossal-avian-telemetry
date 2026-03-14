@@ -177,6 +177,46 @@ export const getInitColossalAvian = () => {
   };
 };
 
+export const importRobot = (csvData: string[][]): Robot => {
+  const robot = getInitColossalAvian();
+
+  let currentEsc = "";
+  let currentHeaders: string[] = [];
+  let isInputData = false;
+  let escNameIndex = 0;
+  let timestampIndex = 0;
+  csvData.forEach((row) => {
+    // header row
+    if (row.includes("escName")) {
+      escNameIndex = row.indexOf("escName");
+      timestampIndex = row.indexOf("timestamp");
+      currentHeaders = row;
+      isInputData = row.includes(INPUT);
+    } else {
+      currentEsc = row[escNameIndex];
+      // parse timestamp
+      const timestamp = row[timestampIndex];
+      if (isInputData) {
+        robot.escs[currentEsc].measurements[INPUT].timestamps?.push(
+          Number(timestamp),
+        );
+      } else {
+        robot.escs[currentEsc].timestamps.push(Number(timestamp));
+      }
+      // parse values
+      currentHeaders.forEach((measurementName, index) => {
+        if (index !== escNameIndex && index !== timestampIndex) {
+          const value = row[index];
+          robot.escs[currentEsc].measurements[measurementName].values.push(
+            Number(value),
+          );
+        }
+      });
+    }
+  });
+  return robot;
+};
+
 export const getColor = (measurement: Measurement) => {
   const { colorThresholds, highlightThreshold } = measurement;
   let barColor = "skyblue";
@@ -258,14 +298,14 @@ export const calculateDerivedValues = (robot: Robot) => {
   return newRobot;
 };
 
-const measurementIdDelimiter = '-';
+const measurementIdDelimiter = "-";
 export const getMeasurementId = (escName: string, measurementName: string) => {
   return `${escName}${measurementIdDelimiter}${measurementName}`;
-}
+};
 export const parseMeasurementId = (id: string) => {
   const [escName, measurementName] = id.split(measurementIdDelimiter);
   return {
     escName,
-    measurementName
+    measurementName,
   };
-}
+};

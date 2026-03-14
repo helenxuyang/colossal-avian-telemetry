@@ -12,7 +12,8 @@ import { SMALL_VIEWPORT } from "./styles";
 import { ConsumptionDonut } from "./ConsumptionDonut";
 import { CSVDownloader } from "./CSVWriter";
 import { NavigationTabs, type Tab } from "./Tabs";
-import { GraphDisplay } from "./GraphDisplay";
+import { GraphGrid } from "./GraphGrid";
+import { RobotImporter } from "./RobotImporter";
 
 const Layout = styled.div`
   display: flex;
@@ -79,70 +80,93 @@ const BarsHolder = styled.div`
   flex-direction: column;
 `;
 
+const ControlsGrid = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+const ControlsSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 3px solid black;
+  padding: 16px;
+  flex: 1;
+`;
+
 type Props = {
   status?: React.ReactNode;
   robot: Robot;
+  setRobot: (robot: Robot) => void;
   controls?: React.ReactNode;
 };
 
-export const RobotDisplay = ({ status, robot, controls }: Props) => {
+export const RobotDisplay = ({ status, robot, setRobot, controls }: Props) => {
   const driveLeftEsc = robot.escs[DRIVE_LEFT_ESC];
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
 
-  const liveTabContent = <Layout>
-    <RobotSection>
-      <h1>Colossal Avian</h1>
-      <RobotLayout>
-        <BarsHolder>
-          <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
-          {Object.values(robot.derivedValues)
-            .filter((measurement) => measurement.shouldShow !== false)
-            .map((measurement) => {
-              return (
-                <HorizontalBarDisplay
-                  key={`${robot.name}-${measurement.name}`}
-                  barColor="skyblue"
-                  measurement={measurement}
-                />
-              );
-            })}
-        </BarsHolder>
-        <ConsumptionDonut robot={robot} />
-      </RobotLayout>
-    </RobotSection>
-    <ESCSection>
-      <ESCGrid>
-        <DriveLeftESCSection esc={driveLeftEsc} />
-        <WeaponESCSection esc={weaponEsc} />
-        <DriveRightESCSection esc={driveRightEsc} />
-      </ESCGrid>
-    </ESCSection>
-  </Layout>;
+  const liveTabContent = (
+    <Layout>
+      <RobotSection>
+        <h1>Colossal Avian</h1>
+        <RobotLayout>
+          <BarsHolder>
+            <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
+            {Object.values(robot.derivedValues)
+              .filter((measurement) => measurement.shouldShow !== false)
+              .map((measurement) => {
+                return (
+                  <HorizontalBarDisplay
+                    key={`${robot.name}-${measurement.name}`}
+                    barColor="skyblue"
+                    measurement={measurement}
+                  />
+                );
+              })}
+          </BarsHolder>
+          <ConsumptionDonut robot={robot} />
+        </RobotLayout>
+      </RobotSection>
+      <ESCSection>
+        <ESCGrid>
+          <DriveLeftESCSection esc={driveLeftEsc} />
+          <WeaponESCSection esc={weaponEsc} />
+          <DriveRightESCSection esc={driveRightEsc} />
+        </ESCGrid>
+      </ESCSection>
+    </Layout>
+  );
 
   const tabs: Tab[] = [
     {
       name: "Live",
-      panelContent: liveTabContent
+      panelContent: liveTabContent,
     },
     {
       name: "Graph",
-      panelContent: <GraphDisplay robot={robot} />
-    }
-  ]
+      panelContent: <GraphGrid robot={robot} />,
+    },
+  ];
   return (
-    <div>
+    <Layout>
       <NavigationTabs tabs={tabs} />
       {status}
 
-      {controls && (
-        <>
-          <h2>Data Controls</h2>
-          {controls}
+      <ControlsGrid>
+        {controls && (
+          <ControlsSection>
+            <h2>Data Controls</h2>
+            {controls}
+          </ControlsSection>
+        )}
+        <ControlsSection>
+          <h2>CSV Controls</h2>
+          <h3>Import</h3>
+          <RobotImporter setRobot={setRobot} />
+          <h3>Export</h3>
           <CSVDownloader />
-        </>
-      )}
-    </div>
-
+        </ControlsSection>
+      </ControlsGrid>
+    </Layout>
   );
 };

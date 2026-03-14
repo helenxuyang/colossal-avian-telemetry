@@ -15,7 +15,6 @@ import {
 } from "chart.js";
 import { ConnectedDataDisplay } from "./ConnectedDataDisplay";
 import { useState } from "react";
-import { FullscreenButton } from "./FullscreenButton";
 
 ChartJS.register(
   CategoryScale,
@@ -43,6 +42,7 @@ const ControlsHolder = styled.div`
   justify-content: center;
   gap: 8px;
 `;
+
 function App() {
   const [isUsingFakeData, setIsUsingFakeData] = useState(true);
   return (
@@ -55,7 +55,6 @@ function App() {
         <button onClick={() => setIsUsingFakeData((isFake) => !isFake)}>
           Use {isUsingFakeData ? "real" : "fake"} data
         </button>
-        <FullscreenButton />
       </ControlsHolder>
     </Container>
   );
