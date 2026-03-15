@@ -10,16 +10,23 @@ import { ESCDisplay } from "./ESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";
 import { SMALL_VIEWPORT } from "./styles";
 import { ConsumptionDonut } from "./ConsumptionDonut";
-import { CSVDownloader } from "./CSVWriter";
 import { NavigationTabs, type Tab } from "./Tabs";
 import { GraphGrid } from "./GraphGrid";
 import { RobotImporter } from "./RobotImporter";
+import { RecordingControls } from "./RecordingControls";
+import { MatchControls } from "./MatchControls";
 
 const Layout = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
+`;
+
+const HeaderHolder = styled.div`
+  display: flex;
+
+  justify-content: space-between;
 `;
 
 const ESCSection = styled.div`
@@ -82,8 +89,10 @@ const BarsHolder = styled.div`
 
 const ControlsGrid = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 `;
+
 const ControlsSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -94,13 +103,26 @@ const ControlsSection = styled.div`
 `;
 
 type Props = {
-  status?: React.ReactNode;
   robot: Robot;
   setRobot: (robot: Robot) => void;
-  controls?: React.ReactNode;
+  controls?: React.ReactNode[];
+  isRecording: boolean;
+  setIsRecording: (isRecording: boolean) => void;
+  onStartRecording: () => void;
+  onPauseRecording: () => void;
+  onClearRecording: () => void;
 };
 
-export const RobotDisplay = ({ status, robot, setRobot, controls }: Props) => {
+export const RobotDisplay = ({
+  robot,
+  setRobot,
+  controls,
+  isRecording,
+  setIsRecording,
+  onStartRecording,
+  onPauseRecording,
+  onClearRecording,
+}: Props) => {
   const driveLeftEsc = robot.escs[DRIVE_LEFT_ESC];
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
@@ -108,7 +130,6 @@ export const RobotDisplay = ({ status, robot, setRobot, controls }: Props) => {
   const liveTabContent = (
     <Layout>
       <RobotSection>
-        <h1>Colossal Avian</h1>
         <RobotLayout>
           <BarsHolder>
             <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
@@ -147,24 +168,37 @@ export const RobotDisplay = ({ status, robot, setRobot, controls }: Props) => {
       panelContent: <GraphGrid robot={robot} />,
     },
   ];
+
   return (
     <Layout>
+      <HeaderHolder>
+        <h1>Colossal Avian</h1>
+        <MatchControls
+          onStart={() => {
+            if (!isRecording) {
+              setIsRecording(true);
+            }
+          }}
+        />
+      </HeaderHolder>
       <NavigationTabs tabs={tabs} />
-      {status}
-
       <ControlsGrid>
-        {controls && (
-          <ControlsSection>
-            <h2>Data Controls</h2>
-            {controls}
-          </ControlsSection>
-        )}
+        {controls &&
+          controls.map((control) => (
+            <ControlsSection>{control}</ControlsSection>
+          ))}
         <ControlsSection>
-          <h2>CSV Controls</h2>
-          <h3>Import</h3>
+          <h2>Recording</h2>
+          <RecordingControls
+            isRecording={isRecording}
+            onStart={onStartRecording}
+            onPause={onPauseRecording}
+            onClear={onClearRecording}
+          />
+        </ControlsSection>
+        <ControlsSection>
+          <h2>Import CSV</h2>
           <RobotImporter setRobot={setRobot} />
-          <h3>Export</h3>
-          <CSVDownloader />
         </ControlsSection>
       </ControlsGrid>
     </Layout>

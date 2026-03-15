@@ -17,6 +17,7 @@ import {
   InputLabel,
 } from "@mui/material";
 import styled from "styled-components";
+import { StatusDot } from "./StatusDot";
 
 type Props = {
   robot: Robot;
@@ -108,6 +109,18 @@ const DropdownsHolder = styled.div`
   gap: 4px;
   @media (max-width: 500px) {
     flex-direction: column;
+  }
+`;
+
+const AutoscrollHolder = styled.div`
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: end;
+
+  font-size: 12px;
+  button {
+    padding: 4px 8px;
   }
 `;
 
@@ -265,22 +278,24 @@ export const GraphDisplay = ({ robot }: Props) => {
           onEvents={onEvents}
         />
       )}
-      <p>Auto-scroll: {isAutoScrolling ? "ON" : "OFF"}</p>
-      <button
-        onClick={() => {
-          if (isAutoScrolling) {
-            setLastZoomValues({
-              startValue: autoscrollStart ?? 0,
-              endValue: referenceTimestamps.at(-1) ?? 0,
-            });
-          } else {
-            setLastZoomValues({});
-          }
-          setIsAutoScrolling((scrolling) => !scrolling);
-        }}
-      >
-        {isAutoScrolling ? "Pause" : "Resume"}
-      </button>
+      <AutoscrollHolder>
+        <span>{isAutoScrolling && <StatusDot dot="🟢" />} Auto-scroll </span>
+        <button
+          onClick={() => {
+            if (isAutoScrolling) {
+              setLastZoomValues({
+                startValue: autoscrollStart ?? 0,
+                endValue: referenceTimestamps.at(-1) ?? 0,
+              });
+            } else {
+              setLastZoomValues({});
+            }
+            setIsAutoScrolling((scrolling) => !scrolling);
+          }}
+        >
+          {isAutoScrolling ? "⏸" : "▶"}
+        </button>
+      </AutoscrollHolder>
     </div>
   );
 };

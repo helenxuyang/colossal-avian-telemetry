@@ -5,18 +5,11 @@ import { getUpdatedRobot, parseData } from "./dataUtils";
 import { WebSocketConnector } from "./WebSocketConnector";
 import styled from "styled-components";
 import { BACKGROUND, Container } from "./styles";
-import { StatusDot } from "./StatusDot";
 
 const WebSocketInfoHolder = styled(Container)`
   display: flex;
   flex-direction: column;
   background-color: ${BACKGROUND};
-`;
-
-const ButtonsHolder = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 8px;
 `;
 
 export const ConnectedDataDisplay = () => {
@@ -45,36 +38,18 @@ export const ConnectedDataDisplay = () => {
     <RobotDisplay
       robot={robot}
       setRobot={setRobot}
-      status={
+      controls={[
         <WebSocketInfoHolder>
           <WebSocketConnector onReceiveData={handleReceiveDataCallback} />
-        </WebSocketInfoHolder>
-      }
-      controls={
-        <div>
-          <strong>Status: </strong>
-          {isRecording ? (
-            <span>
-              <StatusDot /> RECORDING
-            </span>
-          ) : (
-            <span>Paused</span>
-          )}
-
-          <ButtonsHolder>
-            <button
-              onClick={() => {
-                setIsRecording((recording) => !recording);
-              }}
-            >
-              {isRecording ? "Pause" : "Start"}
-            </button>
-            <button onClick={() => setRobot(getInitColossalAvian())}>
-              Clear data
-            </button>
-          </ButtonsHolder>
-        </div>
-      }
+        </WebSocketInfoHolder>,
+      ]}
+      isRecording={isRecording}
+      setIsRecording={setIsRecording}
+      onStartRecording={() => {
+        setIsRecording(true);
+      }}
+      onPauseRecording={() => setIsRecording(false)}
+      onClearRecording={() => setRobot(getInitColossalAvian())}
     />
   );
 };

@@ -22,7 +22,14 @@ export const Value = styled.p`
   min-width: 65px;
 `;
 
-export const pulseAnimation = css`
+export const ButtonsHolder = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+`;
+
+export const pulseAnimation = (speedSec: number = 2) => css`
   @keyframes pulse {
     0% {
       opacity: 100%;
@@ -34,5 +41,5 @@ export const pulseAnimation = css`
       opacity: 100%;
     }
   }
-  animation: pulse 2s infinite;
+  animation: pulse ${speedSec ?? 2}s infinite;
 `;

@@ -2,9 +2,12 @@ import styled from "styled-components";
 import { pulseAnimation } from "./styles";
 
 const StyledDot = styled.span`
-  ${pulseAnimation}
+  ${pulseAnimation()}
 `;
 
-export const StatusDot = () => {
-  return <StyledDot>🔴</StyledDot>;
+type Props = {
+  dot?: string;
+};
+export const StatusDot = ({ dot = "🔴" }: Props) => {
+  return <StyledDot>{dot}</StyledDot>;
 };

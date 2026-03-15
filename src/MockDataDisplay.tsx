@@ -1,28 +1,20 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   calculateDerivedValues,
   getInitColossalAvian,
   type Robot,
 } from "./data";
 import { RobotDisplay } from "./RobotDisplay";
-import styled from "styled-components";
 import {
   getMockEscMessageGenerator,
   getUpdatedRobot,
   parseData,
 } from "./dataUtils";
 import { CSVWriterSingleton } from "./CSVWriter";
-import { StatusDot } from "./StatusDot";
-
-const ButtonsHolder = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-`;
+import { DebugDisplay } from "./DebugDisplay";
 
 export const MockDataDisplay = () => {
   const intervalMs = 30;
-  const mockDataCallback = useRef<() => void | null>(null);
   const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
     null,
   );
@@ -30,7 +22,7 @@ export const MockDataDisplay = () => {
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
   const [startTime, setStartTime] = useState<number | null>(0);
 
-  const startData = () => {
+  const handleStart = () => {
     const now = Date.now();
     if (!startTime) {
       setStartTime(now);
@@ -55,74 +47,39 @@ export const MockDataDisplay = () => {
       }
     };
 
-    mockDataCallback.current = generateFakeData;
-    setMockDataIntervalId(setInterval(mockDataCallback.current, intervalMs));
+    setMockDataIntervalId(setInterval(generateFakeData, intervalMs));
   };
 
-  const stopData = () => {
+  const handlePause = () => {
     if (mockDataIntervalId) {
       clearInterval(mockDataIntervalId);
     }
     setMockDataIntervalId(null);
   };
 
-  const StartButton = <button onClick={startData}>Start</button>;
-  const StopButton = <button onClick={stopData}>Pause</button>;
+  const handleClear = () => {
+    setRobot(getInitColossalAvian());
+    setStartTime(null);
+  };
 
   const controls = (
     <div>
-      <div>
-        <strong>Status: </strong>
-        {mockDataIntervalId ? (
-          <span>
-            <StatusDot /> Recording
-          </span>
-        ) : (
-          <span>Paused</span>
-        )}
-      </div>
-
-      <ButtonsHolder>
-        {mockDataIntervalId ? StopButton : StartButton}
-        <button
-          onClick={() => {
-            setRobot(getInitColossalAvian());
-            setStartTime(null);
-          }}
-        >
-          Clear fake data
-        </button>
-      </ButtonsHolder>
-      <details>
-        <summary>Debug</summary>
-        <div>
-          {Object.values(robot.escs).map((esc) => {
-            const numValuesToShow = 5;
-            return (
-              <div key={esc.name}>
-                <strong>{esc.name}</strong>
-                <p>
-                  {" "}
-                  Timestamps: [
-                  {esc.timestamps.slice(-numValuesToShow).join(",")}]
-                </p>
-                {Object.values(esc.measurements).map((measurement) => {
-                  return (
-                    <div key={`${esc.name}-${measurement.name}`}>
-                      <p>
-                        {measurement.name}: [
-                        {measurement.values.slice(-numValuesToShow).join(",")}]
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </details>
+      <h2>Data</h2>
+      <p>⚠ USING FAKE DATA ⚠</p>
+      <DebugDisplay robot={robot} />
     </div>
   );
 
-  return <RobotDisplay robot={robot} setRobot={setRobot} controls={controls} />;
+  return (
+    <RobotDisplay
+      robot={robot}
+      setRobot={setRobot}
+      controls={[controls]}
+      isRecording={mockDataIntervalId !== null}
+      setIsRecording={handleStart}
+      onStartRecording={handleStart}
+      onPauseRecording={handlePause}
+      onClearRecording={handleClear}
+    />
+  );
 };
