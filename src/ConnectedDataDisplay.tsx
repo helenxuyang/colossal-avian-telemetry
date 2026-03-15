@@ -5,6 +5,7 @@ import { getUpdatedRobot, parseData } from "./dataUtils";
 import { WebSocketConnector } from "./WebSocketConnector";
 import styled from "styled-components";
 import { BACKGROUND, Container } from "./styles";
+import { StatusDot } from "./StatusDot";
 
 const WebSocketInfoHolder = styled(Container)`
   display: flex;
@@ -52,7 +53,13 @@ export const ConnectedDataDisplay = () => {
       controls={
         <div>
           <strong>Status: </strong>
-          {isRecording ? <span>🔴 RECORDING</span> : <span>Paused</span>}
+          {isRecording ? (
+            <span>
+              <StatusDot /> RECORDING
+            </span>
+          ) : (
+            <span>Paused</span>
+          )}
 
           <ButtonsHolder>
             <button
@@ -60,10 +67,10 @@ export const ConnectedDataDisplay = () => {
                 setIsRecording((recording) => !recording);
               }}
             >
-              {isRecording ? "Pause" : "Start"} recording
+              {isRecording ? "Pause" : "Start"}
             </button>
             <button onClick={() => setRobot(getInitColossalAvian())}>
-              Clear recording
+              Clear data
             </button>
           </ButtonsHolder>
         </div>

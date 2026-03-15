@@ -22,9 +22,11 @@ const GridHolder = styled.div`
   gap: 4px;
 `;
 
-const GraphHolder = styled.div`
-  flex: 1;
-  min-width: 600px;
+const GraphHolder = styled.div<{ $isFullWidth: boolean }>`
+  box-sizing: border-box;
+  flex-basis: ${({ $isFullWidth }) =>
+    $isFullWidth ? "100%" : "calc(50% - 2px)"}; // to account for gap
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border: 2px solid #cccccc;
@@ -32,11 +34,11 @@ const GraphHolder = styled.div`
   gap: 8px;
 
   @media (max-width: 700px) {
-    min-width: 300px;
+    flex-basis: 100%;
   }
 `;
 
-const DeleteButton = styled.button`
+const RoundButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -46,30 +48,117 @@ const DeleteButton = styled.button`
   height: 24px;
   padding: 16px;
   border-radius: 50%;
-  background-color: #cccccc;
 
+  background-color: #cccccc;
   &:hover {
     background-color: #bbbbbb;
   }
 `;
 
+const PlotWidthButton = styled(RoundButton)`
+  @media (max-width: 700px) {
+    display: none;
+  }
+`;
+
+const ButtonsHolder = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ControlsButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+type PlotConfig = {
+  id: UUID;
+  isFullWidth: boolean;
+};
 export const GraphGrid = ({ robot }: Props) => {
-  const [plotIds, setPlotIds] = useState<UUID[]>([crypto.randomUUID()]);
+  const [plotConfigs, setPlotConfigs] = useState<PlotConfig[]>([
+    { id: crypto.randomUUID(), isFullWidth: true },
+  ]);
 
   const deletePlot = (index: number) =>
-    setPlotIds(plotIds.filter((_, i) => i !== index));
+    setPlotConfigs(plotConfigs.filter((_, i) => i !== index));
 
-  const addPlot = () => setPlotIds([...plotIds, crypto.randomUUID()]);
+  const addPlot = () =>
+    setPlotConfigs([
+      ...plotConfigs,
+      {
+        id: crypto.randomUUID(),
+        isFullWidth: false,
+      },
+    ]);
+
+  const togglePlotWidth = (index: number) => {
+    const updatedPlots = [...plotConfigs];
+    updatedPlots[index].isFullWidth = !updatedPlots[index].isFullWidth;
+    setPlotConfigs(updatedPlots);
+  };
+
+  const movePlotLeft = (index: number) => {
+    const updatedPlots = [...plotConfigs];
+    [updatedPlots[index], updatedPlots[index - 1]] = [
+      updatedPlots[index - 1],
+      updatedPlots[index],
+    ];
+    setPlotConfigs(updatedPlots);
+  };
+
+  const movePlotRight = (index: number) => {
+    const updatedPlots = [...plotConfigs];
+    [updatedPlots[index], updatedPlots[index + 1]] = [
+      updatedPlots[index + 1],
+      updatedPlots[index],
+    ];
+    setPlotConfigs(updatedPlots);
+  };
 
   return (
     <Holder>
       <GridHolder>
-        {plotIds.map((id, index) => (
-          <GraphHolder key={id}>
-            <DeleteButton onClick={() => deletePlot(index)}>X</DeleteButton>
-            <GraphDisplay key={id} robot={robot} />
-          </GraphHolder>
-        ))}
+        {plotConfigs.map((plot, index) => {
+          const { id, isFullWidth } = plot;
+          return (
+            <GraphHolder key={id} $isFullWidth={isFullWidth}>
+              <ButtonsHolder>
+                <RoundButton title="Delete" onClick={() => deletePlot(index)}>
+                  ✖
+                </RoundButton>
+                <ControlsButtons>
+                  {index > 0 && (
+                    <RoundButton
+                      title="Move left"
+                      onClick={() => movePlotLeft(index)}
+                    >
+                      ←
+                    </RoundButton>
+                  )}
+                  <PlotWidthButton
+                    title={isFullWidth ? "Shrink" : "Expand"}
+                    onClick={() => {
+                      togglePlotWidth(index);
+                    }}
+                  >
+                    {isFullWidth ? "↦↤" : "⇤⇥"}
+                  </PlotWidthButton>
+
+                  {index < plotConfigs.length - 1 && (
+                    <RoundButton
+                      title="Move right"
+                      onClick={() => movePlotRight(index)}
+                    >
+                      →
+                    </RoundButton>
+                  )}
+                </ControlsButtons>
+              </ButtonsHolder>
+              <GraphDisplay key={id} robot={robot} />
+            </GraphHolder>
+          );
+        })}
       </GridHolder>
       <button onClick={addPlot}>+ New</button>
     </Holder>

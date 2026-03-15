@@ -40,23 +40,23 @@ const escToIdMap: Record<string, EscId> = Object.entries(idToEscMap).reduce(
 );
 
 export type EscData = {
-  dataType: 'data',
+  dataType: "data";
   [TEMPERATURE]: number;
   [VOLTAGE]: number;
   [CURRENT]: number;
   [CONSUMPTION]: number;
   [RPM]: number;
-}
+};
 
 export type EscInputData = {
-  dataType: 'input',
+  dataType: "input";
   [INPUT]: number;
-}
+};
 
 export type ParsedData = {
   escName: string;
   timestamp: number;
-  escData: EscData | EscInputData
+  escData: EscData | EscInputData;
 };
 
 export const parseData = (data: string) => {
@@ -117,7 +117,7 @@ export const parseData = (data: string) => {
       escName,
       timestamp,
       escData: {
-        dataType: 'data',
+        dataType: "data",
         [TEMPERATURE]: values[0],
         [VOLTAGE]: Number((mergeBytes(values[1], values[2]) / 100).toFixed(2)),
         [CURRENT]: Number((mergeBytes(values[3], values[4]) / 100).toFixed(2)),
@@ -129,12 +129,11 @@ export const parseData = (data: string) => {
   } else if (escInputIds.includes(escId)) {
     const value = values[0];
     const timestamp = values[1];
-
     const parsedData: ParsedData = {
       escName,
       timestamp,
       escData: {
-        dataType: 'input',
+        dataType: "input",
         [INPUT]: Math.round(0.2 * value - 300), // scale from [1000, 2000] -> [-100, 100]
       },
     };
@@ -149,18 +148,16 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
 
   const { dataType, ...dataValues } = escData;
 
-  if (dataType === 'data') {
+  if (dataType === "data") {
     Object.entries(dataValues).forEach(([measurementKey, measurementValue]) => {
       newRobot.escs[escName].measurements[measurementKey].values.push(
         measurementValue,
       );
     });
-    newRobot.escs[escName].timestamps?.push(
-      timestamp,
-    );
-  }
-  else if (dataType === 'input') {
+    newRobot.escs[escName].timestamps?.push(timestamp);
+  } else if (dataType === "input") {
     newRobot.escs[escName].measurements[INPUT].timestamps?.push(timestamp);
+    newRobot.escs[escName].measurements[INPUT].values.push(escData[INPUT]);
   }
 
   newRobot = calculateDerivedValues(newRobot);
@@ -177,29 +174,28 @@ export const generateMockValue = (esc: ESC, measurementName: string) => {
   const sign = Math.random() > 0.5 ? 1 : -1;
 
   const randomValue = Math.round(
-    Math.min(max, Math.max(min, previousValue + (1 * sign))),
+    Math.min(max, Math.max(min, previousValue + 1 * sign)),
   );
   return randomValue;
-}
+};
 
 export const generateMockValueTwoByteHex = (num: number) => {
   const highByte = ((num & Number("0xFF00")) >> 8).toString(16);
-  const lowByte = ((num & Number("0x00FF"))).toString(16);
+  const lowByte = (num & Number("0x00FF")).toString(16);
   const combined = `${highByte} ${lowByte}`;
   return combined;
-}
-
+};
 
 export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
-  const escIds = ['a', 'b', 'c', 'w', 'x', 'y'];
+  const escIds = ["a", "b", "c", "w", "x", "y"];
   let escIndex = 0;
 
   const generateMockESCMessage = () => {
     const escId = escIds[escIndex] as EscId;
     const escName = idToEscMap[escId];
     const esc = robot.escs[escName];
-    // start marker and ID
-    const messageComponents = [`<${escId}`];
+    const messageComponents = [];
+    const timestamp = Date.now() - startTime;
 
     if (escDataIds.includes(escId)) {
       // component 0: temp
@@ -222,30 +218,30 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
       messageComponents.push(mockConsumptionHex);
 
       // component 7-8: RPM
-      const mockRPM = generateMockValue(esc, RPM) / 100 * (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
+      const mockRPM =
+        (generateMockValue(esc, RPM) / 100) *
+        (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
       const mockRPMHex = generateMockValueTwoByteHex(mockRPM);
       messageComponents.push(mockRPMHex);
 
       // component 9: checksum (ignore for now)
-      messageComponents.push('00');
+      messageComponents.push("00");
 
       // component 10: timestamp
-      messageComponents.push((Date.now() - startTime).toString());
-    }
-    else if (escInputIds.includes(escId)) {
-      const messageComponents = [`<${escId}`];
-      messageComponents.push((Date.now() - startTime).toString());
+      messageComponents.push(timestamp.toString(16));
+    } else if (escInputIds.includes(escId)) {
+      // component 1: input
       const mockInput = (generateMockValue(esc, INPUT) + 300) * 5;
       messageComponents.push(mockInput.toString(16));
+      // component 2: timestamp
+      messageComponents.push(timestamp.toString(16));
     }
 
+    const message = `<${escId} ${messageComponents.join(" ")}>`;
     // end marker
-    messageComponents.push('>');
-
-    const message = messageComponents.join(' ');
     escIndex = escIndex >= escIds.length - 1 ? 0 : escIndex + 1;
     return message;
-  }
+  };
 
   return generateMockESCMessage;
-}
+};

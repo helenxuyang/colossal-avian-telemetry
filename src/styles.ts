@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 export const MEDIUM_VIEWPORT = 800;
 export const SMALL_VIEWPORT = 600;
@@ -20,4 +20,19 @@ export const Value = styled.p`
   }
   white-space: nowrap;
   min-width: 65px;
+`;
+
+export const pulseAnimation = css`
+  @keyframes pulse {
+    0% {
+      opacity: 100%;
+    }
+    50% {
+      opacity: 50%;
+    }
+    100% {
+      opacity: 100%;
+    }
+  }
+  animation: pulse 2s infinite;
 `;

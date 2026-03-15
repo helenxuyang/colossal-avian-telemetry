@@ -12,6 +12,7 @@ import {
   parseData,
 } from "./dataUtils";
 import { CSVWriterSingleton } from "./CSVWriter";
+import { StatusDot } from "./StatusDot";
 
 const ButtonsHolder = styled.div`
   display: flex;
@@ -65,11 +66,22 @@ export const MockDataDisplay = () => {
     setMockDataIntervalId(null);
   };
 
-  const StartButton = <button onClick={startData}>Start fake data</button>;
-  const StopButton = <button onClick={stopData}>Stop fake data</button>;
+  const StartButton = <button onClick={startData}>Start</button>;
+  const StopButton = <button onClick={stopData}>Pause</button>;
 
   const controls = (
     <div>
+      <div>
+        <strong>Status: </strong>
+        {mockDataIntervalId ? (
+          <span>
+            <StatusDot /> Recording
+          </span>
+        ) : (
+          <span>Paused</span>
+        )}
+      </div>
+
       <ButtonsHolder>
         {mockDataIntervalId ? StopButton : StartButton}
         <button

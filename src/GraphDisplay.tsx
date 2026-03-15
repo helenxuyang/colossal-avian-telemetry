@@ -48,6 +48,24 @@ const getSeries = (robot: Robot, escName: string, measurementName: string) => {
   return series;
 };
 
+const getXAxis = (robot: Robot, escName: string, measurementName: string) => {
+  const esc = robot.escs[escName];
+  const measurement = esc.measurements[measurementName];
+  const timestamps = measurement.timestamps ?? esc.timestamps;
+  const axis = {
+    name: "seconds",
+    nameLocation: "middle",
+    max: timestamps.at(-1),
+    axisLabel: {
+      formatter: (value: string) => {
+        const sec = Number(value) / 1000;
+        return sec.toFixed(sec % 1 === 0 ? 0 : 2);
+      },
+    },
+  };
+  return axis;
+};
+
 const getYAxis = (robot: Robot, escName: string, measurementName: string) => {
   const esc = robot.escs[escName];
   const measurement = esc.measurements[measurementName];
@@ -67,12 +85,19 @@ const parsePlotData = (robot: Robot, ids: string[]) => {
       return {
         ...getSeries(robot, escName, measurementName),
         yAxisIndex: index,
+        xAxisIndex: index,
+      };
+    }),
+    xAxis: measurements.map(({ escName, measurementName }, index) => {
+      return {
+        ...getXAxis(robot, escName, measurementName),
+        show: index === 0,
       };
     }),
     yAxis: measurements.map(({ escName, measurementName }, index) => {
       return {
         ...getYAxis(robot, escName, measurementName),
-        offset: index > 1 ? index * 70 : 0,
+        offset: index > 1 ? index * 50 : 0,
       };
     }),
   };
@@ -81,10 +106,25 @@ const parsePlotData = (robot: Robot, ids: string[]) => {
 const DropdownsHolder = styled.div`
   display: flex;
   gap: 4px;
-  @media (max-width: 450px) {
+  @media (max-width: 500px) {
     flex-direction: column;
   }
 `;
+
+const getAutoscrollStart = (timestamps: number[]) => {
+  const rangeMilliseconds = 5000;
+  if (timestamps.length === 0) {
+    return null;
+  }
+  const lastTimestamp = timestamps[timestamps.length - 1];
+  let startTimestamp = lastTimestamp;
+  let i = timestamps.length - 1;
+  while (i >= 0 && lastTimestamp - startTimestamp < rangeMilliseconds) {
+    startTimestamp = timestamps[i];
+    i--;
+  }
+  return startTimestamp;
+};
 
 export const GraphDisplay = ({ robot }: Props) => {
   const graphRef = useRef<ReactECharts>(null);
@@ -97,47 +137,59 @@ export const GraphDisplay = ({ robot }: Props) => {
     endValue?: number;
   }>({});
 
-  const onZoom = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (params: any) => {
-      console.log("zoom", params);
-      if (isAutoScrolling) {
-        setIsAutoScrolling(false);
-      }
-      setLastZoomValues({
-        // @ts-expect-error echarts is bad at types
-        startValue: graphRef.current?.getEchartsInstance().getOption()
-          .dataZoom[0].startValue,
-        // @ts-expect-error echarts is bad at types
-        endValue: graphRef.current?.getEchartsInstance().getOption().dataZoom[0]
-          .endValue,
-      });
-    },
-    [isAutoScrolling],
-  );
+  const onZoom = useCallback(() => {
+    if (isAutoScrolling) {
+      setIsAutoScrolling(false);
+    }
+    setLastZoomValues({
+      // @ts-expect-error echarts is bad at types
+      startValue: graphRef.current?.getEchartsInstance().getOption().dataZoom[0]
+        .startValue,
+      // @ts-expect-error echarts is bad at types
+      endValue: graphRef.current?.getEchartsInstance().getOption().dataZoom[0]
+        .endValue,
+    });
+  }, [isAutoScrolling]);
 
   const onEvents = useMemo(() => ({ datazoom: onZoom }), [onZoom]);
 
   const referenceTimestamps = robot.escs[WEAPON_ESC].timestamps;
-  const lastN = 100; // change to last 3 sec
+  const autoscrollStart = getAutoscrollStart(referenceTimestamps);
 
   const plotDataOptions = parsePlotData(robot, plotData);
 
-  console.log("LAST", referenceTimestamps.at(-1));
   const option = {
-    xAxis: {
-      max: referenceTimestamps.at(-1),
-    },
+    xAxis: plotDataOptions.xAxis,
     yAxis: plotDataOptions.yAxis,
     series: plotDataOptions.series,
-    legend: {},
+    legend: {
+      bottom: 50,
+    },
+    tooltip: {
+      show: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      formatter: (params: any) => {
+        const seriesInfo = params.seriesName.split(" ");
+        const unit = robot.escs[seriesInfo[0]].measurements[seriesInfo[1]].unit;
+        return String(
+          `${params.value[1]} ${unit}(${params.value[0] / 1000} sec)`,
+        );
+      },
+      textStyle: {
+        fontSize: 10,
+      },
+      backgroundColor: "white",
+      padding: 2,
+      borderWidth: 0,
+    },
+    grid: { bottom: 110, left: 100 },
     dataZoom: [
       {
         type: "slider",
         show: true,
         xAxisIndex: [0],
         startValue: isAutoScrolling
-          ? referenceTimestamps.at(-(lastN + 1))
+          ? autoscrollStart
           : lastZoomValues.startValue,
         endValue: isAutoScrolling ? undefined : lastZoomValues.endValue,
         filterMode: "none",
@@ -195,7 +247,7 @@ export const GraphDisplay = ({ robot }: Props) => {
         {Object.keys(robot.escs).map((escName) => {
           const esc = robot.escs[escName];
           return (
-            <StyledSelectHolder>
+            <StyledSelectHolder key={escName}>
               <InputLabel>{escName}</InputLabel>
               <Select
                 multiple
@@ -217,21 +269,6 @@ export const GraphDisplay = ({ robot }: Props) => {
           );
         })}
       </DropdownsHolder>
-      <button
-        onClick={() => {
-          if (isAutoScrolling) {
-            setLastZoomValues({
-              startValue: referenceTimestamps.at(-(lastN + 1)) ?? 0,
-              endValue: referenceTimestamps.at(-1) ?? 0,
-            });
-          } else {
-            setLastZoomValues({});
-          }
-          setIsAutoScrolling((scrolling) => !scrolling);
-        }}
-      >
-        {isAutoScrolling ? "Stop" : "Start"} auto-scrolling
-      </button>
       {plotData.length > 0 && (
         <ReactECharts
           ref={graphRef}
@@ -240,6 +277,22 @@ export const GraphDisplay = ({ robot }: Props) => {
           onEvents={onEvents}
         />
       )}
+      <p>Auto-scroll: {isAutoScrolling ? "ON" : "OFF"}</p>
+      <button
+        onClick={() => {
+          if (isAutoScrolling) {
+            setLastZoomValues({
+              startValue: autoscrollStart ?? 0,
+              endValue: referenceTimestamps.at(-1) ?? 0,
+            });
+          } else {
+            setLastZoomValues({});
+          }
+          setIsAutoScrolling((scrolling) => !scrolling);
+        }}
+      >
+        {isAutoScrolling ? "Pause" : "Resume"}
+      </button>
     </div>
   );
 };
