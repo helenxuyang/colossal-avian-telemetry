@@ -111,21 +111,6 @@ const DropdownsHolder = styled.div`
   }
 `;
 
-const getAutoscrollStart = (timestamps: number[]) => {
-  const rangeMilliseconds = 5000;
-  if (timestamps.length === 0) {
-    return null;
-  }
-  const lastTimestamp = timestamps[timestamps.length - 1];
-  let startTimestamp = lastTimestamp;
-  let i = timestamps.length - 1;
-  while (i >= 0 && lastTimestamp - startTimestamp < rangeMilliseconds) {
-    startTimestamp = timestamps[i];
-    i--;
-  }
-  return startTimestamp;
-};
-
 export const GraphDisplay = ({ robot }: Props) => {
   const graphRef = useRef<ReactECharts>(null);
   const [plotData, setPlotData] = useState<string[]>([
@@ -154,7 +139,10 @@ export const GraphDisplay = ({ robot }: Props) => {
   const onEvents = useMemo(() => ({ datazoom: onZoom }), [onZoom]);
 
   const referenceTimestamps = robot.escs[WEAPON_ESC].timestamps;
-  const autoscrollStart = getAutoscrollStart(referenceTimestamps);
+  const autoscrollStart =
+    referenceTimestamps.length > 0
+      ? referenceTimestamps[referenceTimestamps.length - 1] - 5000
+      : 0;
 
   const plotDataOptions = parsePlotData(robot, plotData);
 
@@ -187,7 +175,7 @@ export const GraphDisplay = ({ robot }: Props) => {
       {
         type: "slider",
         show: true,
-        xAxisIndex: [0],
+        xAxisIndex: [...Array(plotData.length).keys()],
         startValue: isAutoScrolling
           ? autoscrollStart
           : lastZoomValues.startValue,
