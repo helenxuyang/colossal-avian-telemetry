@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { CSVDownloader } from "./CSVWriter";
 import { StatusDot } from "./StatusDot";
 import { ButtonsHolder } from "./styles";
 
@@ -42,7 +41,6 @@ export const RecordingControls = ({
           <button onClick={onStart}>▶ Start</button>
         )}
         <button onClick={onClear}>🗑️ Clear </button>
-        <CSVDownloader />
       </ButtonsHolder>
     </Layout>
   );

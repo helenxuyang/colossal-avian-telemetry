@@ -15,6 +15,7 @@ import { GraphGrid } from "./GraphGrid";
 import { RobotImporter } from "./RobotImporter";
 import { RecordingControls } from "./RecordingControls";
 import { MatchControls } from "./MatchControls";
+import { CSVDownloader } from "./CSVWriter";
 
 const Layout = styled.div`
   display: flex;
@@ -96,6 +97,7 @@ const ControlsGrid = styled.div`
 const ControlsSection = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
   border: 3px solid black;
   padding: 16px;
@@ -174,6 +176,7 @@ export const RobotDisplay = ({
       <HeaderHolder>
         <h1>Colossal Avian</h1>
         <MatchControls
+          robot={robot}
           onStart={() => {
             if (!isRecording) {
               setIsRecording(true);
@@ -199,6 +202,8 @@ export const RobotDisplay = ({
         <ControlsSection>
           <h2>Import CSV</h2>
           <RobotImporter setRobot={setRobot} />
+          <h2>Export CSV</h2>
+          <CSVDownloader robot={robot} />
         </ControlsSection>
       </ControlsGrid>
     </Layout>

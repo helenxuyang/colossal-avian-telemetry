@@ -10,7 +10,6 @@ import {
   getUpdatedRobot,
   parseData,
 } from "./dataUtils";
-import { CSVWriterSingleton } from "./CSVWriter";
 import { DebugDisplay } from "./DebugDisplay";
 
 export const MockDataDisplay = () => {
@@ -42,7 +41,6 @@ export const MockDataDisplay = () => {
             newRobot = calculateDerivedValues(newRobot);
             return newRobot;
           });
-          CSVWriterSingleton.getInstance().addData(parsedData);
         }
       }
     };

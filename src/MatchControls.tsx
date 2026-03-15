@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ButtonsHolder } from "./styles";
 import styled from "styled-components";
+import type { Robot } from "./data";
 
 type FightStatus = "INACTIVE" | "FIGHTING" | "PAUSED";
 
@@ -13,9 +14,10 @@ const MatchControlsSection = styled.div`
 const MATCH_LENGTH = 180;
 
 type Props = {
+  robot: Robot;
   onStart: () => void;
 };
-export const MatchControls = ({ onStart }: Props) => {
+export const MatchControls = ({ robot, onStart }: Props) => {
   const [fightStatus, setFightStatus] = useState<FightStatus>("INACTIVE");
   const [matchTimeSec, setMatchTimeSec] = useState<number>(MATCH_LENGTH);
   const timerRef = useRef<number>(null);
@@ -35,24 +37,43 @@ export const MatchControls = ({ onStart }: Props) => {
       clearInterval(timerRef.current);
     }
   };
-  const handleStart = () => {
+
+  const getCurrentTimestamp = () => {
+    return Date.now() - (robot.initialTimestamp ?? 0);
+  };
+
+  const handleStart = (isResume: boolean = false) => {
+    console.log("handle start");
+    robot.matchMarkers.push({
+      type: isResume ? "RESUME" : "START",
+      timestamp: getCurrentTimestamp(),
+    });
     setFightStatus("FIGHTING");
     setTimer();
     onStart();
   };
 
   const handlePause = () => {
+    robot.matchMarkers.push({
+      type: "PAUSE",
+      timestamp: getCurrentTimestamp(),
+    });
     setFightStatus("PAUSED");
     clearTimer();
   };
 
   const handleEnd = () => {
+    robot.matchMarkers.push({
+      type: "END",
+      timestamp: getCurrentTimestamp(),
+    });
     setFightStatus("INACTIVE");
     clearTimer();
     setMatchTimeSec(MATCH_LENGTH);
   };
 
-  const startButton = <button onClick={handleStart}>▶</button>;
+  const startButton = <button onClick={() => handleStart()}>▶</button>;
+  const resumeButton = <button onClick={() => handleStart(true)}>▶</button>;
   const pauseButton = <button onClick={handlePause}>⏸</button>;
   const endButton = <button onClick={handleEnd}>⏹</button>;
 
@@ -70,7 +91,7 @@ export const MatchControls = ({ onStart }: Props) => {
       case "PAUSED":
         return (
           <ButtonsHolder>
-            {startButton}
+            {resumeButton}
             {endButton}
           </ButtonsHolder>
         );

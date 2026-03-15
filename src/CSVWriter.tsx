@@ -1,6 +1,5 @@
 import { CSVLink } from "react-csv";
-import type { ParsedData } from "./dataUtils";
-import { ALL_ESCS } from "./data";
+import { INPUT, type Robot } from "./data";
 import { useState } from "react";
 import styled from "styled-components";
 
@@ -15,90 +14,75 @@ const StyledCSVLink = styled(CSVLink)`
   width: fit-content;
 `;
 
-export class CSVWriterSingleton {
-  rawData: ParsedData[];
-  firstTimestamp: number = 0;
+const getCsvData = (robot: Robot): CSVRow[] => {
+  const rows: CSVRow[] = [];
+  Object.keys(robot.escs).forEach((escName) => {
+    const esc = robot.escs[escName];
+    const dataMeasurementsNames = [
+      ...Object.keys(esc.measurements).filter((name) => name !== INPUT),
+    ];
+    const dataHeaderRow = [
+      "type",
+      "escName",
+      "timestamp",
+      ...dataMeasurementsNames,
+    ];
+    rows.push(dataHeaderRow);
 
-  private static instance: CSVWriterSingleton;
-
-  private constructor() {
-    this.rawData = [];
-  }
-
-  public static getInstance(): CSVWriterSingleton {
-    if (!CSVWriterSingleton.instance) {
-      CSVWriterSingleton.instance = new CSVWriterSingleton();
-    }
-    return CSVWriterSingleton.instance;
-  }
-
-  public addData(data: ParsedData) {
-    if (this.rawData.length === 0) {
-      this.firstTimestamp = Date.now();
-    }
-    this.rawData.push(data);
-  }
-
-  public getRawData() {
-    return this.rawData;
-  }
-
-  public getFormattedData(): CSVRow[] {
-    const dataRows = this.rawData
-      .filter((rawData) => rawData.escData.dataType === "data")
-      .map(({ escName, timestamp, escData }) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { dataType, ...values } = escData;
-        return { escName, timestamp, ...values };
-      });
-    const dataHeaders = Object.keys(dataRows.length ? dataRows[0] : []);
-
-    const inputDataRows = this.rawData
-      .filter((rawData) => rawData.escData.dataType === "input")
-      .map(({ escName, timestamp, escData }) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { dataType, ...values } = escData;
-        return { escName, timestamp, ...values };
-      });
-
-    const inputHeaders = Object.keys(
-      inputDataRows.length ? inputDataRows[0] : [],
-    );
-
-    const formattedData: CSVRow[] = [];
-
-    ALL_ESCS.forEach((esc) => {
-      formattedData.push(dataHeaders);
-      dataRows
-        .filter((data) => data.escName === esc)
-        .forEach((data) => {
-          formattedData.push(Object.values(data));
-        });
-      formattedData.push(inputHeaders);
-      inputDataRows
-        .filter((data) => data.escName === esc)
-        .forEach((data) => {
-          formattedData.push(Object.values(data));
-        });
+    const dataRows = esc.timestamps.map((timestamp, index) => {
+      return [
+        "data",
+        escName,
+        timestamp,
+        ...dataMeasurementsNames.map(
+          (name) => esc.measurements[name].values[index],
+        ),
+      ];
     });
+    dataRows.forEach((row) => rows.push(row));
 
-    return formattedData;
-  }
+    const inputHeaderRow = ["type", "escName", "timestamp", INPUT];
+    rows.push(inputHeaderRow);
+    const inputRows =
+      esc.measurements[INPUT].timestamps?.map((timestamp, index) => {
+        return [
+          "input",
+          escName,
+          timestamp,
+          esc.measurements[INPUT].values[index],
+        ];
+      }) ?? [];
+    inputRows.forEach((row) => rows.push(row));
 
-  public getFormattedFirstTimestamp(): string {
-    const date = new Date(this.firstTimestamp);
-    return date.toISOString();
-  }
-}
+    const matchMarkerHeaderRow = ["type", "event", "timestamp"];
+    rows.push(matchMarkerHeaderRow);
 
-export const CSVDownloader = () => {
+    const matchMarkerRows = robot.matchMarkers.map(({ type, timestamp }) => {
+      return ["matchMarker", type, timestamp];
+    });
+    matchMarkerRows.forEach((row) => rows.push(row));
+  });
+  return rows;
+};
+
+const getFormattedFirstTimestamp = (robot: Robot): string => {
+  const date = robot.initialTimestamp
+    ? new Date(robot.initialTimestamp)
+    : new Date();
+  return date.toISOString();
+};
+
+type Props = {
+  robot: Robot;
+};
+
+export const CSVDownloader = ({ robot }: Props) => {
   const [fileName, setFileName] = useState<string>("");
-  const [formattedData, setFormattedData] = useState<CSVRow[]>([]);
+  const [csvData, setCsvData] = useState<CSVRow[]>([]);
 
   const prepareDownload = () => {
-    const csvWriter = CSVWriterSingleton.getInstance();
-    setFormattedData(csvWriter.getFormattedData());
-    setFileName(`colossal-avian-${csvWriter.getFormattedFirstTimestamp()}.csv`);
+    setCsvData(getCsvData(robot));
+    setFileName(`colossal-avian-${getFormattedFirstTimestamp(robot)}.csv`);
   };
 
   return (
@@ -106,7 +90,7 @@ export const CSVDownloader = () => {
       onClick={() => {
         prepareDownload();
       }}
-      data={formattedData}
+      data={csvData}
       filename={fileName}
     >
       Download CSV

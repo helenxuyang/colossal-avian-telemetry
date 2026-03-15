@@ -162,7 +162,26 @@ export const GraphDisplay = ({ robot }: Props) => {
   const option = {
     xAxis: plotDataOptions.xAxis,
     yAxis: plotDataOptions.yAxis,
-    series: plotDataOptions.series,
+    series: [
+      ...plotDataOptions.series,
+      ...robot.matchMarkers.map((marker) => {
+        return {
+          type: "line",
+          name: marker.type,
+          markLine: {
+            silent: true,
+            symbolSize: 5,
+            data: [{ xAxis: marker.timestamp }],
+            label: {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter: (params: any) => {
+                return params.seriesName;
+              },
+            },
+          },
+        };
+      }),
+    ],
     legend: {
       bottom: 50,
     },
@@ -170,6 +189,9 @@ export const GraphDisplay = ({ robot }: Props) => {
       show: true,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatter: (params: any) => {
+        if (params.componentType === "markLine") {
+          return;
+        }
         const seriesInfo = params.seriesName.split(" ");
         const unit = robot.escs[seriesInfo[0]].measurements[seriesInfo[1]].unit;
         return String(

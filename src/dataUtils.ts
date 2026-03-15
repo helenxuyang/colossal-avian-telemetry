@@ -146,6 +146,10 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
   const { escName, timestamp, escData } = data;
   let newRobot = { ...robot };
 
+  if (newRobot.initialTimestamp === null) {
+    newRobot.initialTimestamp = Date.now() - timestamp;
+  }
+
   const { dataType, ...dataValues } = escData;
 
   if (dataType === "data") {

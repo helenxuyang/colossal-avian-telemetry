@@ -110,11 +110,18 @@ export const getInitEscMeasurements = ({
   };
 };
 
+export type MatchMarker = {
+  type: "START" | "PAUSE" | "RESUME" | "END";
+  timestamp: number;
+};
+
 export type Robot = {
   name: string;
   escs: Record<string, ESC>;
   derivedValues: Record<string, Measurement>;
   batteryVoltage: BatteryVoltageMeasurement;
+  initialTimestamp: number | null;
+  matchMarkers: MatchMarker[];
 };
 
 export const DRIVE_LEFT_ESC = "DriveLeft";
@@ -125,7 +132,7 @@ export const WEAPON_ESC = "Weapon";
 // no arm yet
 export const ALL_ESCS = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC];
 
-export const getInitColossalAvian = () => {
+export const getInitColossalAvian = (): Robot => {
   const escs = ALL_ESCS.reduce(
     (acc, name) => {
       acc[name] = {
@@ -174,46 +181,81 @@ export const getInitColossalAvian = () => {
     escs,
     derivedValues,
     batteryVoltage,
+    initialTimestamp: null,
+    matchMarkers: [],
   };
 };
 
 export const importRobot = (csvData: string[][]): Robot => {
   const robot = getInitColossalAvian();
 
-  let currentEsc = "";
-  let currentHeaders: string[] = [];
-  let isInputData = false;
-  let escNameIndex = 0;
-  let timestampIndex = 0;
-  csvData.forEach((row) => {
-    // header row
-    if (row.includes("escName")) {
-      escNameIndex = row.indexOf("escName");
-      timestampIndex = row.indexOf("timestamp");
-      currentHeaders = row;
-      isInputData = row.includes(INPUT);
-    } else {
-      currentEsc = row[escNameIndex];
-      // parse timestamp
-      const timestamp = row[timestampIndex];
-      if (isInputData) {
-        robot.escs[currentEsc].measurements[INPUT].timestamps?.push(
-          Number(timestamp),
+  Object.keys(robot.escs).forEach((escName) => {
+    const dataRows = csvData.filter(
+      (row) => row.includes(escName) && row[0] === "data",
+    );
+    robot.escs[escName].timestamps = dataRows.map((row) => Number(row[2]));
+    Object.keys(robot.escs[escName].measurements).forEach(
+      (measurementName, index) => {
+        robot.escs[escName].measurements[measurementName].values = dataRows.map(
+          (row) => Number(row[3 + index]),
         );
-      } else {
-        robot.escs[currentEsc].timestamps.push(Number(timestamp));
-      }
-      // parse values
-      currentHeaders.forEach((measurementName, index) => {
-        if (index !== escNameIndex && index !== timestampIndex) {
-          const value = row[index];
-          robot.escs[currentEsc].measurements[measurementName].values.push(
-            Number(value),
-          );
-        }
-      });
-    }
+      },
+    );
+
+    const inputRows = csvData.filter(
+      (row) => row[0] === escName && row[0] === "input",
+    );
+    robot.escs[escName].measurements[INPUT].timestamps = inputRows.map((row) =>
+      Number(row[2]),
+    );
+    robot.escs[escName].measurements[INPUT].values = inputRows.map((row) =>
+      Number(row[3]),
+    );
   });
+
+  const matchMarkerRows = csvData.filter((row) => row[0] === "matchMarker");
+  robot.matchMarkers = matchMarkerRows.map(
+    (row) =>
+      ({
+        type: row[1],
+        timestamp: Number(row[2]),
+      }) as MatchMarker,
+  );
+
+  // let currentEsc = "";
+  // let currentHeaders: string[] = [];
+  // let isInputData = false;
+  // let escNameIndex = 0;
+  // let timestampIndex = 0;
+  // csvData.forEach((row) => {
+  //   // header row
+  //   if (row.includes("escName")) {
+  //     escNameIndex = row.indexOf("escName");
+  //     timestampIndex = row.indexOf("timestamp");
+  //     currentHeaders = row;
+  //     isInputData = row.includes(INPUT);
+  //   } else {
+  //     currentEsc = row[escNameIndex];
+  //     // parse timestamp
+  //     const timestamp = row[timestampIndex];
+  //     if (isInputData) {
+  //       robot.escs[currentEsc].measurements[INPUT].timestamps?.push(
+  //         Number(timestamp),
+  //       );
+  //     } else {
+  //       robot.escs[currentEsc].timestamps.push(Number(timestamp));
+  //     }
+  //     // parse values
+  //     currentHeaders.forEach((measurementName, index) => {
+  //       if (index !== escNameIndex && index !== timestampIndex) {
+  //         const value = row[index];
+  //         robot.escs[currentEsc].measurements[measurementName].values.push(
+  //           Number(value),
+  //         );
+  //       }
+  //     });
+  //   }
+  // });
   return robot;
 };
 
