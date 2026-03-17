@@ -18,9 +18,7 @@ const getCsvData = (robot: Robot): CSVRow[] => {
   const rows: CSVRow[] = [];
   Object.keys(robot.escs).forEach((escName) => {
     const esc = robot.escs[escName];
-    const dataMeasurementsNames = [
-      ...Object.keys(esc.measurements).filter((name) => name !== INPUT),
-    ];
+    const dataMeasurementsNames = Object.keys(esc.measurements);
     const dataHeaderRow = [
       "type",
       "escName",
@@ -44,24 +42,21 @@ const getCsvData = (robot: Robot): CSVRow[] => {
     const inputHeaderRow = ["type", "escName", "timestamp", INPUT];
     rows.push(inputHeaderRow);
     const inputRows =
-      esc.measurements[INPUT].timestamps?.map((timestamp, index) => {
-        return [
-          "input",
-          escName,
-          timestamp,
-          esc.measurements[INPUT].values[index],
-        ];
+      esc.inputs.timestamps?.map((timestamp, index) => {
+        return ["input", escName, timestamp, esc.inputs.values[index]];
       }) ?? [];
     inputRows.forEach((row) => rows.push(row));
+  });
 
+  const matchMarkerRows = robot.matchMarkers.map(({ type, timestamp }) => {
+    return ["matchMarker", type, timestamp];
+  });
+  if (matchMarkerRows.length > 0) {
     const matchMarkerHeaderRow = ["type", "event", "timestamp"];
     rows.push(matchMarkerHeaderRow);
-
-    const matchMarkerRows = robot.matchMarkers.map(({ type, timestamp }) => {
-      return ["matchMarker", type, timestamp];
-    });
     matchMarkerRows.forEach((row) => rows.push(row));
-  });
+  }
+
   return rows;
 };
 

@@ -4,12 +4,15 @@ export type Measurement = {
   min: number;
   max: number;
   values: number[];
-  timestamps?: number[];
   colorThresholds?: Record<string, number>;
   highlightThreshold?: number;
   shouldShow?: boolean;
   shouldPlot?: boolean;
   shouldShowPercent?: boolean;
+};
+
+export type Input = Measurement & {
+  timestamps: number[];
 };
 
 export const TEMPERATURE = "Temp";
@@ -40,6 +43,7 @@ export type ESC = {
   abbreviation: string;
   timestamps: number[];
   measurements: Record<string, Measurement>;
+  inputs: Input;
 };
 
 export const getInitEscMeasurements = ({
@@ -97,16 +101,6 @@ export const getInitEscMeasurements = ({
       },
       shouldPlot: false,
     },
-    [INPUT]: {
-      name: INPUT,
-      unit: "",
-      min: -100,
-      max: 100,
-      values: [],
-      timestamps: [],
-      shouldPlot: false,
-      shouldShowPercent: false,
-    },
   };
 };
 
@@ -147,6 +141,16 @@ export const getInitColossalAvian = (): Robot => {
             name === DRIVE_LEFT_ESC || name === DRIVE_RIGHT_ESC ? 35000 : 20000,
           rpmHighlight: name === WEAPON_ESC ? 15000 : undefined,
         }),
+        inputs: {
+          name: INPUT,
+          unit: "",
+          min: -100,
+          max: 100,
+          values: [],
+          timestamps: [],
+          shouldPlot: false,
+          shouldShowPercent: false,
+        },
       };
       return acc;
     },
@@ -205,12 +209,10 @@ export const importRobot = (csvData: string[][]): Robot => {
     const inputRows = csvData.filter(
       (row) => row[0] === escName && row[0] === "input",
     );
-    robot.escs[escName].measurements[INPUT].timestamps = inputRows.map((row) =>
+    robot.escs[escName].inputs.timestamps = inputRows.map((row) =>
       Number(row[2]),
     );
-    robot.escs[escName].measurements[INPUT].values = inputRows.map((row) =>
-      Number(row[3]),
-    );
+    robot.escs[escName].inputs.values = inputRows.map((row) => Number(row[3]));
   });
 
   const matchMarkerRows = csvData.filter((row) => row[0] === "matchMarker");

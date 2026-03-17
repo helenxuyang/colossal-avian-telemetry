@@ -10,7 +10,7 @@ import {
   TEMPERATURE,
   VOLTAGE,
   WEAPON_ESC,
-  type ESC,
+  type Measurement,
   type Robot,
 } from "./data";
 
@@ -158,19 +158,19 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
         measurementValue,
       );
     });
-    newRobot.escs[escName].timestamps?.push(timestamp);
+    newRobot.escs[escName].timestamps.push(timestamp);
   } else if (dataType === "input") {
-    newRobot.escs[escName].measurements[INPUT].timestamps?.push(timestamp);
-    newRobot.escs[escName].measurements[INPUT].values.push(escData[INPUT]);
+    newRobot.escs[escName].inputs.timestamps.push(timestamp);
+    newRobot.escs[escName].inputs.values.push(escData[INPUT]);
   }
 
   newRobot = calculateDerivedValues(newRobot);
   return newRobot;
 };
 
-export const generateMockValue = (esc: ESC, measurementName: string) => {
-  const { min, max } = esc.measurements[measurementName];
-  const previousValue = esc.measurements[measurementName].values.at(-1);
+export const generateMockValue = (measurement: Measurement) => {
+  const { min, max, values } = measurement;
+  const previousValue = values.at(-1);
   if (!previousValue) {
     const randomValue = Math.round(Math.random() * (max - min) + min);
     return randomValue;
@@ -203,27 +203,29 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
 
     if (escDataIds.includes(escId)) {
       // component 0: temp
-      const mockTemp = generateMockValue(esc, TEMPERATURE).toString(16);
+      const mockTemp = generateMockValue(
+        esc.measurements[TEMPERATURE],
+      ).toString(16);
       messageComponents.push(mockTemp);
 
       // component 1-2: voltage
-      const mockVoltage = generateMockValue(esc, VOLTAGE) * 100;
+      const mockVoltage = generateMockValue(esc.measurements[VOLTAGE]) * 100;
       const mockVoltageHex = generateMockValueTwoByteHex(mockVoltage);
       messageComponents.push(mockVoltageHex);
 
       // component 3-4: current
-      const mockCurrent = generateMockValue(esc, CURRENT) * 100;
+      const mockCurrent = generateMockValue(esc.measurements[CURRENT]) * 100;
       const mockCurrentHex = generateMockValueTwoByteHex(mockCurrent);
       messageComponents.push(mockCurrentHex);
 
       // component 5-6: consumption
-      const mockConsumption = generateMockValue(esc, CONSUMPTION);
+      const mockConsumption = generateMockValue(esc.measurements[CONSUMPTION]);
       const mockConsumptionHex = generateMockValueTwoByteHex(mockConsumption);
       messageComponents.push(mockConsumptionHex);
 
       // component 7-8: RPM
       const mockRPM =
-        (generateMockValue(esc, RPM) / 100) *
+        (generateMockValue(esc.measurements[RPM]) / 100) *
         (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
       const mockRPMHex = generateMockValueTwoByteHex(mockRPM);
       messageComponents.push(mockRPMHex);
@@ -235,7 +237,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
       messageComponents.push(timestamp.toString(16));
     } else if (escInputIds.includes(escId)) {
       // component 1: input
-      const mockInput = (generateMockValue(esc, INPUT) + 300) * 5;
+      const mockInput = (generateMockValue(esc.inputs) + 300) * 5;
       messageComponents.push(mockInput.toString(16));
       // component 2: timestamp
       messageComponents.push(timestamp.toString(16));

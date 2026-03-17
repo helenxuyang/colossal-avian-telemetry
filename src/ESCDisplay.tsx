@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { CURRENT, INPUT, RPM, TEMPERATURE, type ESC } from "./data";
+import { CURRENT, RPM, TEMPERATURE, type ESC } from "./data";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 import { ArcDisplay } from "./ArcDisplay";
 import { Container, MEDIUM_VIEWPORT } from "./styles";
@@ -53,7 +53,7 @@ export const ESCDisplay = ({ esc, className }: Props) => {
           outerMeasurement={esc.measurements[RPM]}
           innerMeasurement={esc.measurements[CURRENT]}
         />
-        <InputDisplay measurement={esc.measurements[INPUT]} />
+        <InputDisplay measurement={esc.inputs} />
       </DisplayLayout>
     </DisplayHolder>
   );

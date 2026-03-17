@@ -49,10 +49,7 @@ const getSeries = (robot: Robot, escName: string, measurementName: string) => {
   return series;
 };
 
-const getXAxis = (robot: Robot, escName: string, measurementName: string) => {
-  const esc = robot.escs[escName];
-  const measurement = esc.measurements[measurementName];
-  const timestamps = measurement.timestamps ?? esc.timestamps;
+const getXAxis = (timestamps: number[]) => {
   const axis = {
     name: "seconds",
     nameLocation: "middle",
@@ -81,6 +78,19 @@ const getYAxis = (robot: Robot, escName: string, measurementName: string) => {
 
 const parsePlotData = (robot: Robot, ids: string[]) => {
   const measurements = ids.map((id) => parseMeasurementId(id));
+  const dataXAxes = measurements.map(({ escName }, index) => {
+    return {
+      ...getXAxis(robot.escs[escName].timestamps),
+      show: index === 0,
+    };
+  });
+  const inputXAxes = Object.values(robot.escs).map((esc) => {
+    return {
+      ...getXAxis(esc.inputs.timestamps),
+      show: false,
+    };
+  });
+
   return {
     series: measurements.map(({ escName, measurementName }, index) => {
       return {
@@ -89,12 +99,7 @@ const parsePlotData = (robot: Robot, ids: string[]) => {
         xAxisIndex: index,
       };
     }),
-    xAxis: measurements.map(({ escName, measurementName }, index) => {
-      return {
-        ...getXAxis(robot, escName, measurementName),
-        show: index === 0,
-      };
-    }),
+    xAxis: [...dataXAxes, ...inputXAxes],
     yAxis: measurements.map(({ escName, measurementName }, index) => {
       return {
         ...getYAxis(robot, escName, measurementName),
