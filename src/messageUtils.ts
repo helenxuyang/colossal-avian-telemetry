@@ -138,7 +138,7 @@ export const parseData = (data: string) => {
 
 export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
   const { escName, timestamp, escData } = data;
-  const newRobot = { ...structuredClone(robot) };
+  const newRobot = { ...robot }; // TODO: this should probably be a structuredClone because otherwise it's keeping the same array references, but changing this breaks mock data because it's not passing the most recent robot correctly
 
   if (newRobot.initialTimestamp === null) {
     newRobot.initialTimestamp = Date.now() - timestamp;
