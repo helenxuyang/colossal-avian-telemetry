@@ -1,5 +1,12 @@
 import ReactECharts from "echarts-for-react";
-import { DRIVE_LEFT_ESC, RPM, WEAPON_ESC, type Robot } from "./robot";
+import {
+  DRIVE_LEFT_ESC,
+  RPM,
+  WEAPON_ESC,
+  type EscName,
+  type MeasurementName,
+  type Robot,
+} from "./robot";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   type SelectChangeEvent,
@@ -11,7 +18,11 @@ import {
 } from "@mui/material";
 import styled from "styled-components";
 import { StatusDot } from "./StatusDot";
-import { getMeasurementId, parseMeasurementId } from "./dataUtils";
+import {
+  getMeasurementId,
+  parseMeasurementId,
+  type MeasurementId,
+} from "./dataUtils";
 
 type Props = {
   robot: Robot;
@@ -21,7 +32,11 @@ const StyledSelectHolder = styled(FormControl)`
   width: 100%;
 `;
 
-const getSeries = (robot: Robot, escName: string, measurementName: string) => {
+const getSeries = (
+  robot: Robot,
+  escName: EscName,
+  measurementName: MeasurementName,
+) => {
   const timestamps = robot.escs[escName].timestamps;
   const values = robot.escs[escName].measurements[measurementName].values;
   if (!timestamps) {
@@ -58,7 +73,11 @@ const getXAxis = (timestamps: number[]) => {
   return axis;
 };
 
-const getYAxis = (robot: Robot, escName: string, measurementName: string) => {
+const getYAxis = (
+  robot: Robot,
+  escName: EscName,
+  measurementName: MeasurementName,
+) => {
   const esc = robot.escs[escName];
   const measurement = esc.measurements[measurementName];
   const axis = {
@@ -70,7 +89,7 @@ const getYAxis = (robot: Robot, escName: string, measurementName: string) => {
   return axis;
 };
 
-const parsePlotData = (robot: Robot, ids: string[]) => {
+const parsePlotData = (robot: Robot, ids: MeasurementId[]) => {
   const measurements = ids.map((id) => parseMeasurementId(id));
   const dataXAxes = measurements.map(({ escName }, index) => {
     return {
@@ -125,7 +144,7 @@ const AutoscrollHolder = styled.div`
 
 export const GraphDisplay = ({ robot }: Props) => {
   const graphRef = useRef<ReactECharts>(null);
-  const [plotData, setPlotData] = useState<string[]>([
+  const [plotData, setPlotData] = useState<MeasurementId[]>([
     `${DRIVE_LEFT_ESC}-${RPM}`,
   ]);
   const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(true);
@@ -192,7 +211,10 @@ export const GraphDisplay = ({ robot }: Props) => {
           return;
         }
         const seriesInfo = params.seriesName.split(" ");
-        const unit = robot.escs[seriesInfo[0]].measurements[seriesInfo[1]].unit;
+        const unit =
+          robot.escs[seriesInfo[0] as EscName].measurements[
+            seriesInfo[1] as MeasurementName
+          ].unit;
         return String(
           `${params.value[1]} ${unit}(${params.value[0] / 1000} sec)`,
         );
@@ -251,7 +273,11 @@ export const GraphDisplay = ({ robot }: Props) => {
     const {
       target: { value },
     } = event;
-    setPlotData(typeof value === "string" ? value.split(",") : value);
+    setPlotData(
+      typeof value === "string"
+        ? (value.split(",") as MeasurementId[])
+        : (value as MeasurementId[]),
+    );
   };
 
   const MenuProps = {
@@ -266,20 +292,22 @@ export const GraphDisplay = ({ robot }: Props) => {
   return (
     <div>
       <DropdownsHolder>
-        {Object.keys(robot.escs).map((escName) => {
-          const esc = robot.escs[escName];
+        {Object.values(robot.escs).map((esc) => {
           return (
-            <StyledSelectHolder key={escName}>
-              <InputLabel>{escName}</InputLabel>
+            <StyledSelectHolder key={esc.name}>
+              <InputLabel>{esc.name}</InputLabel>
               <Select
                 multiple
                 value={plotData}
                 onChange={handleDropdownChange}
-                input={<OutlinedInput label={escName} />}
+                input={<OutlinedInput label={esc.name} />}
                 MenuProps={MenuProps}
               >
                 {Object.values(esc.measurements).map((measurement) => {
-                  const id = getMeasurementId(esc.name, measurement.name);
+                  const id = getMeasurementId(
+                    esc.name,
+                    measurement.name as MeasurementName,
+                  );
                   return (
                     <MenuItem key={id} value={id}>
                       {measurement.name}

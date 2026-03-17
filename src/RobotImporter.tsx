@@ -8,26 +8,20 @@ type Props = {
 const importRobot = (csvData: string[][]): Robot => {
   const robot = getInitColossalAvian();
 
-  Object.keys(robot.escs).forEach((escName) => {
+  Object.values(robot.escs).forEach((esc) => {
     const dataRows = csvData.filter(
-      (row) => row.includes(escName) && row[0] === "data",
+      (row) => row.includes(esc.name) && row[0] === "data",
     );
-    robot.escs[escName].timestamps = dataRows.map((row) => Number(row[2]));
-    Object.keys(robot.escs[escName].measurements).forEach(
-      (measurementName, index) => {
-        robot.escs[escName].measurements[measurementName].values = dataRows.map(
-          (row) => Number(row[3 + index]),
-        );
-      },
-    );
+    esc.timestamps = dataRows.map((row) => Number(row[2]));
+    Object.values(esc.measurements).forEach((measurement, index) => {
+      measurement.values = dataRows.map((row) => Number(row[3 + index]));
+    });
 
     const inputRows = csvData.filter(
-      (row) => row[0] === escName && row[0] === "input",
+      (row) => row.includes(esc.name) && row[0] === "input",
     );
-    robot.escs[escName].inputs.timestamps = inputRows.map((row) =>
-      Number(row[2]),
-    );
-    robot.escs[escName].inputs.values = inputRows.map((row) => Number(row[3]));
+    esc.inputs.timestamps = inputRows.map((row) => Number(row[2]));
+    esc.inputs.values = inputRows.map((row) => Number(row[3]));
   });
 
   const matchMarkerRows = csvData.filter((row) => row[0] === "matchMarker");

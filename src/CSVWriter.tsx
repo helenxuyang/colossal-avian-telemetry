@@ -16,25 +16,20 @@ const StyledCSVLink = styled(CSVLink)`
 
 const getCsvData = (robot: Robot): CSVRow[] => {
   const rows: CSVRow[] = [];
-  Object.keys(robot.escs).forEach((escName) => {
-    const esc = robot.escs[escName];
-    const dataMeasurementsNames = Object.keys(esc.measurements);
-    const dataHeaderRow = [
-      "type",
-      "escName",
-      "timestamp",
-      ...dataMeasurementsNames,
-    ];
+  Object.values(robot.escs).forEach((esc) => {
+    const measurements = Object.values(esc.measurements);
+    const measurementNames = measurements.map(
+      (measurement) => measurement.name,
+    );
+    const dataHeaderRow = ["type", "escName", "timestamp", ...measurementNames];
     rows.push(dataHeaderRow);
 
     const dataRows = esc.timestamps.map((timestamp, index) => {
       return [
         "data",
-        escName,
+        esc.name,
         timestamp,
-        ...dataMeasurementsNames.map(
-          (name) => esc.measurements[name].values[index],
-        ),
+        ...measurements.map((measurement) => measurement.values[index]),
       ];
     });
     dataRows.forEach((row) => rows.push(row));
@@ -43,7 +38,7 @@ const getCsvData = (robot: Robot): CSVRow[] => {
     rows.push(inputHeaderRow);
     const inputRows =
       esc.inputs.timestamps?.map((timestamp, index) => {
-        return ["input", escName, timestamp, esc.inputs.values[index]];
+        return ["input", esc.name, timestamp, esc.inputs.values[index]];
       }) ?? [];
     inputRows.forEach((row) => rows.push(row));
   });

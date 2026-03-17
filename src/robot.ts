@@ -11,8 +11,14 @@ export type Measurement = {
   shouldShowPercent?: boolean;
 };
 
-export type Input = Measurement & {
+export type Input = Omit<Measurement, "name"> & {
+  name: typeof INPUT;
   timestamps: number[];
+};
+
+export type DerivedValue = Omit<Measurement, "name"> & {
+  name: DerivedValueName;
+  measurementName: MeasurementName;
 };
 
 export const TEMPERATURE = "Temp";
@@ -20,11 +26,21 @@ export const RPM = "RPM";
 export const VOLTAGE = "Voltage";
 export const CURRENT = "Current";
 export const CONSUMPTION = "Consumption";
-export const INPUT = "Input";
+export const INPUT = "Input" as const;
+
+export type MeasurementName =
+  | typeof TEMPERATURE
+  | typeof RPM
+  | typeof VOLTAGE
+  | typeof CURRENT
+  | typeof CONSUMPTION;
 
 export const BATTERY_VOLTAGE = "Battery Voltage";
 export const TOTAL_CURRENT = "Total Current";
 export const TOTAL_CONSUMPTION = "Total Consumption";
+
+export const ALL_DERIVED_VALUES = [TOTAL_CURRENT, TOTAL_CONSUMPTION];
+export type DerivedValueName = (typeof ALL_DERIVED_VALUES)[number];
 
 export type BatteryVoltageRange = {
   min: number;
@@ -38,11 +54,13 @@ export type BatteryVoltageMeasurement = {
   values: number[][];
 };
 
+type MeasurementMap = Record<MeasurementName, Measurement>;
+
 export type ESC = {
-  name: string;
+  name: EscName;
   abbreviation: string;
   timestamps: number[];
-  measurements: Record<string, Measurement>;
+  measurements: MeasurementMap;
   inputs: Input;
 };
 
@@ -52,7 +70,7 @@ export const getInitEscMeasurements = ({
 }: {
   rpmMax?: number;
   rpmHighlight?: number;
-}): Record<string, Measurement> => {
+}): MeasurementMap => {
   return {
     [RPM]: {
       name: RPM,
@@ -111,8 +129,8 @@ export type MatchMarker = {
 
 export type Robot = {
   name: string;
-  escs: Record<string, ESC>;
-  derivedValues: Record<string, Measurement>;
+  escs: Record<EscName, ESC>;
+  derivedValues: Record<DerivedValueName, DerivedValue>;
   batteryVoltage: BatteryVoltageMeasurement;
   initialTimestamp: number | null;
   matchMarkers: MatchMarker[];
@@ -124,7 +142,8 @@ export const ARM_ESC = "Arm";
 export const WEAPON_ESC = "Weapon";
 
 // no arm yet
-export const ALL_ESCS = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC];
+export const ALL_ESCS = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC] as const;
+export type EscName = (typeof ALL_ESCS)[number];
 
 export const getInitColossalAvian = (): Robot => {
   const escs = ALL_ESCS.reduce(
@@ -156,9 +175,11 @@ export const getInitColossalAvian = (): Robot => {
     },
     {} as Record<string, ESC>,
   );
-  const derivedValues: Record<string, Measurement> = {
+
+  const derivedValues: Record<DerivedValueName, DerivedValue> = {
     [TOTAL_CURRENT]: {
       name: TOTAL_CURRENT,
+      measurementName: CURRENT,
       unit: "A",
       min: 0,
       max: 400,
@@ -166,6 +187,7 @@ export const getInitColossalAvian = (): Robot => {
     },
     [TOTAL_CONSUMPTION]: {
       name: TOTAL_CONSUMPTION,
+      measurementName: CONSUMPTION,
       unit: "mAh",
       min: 0,
       max: 12000,
@@ -173,6 +195,7 @@ export const getInitColossalAvian = (): Robot => {
       shouldShow: false,
     },
   };
+
   const batteryVoltage: BatteryVoltageMeasurement = {
     name: BATTERY_VOLTAGE,
     unit: "V",
@@ -180,6 +203,7 @@ export const getInitColossalAvian = (): Robot => {
     max: 26,
     values: [],
   };
+
   return {
     name: "Colossal Avian",
     escs,

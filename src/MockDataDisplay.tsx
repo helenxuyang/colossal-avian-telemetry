@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { getInitColossalAvian, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
-import { calculateDerivedValues } from "./dataUtils";
 import { DebugDisplay } from "./DebugDisplay";
 import {
   getMockEscMessageGenerator,
@@ -34,8 +33,7 @@ export const MockDataDisplay = () => {
         const parsedData = parseData(data);
         if (parsedData) {
           setRobot((robot) => {
-            let newRobot = getUpdatedRobot(parsedData, robot);
-            newRobot = calculateDerivedValues(newRobot);
+            const newRobot = getUpdatedRobot(parsedData, robot);
             return newRobot;
           });
         }

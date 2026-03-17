@@ -1,6 +1,5 @@
-import { calculateDerivedValues } from "./dataUtils";
+import { addDerivedValues } from "./dataUtils";
 import {
-  ARM_ESC,
   CONSUMPTION,
   CURRENT,
   DRIVE_LEFT_ESC,
@@ -10,33 +9,33 @@ import {
   TEMPERATURE,
   VOLTAGE,
   WEAPON_ESC,
+  type EscName,
   type Measurement,
+  type MeasurementName,
   type Robot,
 } from "./robot";
 
-const mergeBytes = (byte1: number, byte2: number) => {
+export const mergeBytes = (byte1: number, byte2: number) => {
   return (byte1 << 8) + byte2;
 };
 
-type EscId = "a" | "b" | "c" | "d" | "w" | "x" | "y" | "z";
-const escDataIds = ["a", "b", "c", "d"];
-const escInputIds = ["w", "x", "y", "z"];
-const idToEscMap: Record<EscId, string> = {
+type EscId = "a" | "b" | "c" | "w" | "x" | "y";
+const escDataIds = ["a", "b", "c"];
+const escInputIds = ["w", "x", "y"];
+const idToEscMap: Record<EscId, EscName> = {
   a: DRIVE_LEFT_ESC,
   b: DRIVE_RIGHT_ESC,
   c: WEAPON_ESC,
-  d: ARM_ESC,
   w: DRIVE_LEFT_ESC,
   x: DRIVE_RIGHT_ESC,
   y: WEAPON_ESC,
-  z: ARM_ESC,
 };
-const escToIdMap: Record<string, EscId> = Object.entries(idToEscMap).reduce(
+const escToIdMap: Record<EscName, EscId> = Object.entries(idToEscMap).reduce(
   (acc, [key, val]) => {
     acc[val] = key as EscId;
     return acc;
   },
-  {} as Record<string, EscId>,
+  {} as Record<EscName, EscId>,
 );
 
 export type EscData = {
@@ -54,7 +53,7 @@ export type EscInputData = {
 };
 
 export type ParsedData = {
-  escName: string;
+  escName: EscName;
   timestamp: number;
   escData: EscData | EscInputData;
 };
@@ -99,17 +98,12 @@ export const parseData = (data: string) => {
   const escId = splitData[0];
   const escName = idToEscMap[escId as EscId];
 
-  // TODO: remove when we actually have arm
-  if (escName === ARM_ESC) {
-    return null;
-  }
-
   const values = splitData.slice(1).map((entry) => Number("0x" + entry));
 
   if (escDataIds.includes(escId)) {
     const rpmFactor =
-      escId === escToIdMap[WEAPON_ESC] || escId === escToIdMap[ARM_ESC]
-        ? 1 / 7
+      escId === escToIdMap[WEAPON_ESC]
+        ? 1 / 7 // TODO: if add arm, it's also 1/7
         : 1 / 6;
     const timestamp = Number(values[10]);
 
@@ -144,7 +138,7 @@ export const parseData = (data: string) => {
 
 export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
   const { escName, timestamp, escData } = data;
-  let newRobot = { ...robot };
+  const newRobot = { ...structuredClone(robot) };
 
   if (newRobot.initialTimestamp === null) {
     newRobot.initialTimestamp = Date.now() - timestamp;
@@ -154,9 +148,9 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
 
   if (dataType === "data") {
     Object.entries(dataValues).forEach(([measurementKey, measurementValue]) => {
-      newRobot.escs[escName].measurements[measurementKey].values.push(
-        measurementValue,
-      );
+      newRobot.escs[escName].measurements[
+        measurementKey as MeasurementName
+      ].values.push(measurementValue);
     });
     newRobot.escs[escName].timestamps.push(timestamp);
   } else if (dataType === "input") {
@@ -164,7 +158,7 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
     newRobot.escs[escName].inputs.values.push(escData[INPUT]);
   }
 
-  newRobot = calculateDerivedValues(newRobot);
+  addDerivedValues(newRobot);
   return newRobot;
 };
 
@@ -226,7 +220,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
       // component 7-8: RPM
       const mockRPM =
         (generateMockValue(esc.measurements[RPM]) / 100) *
-        (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
+        (escName === WEAPON_ESC ? 7 : 6); // TODO: if add arm, it's also 7
       const mockRPMHex = generateMockValueTwoByteHex(mockRPM);
       messageComponents.push(mockRPMHex);
 

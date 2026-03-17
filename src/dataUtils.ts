@@ -1,16 +1,17 @@
 import {
-  CONSUMPTION,
-  CURRENT,
-  TOTAL_CONSUMPTION,
-  TOTAL_CURRENT,
   VOLTAGE,
+  type EscName,
   type Measurement,
+  type MeasurementName,
   type Robot,
 } from "./robot";
 
+export const DEFAULT_COLOR = "skyblue";
+export const HIGHLIGHT_COLOR = "green";
+
 export const getColor = (measurement: Measurement) => {
   const { colorThresholds, highlightThreshold } = measurement;
-  let barColor = "skyblue";
+  let barColor = DEFAULT_COLOR;
   const latestValue = getLatestValue(measurement);
 
   const shouldHighlight = highlightThreshold
@@ -18,7 +19,7 @@ export const getColor = (measurement: Measurement) => {
     : false;
 
   if (shouldHighlight) {
-    barColor = "green";
+    barColor = HIGHLIGHT_COLOR;
   } else {
     if (!colorThresholds) {
       return barColor;
@@ -38,7 +39,7 @@ export const getColor = (measurement: Measurement) => {
   return barColor;
 };
 
-export const getPercent = (value: number, min: number, max: number) => {
+export const getClampedPercent = (value: number, min: number, max: number) => {
   const percent = ((value - min) / (max - min)) * 100;
   return Math.round(Math.max(Math.min(percent, 100), 0));
 };
@@ -49,7 +50,7 @@ export const getLatestValue = (measurement: Measurement) => {
 };
 
 export const getLatestPercent = (measurement: Measurement) => {
-  return getPercent(
+  return getClampedPercent(
     getLatestValue(measurement),
     measurement.min,
     measurement.max,
@@ -61,11 +62,14 @@ export const getLatestValueDisplay = (measurement: Measurement) => {
   if (unit === "%") {
     return `${getLatestPercent(measurement)}%`;
   } else {
-    return `${getLatestValue(measurement)} ${unit}`;
+    return `${getLatestValue(measurement)}${unit && ` ${unit}`}`;
   }
 };
 
-export const calculateTotal = (measurementName: string, robot: Robot) => {
+export const calculateTotal = (
+  measurementName: MeasurementName,
+  robot: Robot,
+) => {
   const values = Object.values(robot.escs).map((esc) =>
     getLatestValue(esc.measurements[measurementName]),
   );
@@ -73,30 +77,39 @@ export const calculateTotal = (measurementName: string, robot: Robot) => {
   return Number(total.toFixed(2));
 };
 
-export const calculateDerivedValues = (robot: Robot) => {
-  const newRobot = { ...robot };
+export const addDerivedValues = (robot: Robot) => {
+  // battery voltage
   const voltages = Object.values(robot.escs).map((esc) =>
     getLatestValue(esc.measurements[VOLTAGE]),
   );
-  newRobot.batteryVoltage.values.push(voltages);
+  robot.batteryVoltage.values.push(voltages);
 
-  newRobot.derivedValues[TOTAL_CURRENT].values.push(
-    calculateTotal(CURRENT, robot),
+  // calculate totals
+  Object.values(robot.derivedValues).forEach(({ values, measurementName }) =>
+    values.push(calculateTotal(measurementName, robot)),
   );
-  newRobot.derivedValues[TOTAL_CONSUMPTION].values.push(
-    calculateTotal(CONSUMPTION, robot),
-  );
-  return newRobot;
+  return robot;
 };
 
-const measurementIdDelimiter = "-";
-export const getMeasurementId = (escName: string, measurementName: string) => {
-  return `${escName}${measurementIdDelimiter}${measurementName}`;
+export type MeasurementId = `${EscName}-${MeasurementName}`;
+
+export const measurementIdDelimiter = "-";
+export const getMeasurementId = (
+  escName: EscName,
+  measurementName: MeasurementName,
+) => {
+  return `${escName}${measurementIdDelimiter}${measurementName}` as MeasurementId;
 };
-export const parseMeasurementId = (id: string) => {
+
+export const parseMeasurementId = (
+  id: MeasurementId,
+): {
+  escName: EscName;
+  measurementName: MeasurementName;
+} => {
   const [escName, measurementName] = id.split(measurementIdDelimiter);
   return {
-    escName,
-    measurementName,
+    escName: escName as EscName,
+    measurementName: measurementName as MeasurementName,
   };
 };

@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { type Measurement } from "./robot";
-import { getPercent } from "./dataUtils";
+import { getClampedPercent } from "./dataUtils";
 
 const ChartHolder = styled.div`
   display: flex;
@@ -25,7 +25,7 @@ export const LineChart = ({ measurement }: Props) => {
 
   const points = rangeValues
     .map((value, index) => {
-      const percent = getPercent(value, plotMin, plotMax);
+      const percent = getClampedPercent(value, plotMin, plotMax);
       const remappedValue = (percent / 100) * plotHeight;
       const x = index;
       const y = plotHeight - remappedValue;

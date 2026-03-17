@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { type BatteryVoltageMeasurement } from "./robot";
 import { Container, Value } from "./styles";
-import { getPercent } from "./dataUtils";
+import { getClampedPercent } from "./dataUtils";
 
 const BarDisplay = styled.div`
   display: flex;
@@ -67,8 +67,8 @@ export const VoltageDisplay = ({ batteryVoltage }: Props) => {
   const latestValues = values.at(-1) ?? [0];
   const minValue = Math.min(...latestValues);
   const maxValue = Math.max(...latestValues);
-  const minPercent = getPercent(minValue, min, max);
-  const maxPercent = getPercent(maxValue, min, max);
+  const minPercent = getClampedPercent(minValue, min, max);
+  const maxPercent = getClampedPercent(maxValue, min, max);
 
   return (
     <Container>
@@ -79,7 +79,7 @@ export const VoltageDisplay = ({ batteryVoltage }: Props) => {
           <MinBar $percent={minPercent} />
           <MaxBar $minPercent={minPercent} $maxPercent={maxPercent} />
           {latestValues.map((value, index) => (
-            <Marker key={index} $percent={getPercent(value, min, max)} />
+            <Marker key={index} $percent={getClampedPercent(value, min, max)} />
           ))}
 
           <MinValueText $percent={minPercent}>{minValue}</MinValueText>

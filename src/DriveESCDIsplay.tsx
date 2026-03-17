@@ -20,16 +20,12 @@ export const DriveESCDisplay = ({ esc, className = "" }: Props) => {
     <Container className={className}>
       <h3>{esc.name}</h3>
       <MeasurementHolder>
-        {Object.keys(esc.measurements)
-          .filter(
-            (measurementName) =>
-              esc.measurements[measurementName].shouldShow !== false,
-          )
-          .map((measurementName) => {
-            const measurement = esc.measurements[measurementName];
+        {Object.values(esc.measurements)
+          .filter((measurement) => measurement.shouldShow !== false)
+          .map((measurement) => {
             return (
               <VerticalBarDisplay
-                key={`${esc.name}-${measurementName}`}
+                key={`${esc.name}-${measurement.name}`}
                 measurement={measurement}
               />
             );
