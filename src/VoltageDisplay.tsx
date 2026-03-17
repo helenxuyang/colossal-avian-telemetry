@@ -1,6 +1,7 @@
 import styled from "styled-components";
-import { getPercent, type BatteryVoltageMeasurement } from "./data";
+import { type BatteryVoltageMeasurement } from "./robot";
 import { Container, Value } from "./styles";
+import { getPercent } from "./dataUtils";
 
 const BarDisplay = styled.div`
   display: flex;

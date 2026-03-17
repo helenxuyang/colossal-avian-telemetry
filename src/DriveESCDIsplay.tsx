@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
-import { type ESC } from "./data";
+import { type ESC } from "./robot";
 import { Container } from "./styles";
 
 type Props = {

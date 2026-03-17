@@ -1,5 +1,5 @@
 import { CSVLink } from "react-csv";
-import { INPUT, type Robot } from "./data";
+import { INPUT, type Robot } from "./robot";
 import { useState } from "react";
 import styled from "styled-components";
 

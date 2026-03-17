@@ -1,5 +1,6 @@
 import styled from "styled-components";
-import { getPercent, type Measurement } from "./data";
+import { type Measurement } from "./robot";
+import { getPercent } from "./dataUtils";
 
 const ChartHolder = styled.div`
   display: flex;

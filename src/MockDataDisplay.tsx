@@ -1,16 +1,13 @@
 import { useState } from "react";
-import {
-  calculateDerivedValues,
-  getInitColossalAvian,
-  type Robot,
-} from "./data";
+import { getInitColossalAvian, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
+import { calculateDerivedValues } from "./dataUtils";
+import { DebugDisplay } from "./DebugDisplay";
 import {
   getMockEscMessageGenerator,
-  getUpdatedRobot,
   parseData,
-} from "./dataUtils";
-import { DebugDisplay } from "./DebugDisplay";
+  getUpdatedRobot,
+} from "./messageUtils";
 
 export const MockDataDisplay = () => {
   const intervalMs = 30;

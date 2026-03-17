@@ -4,7 +4,7 @@ import {
   DRIVE_RIGHT_ESC,
   WEAPON_ESC,
   type Robot,
-} from "./data";
+} from "./robot";
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
 import { ESCDisplay } from "./ESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";

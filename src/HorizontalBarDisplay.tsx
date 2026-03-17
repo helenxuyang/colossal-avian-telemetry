@@ -1,12 +1,8 @@
 import styled from "styled-components";
-import {
-  getColor,
-  getLatestPercent,
-  getLatestValueDisplay,
-  type Measurement,
-} from "./data";
+import { type Measurement } from "./robot";
 import { Container, SMALL_VIEWPORT, Value } from "./styles";
 import { LineChart } from "./LineChart";
+import { getLatestPercent, getColor, getLatestValueDisplay } from "./dataUtils";
 
 const StyledContainer = styled(Container)`
   @media (max-width: ${SMALL_VIEWPORT}px) {

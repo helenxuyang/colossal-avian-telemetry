@@ -1,12 +1,8 @@
 import styled from "styled-components";
-import {
-  CONSUMPTION,
-  getLatestValue,
-  TOTAL_CONSUMPTION,
-  type Robot,
-} from "./data";
+import { CONSUMPTION, TOTAL_CONSUMPTION, type Robot } from "./robot";
 import type { ReactNode } from "react";
 import { Container } from "./styles";
+import { getLatestValue } from "./dataUtils";
 
 const Pie = styled.svg`
   transform: rotate(-90deg);

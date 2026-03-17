@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { GraphDisplay } from "./GraphDisplay";
-import type { Robot } from "./data";
+import type { Robot } from "./robot";
 import styled from "styled-components";
 
 type Props = {

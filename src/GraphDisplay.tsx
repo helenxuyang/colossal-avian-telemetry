@@ -1,12 +1,5 @@
 import ReactECharts from "echarts-for-react";
-import {
-  DRIVE_LEFT_ESC,
-  getMeasurementId,
-  parseMeasurementId,
-  RPM,
-  WEAPON_ESC,
-  type Robot,
-} from "./data";
+import { DRIVE_LEFT_ESC, RPM, WEAPON_ESC, type Robot } from "./robot";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   type SelectChangeEvent,
@@ -18,6 +11,7 @@ import {
 } from "@mui/material";
 import styled from "styled-components";
 import { StatusDot } from "./StatusDot";
+import { getMeasurementId, parseMeasurementId } from "./dataUtils";
 
 type Props = {
   robot: Robot;

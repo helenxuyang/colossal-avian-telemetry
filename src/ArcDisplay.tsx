@@ -1,10 +1,6 @@
 import styled from "styled-components";
-import {
-  getColor,
-  getLatestValue,
-  getLatestValueDisplay,
-  type Measurement,
-} from "./data";
+import { type Measurement } from "./robot";
+import { getLatestValue, getColor, getLatestValueDisplay } from "./dataUtils";
 
 type Props = {
   outerMeasurement: Measurement;

@@ -1,12 +1,8 @@
 import styled from "styled-components";
-import {
-  getColor,
-  getLatestPercent,
-  getLatestValueDisplay,
-  type Measurement,
-} from "./data";
+import { type Measurement } from "./robot";
 import { Container, Value } from "./styles";
 import { LineChart } from "./LineChart";
+import { getColor, getLatestPercent, getLatestValueDisplay } from "./dataUtils";
 
 type Props = {
   measurement: Measurement;

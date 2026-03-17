@@ -1,4 +1,4 @@
-import type { Robot } from "./data";
+import type { Robot } from "./robot";
 
 type Props = {
   robot: Robot;

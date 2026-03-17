@@ -1,4 +1,4 @@
-import { type ESC } from "./data";
+import { type ESC } from "./robot";
 import { Container } from "./styles";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 

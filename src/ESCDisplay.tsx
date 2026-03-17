@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { CURRENT, RPM, TEMPERATURE, type ESC } from "./data";
+import { CURRENT, RPM, TEMPERATURE, type ESC } from "./robot";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 import { ArcDisplay } from "./ArcDisplay";
 import { Container, MEDIUM_VIEWPORT } from "./styles";

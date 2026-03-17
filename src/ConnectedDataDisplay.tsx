@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { type Robot, getInitColossalAvian } from "./data";
+import { type Robot, getInitColossalAvian } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
-import { getUpdatedRobot, parseData } from "./dataUtils";
 import { WebSocketConnector } from "./WebSocketConnector";
 import styled from "styled-components";
-import { BACKGROUND, Container } from "./styles";
+import { getUpdatedRobot, parseData } from "./messageUtils";
 
-const WebSocketInfoHolder = styled(Container)`
+const WebSocketInfoHolder = styled.div`
   display: flex;
   flex-direction: column;
-  background-color: ${BACKGROUND};
 `;
 
 export const ConnectedDataDisplay = () => {

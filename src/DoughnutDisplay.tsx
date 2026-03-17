@@ -1,6 +1,6 @@
 import { Doughnut } from "react-chartjs-2";
 import styled from "styled-components";
-import { type Measurement } from "./data";
+import { type Measurement } from "./robot";
 
 type Props = {
   outerMeasurement: Measurement;
@@ -52,7 +52,7 @@ const getDonutData = (
   value: number,
   min: number,
   max: number,
-  color: string
+  color: string,
 ) => {
   const percent = getPercent(value, min, max);
   return {
@@ -83,7 +83,7 @@ export const DoughnutDisplay = ({
     outerValue,
     outer.min,
     outer.max,
-    outerColor
+    outerColor,
   );
 
   const innerValue = inner.values.at(-1) ?? 0;
@@ -93,7 +93,7 @@ export const DoughnutDisplay = ({
     innerValue,
     inner.min,
     inner.max,
-    "cornflowerblue"
+    "cornflowerblue",
   );
   const outerDonutOptions = {
     plugins: {
