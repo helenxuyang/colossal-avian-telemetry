@@ -76,6 +76,7 @@ export const ConsumptionDonut = ({ robot }: Props) => {
     if (value > 0) {
       labels.push(
         <Label
+          key={esc.name}
           style={{
             left: "50%",
             bottom: "50%",

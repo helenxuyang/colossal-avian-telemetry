@@ -187,8 +187,8 @@ export const RobotDisplay = ({
       <NavigationTabs tabs={tabs} />
       <ControlsGrid>
         {controls &&
-          controls.map((control) => (
-            <ControlsSection>{control}</ControlsSection>
+          controls.map((control, index) => (
+            <ControlsSection key={index}>{control}</ControlsSection>
           ))}
         <ControlsSection>
           <h2>Recording</h2>
