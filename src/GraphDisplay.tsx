@@ -83,8 +83,8 @@ const getYAxis = (
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min: measurement.min,
-    max: measurement.max,
+    min: Math.min(measurement.min, measurement.actualMin ?? measurement.min),
+    max: Math.max(measurement.max, measurement.actualMax ?? measurement.max),
   };
   return axis;
 };

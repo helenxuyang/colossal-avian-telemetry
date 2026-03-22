@@ -147,9 +147,15 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
 
   if (dataType === "data") {
     Object.entries(dataValues).forEach(([measurementKey, measurementValue]) => {
-      newRobot.escs[escName].measurements[
-        measurementKey as MeasurementName
-      ].values.push(measurementValue);
+      const measurement =
+        newRobot.escs[escName].measurements[measurementKey as MeasurementName];
+      measurement.values.push(measurementValue);
+      if (measurementValue < measurement.min) {
+        measurement.actualMin = measurementValue;
+      }
+      if (measurementValue > measurement.max) {
+        measurement.actualMax = measurementValue;
+      }
     });
     newRobot.escs[escName].timestamps.push(timestamp);
   } else if (dataType === "input") {

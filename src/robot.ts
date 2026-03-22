@@ -3,6 +3,8 @@ export type Measurement = {
   unit: string;
   min: number;
   max: number;
+  actualMin?: number;
+  actualMax?: number;
   values: number[];
   colorThresholds?: Record<string, number>;
   highlightThreshold?: number;
