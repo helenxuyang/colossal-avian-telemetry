@@ -133,13 +133,12 @@ export const parseData = (data: string) => {
     };
     return parsedData;
   }
-  return null;
+  throw Error("invalid message");
 };
 
 export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
   const { escName, timestamp, escData } = data;
-  const newRobot = { ...robot }; // TODO: this should probably be a structuredClone because otherwise it's keeping the same array references, but changing this breaks mock data because it's not passing the most recent robot correctly
-
+  const newRobot = structuredClone(robot);
   if (newRobot.initialTimestamp === null) {
     newRobot.initialTimestamp = Date.now() - timestamp;
   }
@@ -184,10 +183,10 @@ export const generateMockValueTwoByteHex = (num: number) => {
   return combined;
 };
 
-export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
-  const escIds = ["a", "b", "c", "w", "x", "y"];
-  let escIndex = 0;
+const escIds = ["a", "b", "c", "w", "x", "y"];
+let escIndex = 0;
 
+export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
   const generateMockESCMessage = () => {
     const escId = escIds[escIndex] as EscId;
     const escName = idToEscMap[escId];

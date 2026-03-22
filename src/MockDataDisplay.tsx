@@ -22,25 +22,22 @@ export const MockDataDisplay = () => {
     if (!startTime) {
       setStartTime(now);
     }
-    const generateEscMessage = getMockEscMessageGenerator(
-      startTime || now,
-      robot,
-    );
 
-    const generateFakeData = () => {
-      const data = generateEscMessage();
-      if (data) {
+    const mockHandleFakeData = () => {
+      setRobot((robot) => {
+        const generateEscMessage = getMockEscMessageGenerator(
+          startTime || now,
+          robot,
+        );
+
+        const data = generateEscMessage();
         const parsedData = parseData(data);
-        if (parsedData) {
-          setRobot((robot) => {
-            const newRobot = getUpdatedRobot(parsedData, robot);
-            return newRobot;
-          });
-        }
-      }
+        const newRobot = getUpdatedRobot(parsedData, robot);
+        return newRobot;
+      });
     };
 
-    setMockDataIntervalId(setInterval(generateFakeData, intervalMs));
+    setMockDataIntervalId(setInterval(mockHandleFakeData, intervalMs));
   };
 
   const handlePause = () => {
