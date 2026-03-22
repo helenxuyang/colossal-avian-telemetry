@@ -1,6 +1,8 @@
 import {
+  INPUT,
   VOLTAGE,
   type EscName,
+  type Input,
   type Measurement,
   type MeasurementName,
   type Robot,
@@ -91,9 +93,22 @@ export const addDerivedValues = (robot: Robot) => {
   return robot;
 };
 
-export type MeasurementId = `${EscName}-${MeasurementName}`;
+export const getMeasurementOrInput = (
+  robot: Robot,
+  esc: EscName,
+  key: MeasurementName | typeof INPUT,
+): Input | Measurement => {
+  return key === INPUT
+    ? robot.escs[esc].inputs
+    : robot.escs[esc].measurements[key];
+};
 
-export const measurementIdDelimiter = "-";
+export type MeasurementId = `${EscName}-${MeasurementName}`;
+export type InputId = `${EscName}-${typeof INPUT}`;
+export type PlotId = MeasurementId | InputId;
+export type PlotMeasurementName = MeasurementName | typeof INPUT;
+
+const measurementIdDelimiter = "-";
 export const getMeasurementId = (
   escName: EscName,
   measurementName: MeasurementName,
@@ -102,14 +117,14 @@ export const getMeasurementId = (
 };
 
 export const parseMeasurementId = (
-  id: MeasurementId,
+  id: PlotId,
 ): {
   escName: EscName;
-  measurementName: MeasurementName;
+  measurementName: PlotMeasurementName;
 } => {
   const [escName, measurementName] = id.split(measurementIdDelimiter);
   return {
     escName: escName as EscName,
-    measurementName: measurementName as MeasurementName,
+    measurementName: measurementName as PlotMeasurementName,
   };
 };

@@ -6,6 +6,7 @@ import {
   getMockEscMessageGenerator,
   parseData,
   getUpdatedRobot,
+  getMockEscError,
 } from "./messageUtils";
 
 export const MockDataDisplay = () => {
@@ -23,7 +24,7 @@ export const MockDataDisplay = () => {
       setStartTime(now);
     }
 
-    const mockHandleFakeData = () => {
+    const handleMockMessage = () => {
       setRobot((robot) => {
         const generateEscMessage = getMockEscMessageGenerator(
           startTime || now,
@@ -37,7 +38,18 @@ export const MockDataDisplay = () => {
       });
     };
 
-    setMockDataIntervalId(setInterval(mockHandleFakeData, intervalMs));
+    setMockDataIntervalId(setInterval(handleMockMessage, intervalMs));
+  };
+
+  const handleMockError = () => {
+    setRobot((robot) => {
+      if (startTime) {
+        const mockError = getMockEscError(startTime);
+        const parsedData = parseData(mockError);
+        return getUpdatedRobot(parsedData, robot);
+      }
+      return robot;
+    });
   };
 
   const handlePause = () => {
@@ -56,6 +68,7 @@ export const MockDataDisplay = () => {
     <div>
       <h2>Data</h2>
       <p>⚠ USING FAKE DATA ⚠</p>
+      <button onClick={handleMockError}>Mock ESC error</button>
       <DebugDisplay robot={robot} />
     </div>
   );

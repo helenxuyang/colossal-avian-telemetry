@@ -52,13 +52,17 @@ export type EscInputData = {
   [INPUT]: number;
 };
 
+export type ErrorData = {
+  dataType: "error";
+};
+
 export type ParsedData = {
   escName: EscName;
   timestamp: number;
-  escData: EscData | EscInputData;
+  escData: EscData | EscInputData | ErrorData;
 };
 
-export const parseData = (data: string) => {
+export const parseData = (data: string): ParsedData => {
   /* Data formats:
   
   ESC telemetry data: 
@@ -97,6 +101,18 @@ export const parseData = (data: string) => {
   const splitData = data.slice(1, data.length - 1).split(" ");
   const escId = splitData[0];
   const escName = idToEscMap[escId as EscId];
+
+  const ERROR_MARKER = "x";
+  if (splitData[1] === ERROR_MARKER) {
+    const timestamp = Number(splitData[2]);
+    return {
+      escName,
+      timestamp,
+      escData: {
+        dataType: "error",
+      },
+    };
+  }
 
   const values = splitData.slice(1).map((entry) => Number("0x" + entry));
 
@@ -161,6 +177,8 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
   } else if (dataType === "input") {
     newRobot.escs[escName].inputs.timestamps.push(timestamp);
     newRobot.escs[escName].inputs.values.push(escData[INPUT]);
+  } else if (dataType === "error") {
+    newRobot.escs[escName].errors.push({ timestamp });
   }
 
   addDerivedValues(newRobot);
@@ -249,4 +267,11 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
   };
 
   return generateMockESCMessage;
+};
+
+export const getMockEscError = (startTime: number, escName?: EscName) => {
+  const escId = escName ? escToIdMap[escName] : (escIds[escIndex] as EscId);
+  const timestamp = Date.now() - startTime;
+
+  return `<${escId} x ${timestamp}>`;
 };

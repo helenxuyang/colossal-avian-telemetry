@@ -57,11 +57,16 @@ export type BatteryVoltageMeasurement = {
 };
 
 type MeasurementMap = Record<MeasurementName, Measurement>;
+type EscError = {
+  timestamp: number;
+  // TODO: might have error codes or something later
+};
 
 export type ESC = {
   name: EscName;
   abbreviation: string;
   timestamps: number[];
+  errors: EscError[];
   measurements: MeasurementMap;
   inputs: Input;
 };
@@ -172,6 +177,7 @@ export const getInitColossalAvian = (): Robot => {
           shouldPlot: false,
           shouldShowPercent: false,
         },
+        errors: [],
       };
       return acc;
     },

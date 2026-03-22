@@ -1,6 +1,7 @@
 import ReactECharts from "echarts-for-react";
 import {
   DRIVE_LEFT_ESC,
+  INPUT,
   RPM,
   WEAPON_ESC,
   type EscName,
@@ -20,8 +21,10 @@ import styled from "styled-components";
 import { StatusDot } from "./StatusDot";
 import {
   getMeasurementId,
+  getMeasurementOrInput,
   parseMeasurementId,
-  type MeasurementId,
+  type PlotId,
+  type PlotMeasurementName,
 } from "./dataUtils";
 
 type Props = {
@@ -35,10 +38,14 @@ const StyledSelectHolder = styled(FormControl)`
 const getSeries = (
   robot: Robot,
   escName: EscName,
-  measurementName: MeasurementName,
+  measurementName: MeasurementName | typeof INPUT,
 ) => {
   const timestamps = robot.escs[escName].timestamps;
-  const values = robot.escs[escName].measurements[measurementName].values;
+  const measurement =
+    measurementName === INPUT
+      ? robot.escs[escName].inputs
+      : robot.escs[escName].measurements[measurementName];
+  const values = measurement.values;
   if (!timestamps) {
     return {};
   }
@@ -53,6 +60,26 @@ const getSeries = (
     name: `${escName} ${measurementName}`,
     data: seriesData,
     // showSymbol: false,
+    symbolSize: 2,
+  };
+  return series;
+};
+
+const getInputSeries = (robot: Robot, escName: EscName) => {
+  const { timestamps, values } = robot.escs[escName].inputs;
+  if (!timestamps) {
+    return {};
+  }
+  const seriesData = [
+    ...timestamps.map((time, index) => {
+      return [time, values[index]];
+    }),
+  ];
+  const series = {
+    id: `${escName} ${INPUT}`,
+    type: "line",
+    name: `${escName} ${INPUT}`,
+    data: seriesData,
     symbolSize: 2,
   };
   return series;
@@ -76,10 +103,10 @@ const getXAxis = (timestamps: number[]) => {
 const getYAxis = (
   robot: Robot,
   escName: EscName,
-  measurementName: MeasurementName,
+  measurementName: PlotMeasurementName,
 ) => {
   const esc = robot.escs[escName];
-  const measurement = esc.measurements[measurementName];
+  const measurement = getMeasurementOrInput(robot, escName, measurementName);
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
@@ -89,7 +116,7 @@ const getYAxis = (
   return axis;
 };
 
-const parsePlotData = (robot: Robot, ids: MeasurementId[]) => {
+const parsePlotData = (robot: Robot, ids: PlotId[]) => {
   const measurements = ids.map((id) => parseMeasurementId(id));
   const dataXAxes = measurements.map(({ escName }, index) => {
     return {
@@ -105,9 +132,16 @@ const parsePlotData = (robot: Robot, ids: MeasurementId[]) => {
   });
 
   return {
-    series: measurements.map(({ escName, measurementName }, index) => {
+    dataSeries: measurements.map(({ escName, measurementName }, index) => {
       return {
         ...getSeries(robot, escName, measurementName),
+        yAxisIndex: index,
+        xAxisIndex: index,
+      };
+    }),
+    inputSeries: measurements.map(({ escName }, index) => {
+      return {
+        ...getInputSeries(robot, escName),
         yAxisIndex: index,
         xAxisIndex: index,
       };
@@ -144,7 +178,7 @@ const AutoscrollHolder = styled.div`
 
 export const GraphDisplay = ({ robot }: Props) => {
   const graphRef = useRef<ReactECharts>(null);
-  const [plotData, setPlotData] = useState<MeasurementId[]>([
+  const [plotIds, setPlotIds] = useState<PlotId[]>([
     `${DRIVE_LEFT_ESC}-${RPM}`,
   ]);
   const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(true);
@@ -175,13 +209,13 @@ export const GraphDisplay = ({ robot }: Props) => {
       ? referenceTimestamps[referenceTimestamps.length - 1] - 5000
       : 0;
 
-  const plotDataOptions = parsePlotData(robot, plotData);
+  const plotDataOptions = parsePlotData(robot, plotIds);
 
   const option = {
     xAxis: plotDataOptions.xAxis,
     yAxis: plotDataOptions.yAxis,
     series: [
-      ...plotDataOptions.series,
+      ...plotDataOptions.dataSeries,
       ...robot.matchMarkers.map((marker) => {
         return {
           type: "line",
@@ -210,14 +244,17 @@ export const GraphDisplay = ({ robot }: Props) => {
         if (params.componentType === "markLine") {
           return;
         }
-        const seriesInfo = params.seriesName.split(" ");
+        const [escName, measurementOrInputName] = params.seriesName.split(" ");
+
         const unit =
-          robot.escs[seriesInfo[0] as EscName].measurements[
-            seriesInfo[1] as MeasurementName
-          ].unit;
-        return String(
-          `${params.value[1]} ${unit}(${params.value[0] / 1000} sec)`,
-        );
+          measurementOrInputName === INPUT
+            ? robot.escs[escName as EscName].inputs.unit
+            : (robot.escs[escName as EscName].measurements[
+                measurementOrInputName as MeasurementName
+              ].unit ?? null);
+        return [params.value[1], unit, `(${params.value[0] / 1000} sec)`]
+          .filter(Boolean)
+          .join(" ");
       },
       textStyle: {
         fontSize: 10,
@@ -231,7 +268,7 @@ export const GraphDisplay = ({ robot }: Props) => {
       {
         type: "slider",
         show: true,
-        xAxisIndex: [...Array(plotData.length).keys()],
+        xAxisIndex: [...Array(plotIds.length).keys()],
         startValue: isAutoScrolling
           ? autoscrollStart
           : lastZoomValues.startValue,
@@ -241,7 +278,7 @@ export const GraphDisplay = ({ robot }: Props) => {
       {
         type: "slider",
         show: true,
-        yAxisIndex: [...Array(plotData.length).keys()],
+        yAxisIndex: [...Array(plotIds.length).keys()],
         filterMode: "none",
         left: 0,
       },
@@ -269,15 +306,12 @@ export const GraphDisplay = ({ robot }: Props) => {
     animation: false,
   };
 
-  const handleDropdownChange = (event: SelectChangeEvent<typeof plotData>) => {
+  const handleDropdownChange = (event: SelectChangeEvent<typeof plotIds>) => {
     const {
       target: { value },
     } = event;
-    setPlotData(
-      typeof value === "string"
-        ? (value.split(",") as MeasurementId[])
-        : (value as MeasurementId[]),
-    );
+    const ids = typeof value === "string" ? value.split(",") : value;
+    setPlotIds(ids as PlotId[]);
   };
 
   const MenuProps = {
@@ -293,33 +327,39 @@ export const GraphDisplay = ({ robot }: Props) => {
     <div>
       <DropdownsHolder>
         {Object.values(robot.escs).map((esc) => {
+          const inputId = `${esc.name}-${INPUT}`;
           return (
             <StyledSelectHolder key={esc.name}>
               <InputLabel>{esc.name}</InputLabel>
               <Select
                 multiple
-                value={plotData}
+                value={plotIds}
                 onChange={handleDropdownChange}
                 input={<OutlinedInput label={esc.name} />}
                 MenuProps={MenuProps}
               >
-                {Object.values(esc.measurements).map((measurement) => {
-                  const id = getMeasurementId(
-                    esc.name,
-                    measurement.name as MeasurementName,
-                  );
-                  return (
-                    <MenuItem key={id} value={id}>
-                      {measurement.name}
-                    </MenuItem>
-                  );
-                })}
+                {[
+                  ...Object.values(esc.measurements).map((measurement) => {
+                    const id = getMeasurementId(
+                      esc.name,
+                      measurement.name as MeasurementName,
+                    );
+                    return (
+                      <MenuItem key={id} value={id}>
+                        {measurement.name}
+                      </MenuItem>
+                    );
+                  }),
+                  <MenuItem key={inputId} value={inputId}>
+                    {INPUT}
+                  </MenuItem>,
+                ]}
               </Select>
             </StyledSelectHolder>
           );
         })}
       </DropdownsHolder>
-      {plotData.length > 0 && (
+      {plotIds.length > 0 && (
         <ReactECharts
           ref={graphRef}
           option={option}

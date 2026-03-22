@@ -28,6 +28,10 @@ export const DebugDisplay = ({ robot }: Props) => {
                   </div>
                 );
               })}
+              <div>
+                Error timestamps: [
+                {esc.errors.map((error) => error.timestamp).join(",")}]
+              </div>
             </div>
           );
         })}
