@@ -1,8 +1,7 @@
 import ReactECharts from "echarts-for-react";
 import {
-  DRIVE_LEFT_ESC,
+  ERROR,
   INPUT,
-  RPM,
   WEAPON_ESC,
   type EscName,
   type MeasurementName,
@@ -20,141 +19,11 @@ import {
 import styled from "styled-components";
 import { StatusDot } from "./StatusDot";
 import {
-  getMeasurementId,
-  getMeasurementOrInput,
-  parseMeasurementId,
-  type PlotId,
-  type PlotMeasurementName,
-} from "./dataUtils";
-
-type Props = {
-  robot: Robot;
-};
-
-const StyledSelectHolder = styled(FormControl)`
-  width: 100%;
-`;
-
-const getSeries = (
-  robot: Robot,
-  escName: EscName,
-  measurementName: MeasurementName | typeof INPUT,
-) => {
-  const timestamps = robot.escs[escName].timestamps;
-  const measurement =
-    measurementName === INPUT
-      ? robot.escs[escName].inputs
-      : robot.escs[escName].measurements[measurementName];
-  const values = measurement.values;
-  if (!timestamps) {
-    return {};
-  }
-  const seriesData = [
-    ...timestamps.map((time, index) => {
-      return [time, values[index]];
-    }),
-  ];
-  const series = {
-    id: `${escName} ${measurementName}`,
-    type: "line",
-    name: `${escName} ${measurementName}`,
-    data: seriesData,
-    // showSymbol: false,
-    symbolSize: 2,
-  };
-  return series;
-};
-
-const getInputSeries = (robot: Robot, escName: EscName) => {
-  const { timestamps, values } = robot.escs[escName].inputs;
-  if (!timestamps) {
-    return {};
-  }
-  const seriesData = [
-    ...timestamps.map((time, index) => {
-      return [time, values[index]];
-    }),
-  ];
-  const series = {
-    id: `${escName} ${INPUT}`,
-    type: "line",
-    name: `${escName} ${INPUT}`,
-    data: seriesData,
-    symbolSize: 2,
-  };
-  return series;
-};
-
-const getXAxis = (timestamps: number[]) => {
-  const axis = {
-    name: "seconds",
-    nameLocation: "middle",
-    max: timestamps.at(-1),
-    axisLabel: {
-      formatter: (value: string) => {
-        const sec = Number(value) / 1000;
-        return sec.toFixed(sec % 1 === 0 ? 0 : 2);
-      },
-    },
-  };
-  return axis;
-};
-
-const getYAxis = (
-  robot: Robot,
-  escName: EscName,
-  measurementName: PlotMeasurementName,
-) => {
-  const esc = robot.escs[escName];
-  const measurement = getMeasurementOrInput(robot, escName, measurementName);
-  const axis = {
-    type: "value",
-    name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min: Math.min(measurement.min, measurement.actualMin ?? measurement.min),
-    max: Math.max(measurement.max, measurement.actualMax ?? measurement.max),
-  };
-  return axis;
-};
-
-const parsePlotData = (robot: Robot, ids: PlotId[]) => {
-  const measurements = ids.map((id) => parseMeasurementId(id));
-  const dataXAxes = measurements.map(({ escName }, index) => {
-    return {
-      ...getXAxis(robot.escs[escName].timestamps),
-      show: index === 0,
-    };
-  });
-  const inputXAxes = Object.values(robot.escs).map((esc) => {
-    return {
-      ...getXAxis(esc.inputs.timestamps),
-      show: false,
-    };
-  });
-
-  return {
-    dataSeries: measurements.map(({ escName, measurementName }, index) => {
-      return {
-        ...getSeries(robot, escName, measurementName),
-        yAxisIndex: index,
-        xAxisIndex: index,
-      };
-    }),
-    inputSeries: measurements.map(({ escName }, index) => {
-      return {
-        ...getInputSeries(robot, escName),
-        yAxisIndex: index,
-        xAxisIndex: index,
-      };
-    }),
-    xAxis: [...dataXAxes, ...inputXAxes],
-    yAxis: measurements.map(({ escName, measurementName }, index) => {
-      return {
-        ...getYAxis(robot, escName, measurementName),
-        offset: index > 1 ? index * 50 : 0,
-      };
-    }),
-  };
-};
+  getXAxis,
+  parsePlotData,
+  stringifyPlot,
+  type Plot,
+} from "./graphUtils";
 
 const DropdownsHolder = styled.div`
   display: flex;
@@ -162,6 +31,10 @@ const DropdownsHolder = styled.div`
   @media (max-width: 500px) {
     flex-direction: column;
   }
+`;
+
+const StyledSelectHolder = styled(FormControl)`
+  width: 100%;
 `;
 
 const AutoscrollHolder = styled.div`
@@ -176,11 +49,13 @@ const AutoscrollHolder = styled.div`
   }
 `;
 
+type Props = {
+  robot: Robot;
+};
+
 export const GraphDisplay = ({ robot }: Props) => {
   const graphRef = useRef<ReactECharts>(null);
-  const [plotIds, setPlotIds] = useState<PlotId[]>([
-    `${DRIVE_LEFT_ESC}-${RPM}`,
-  ]);
+  const [plotIds, setPlotIds] = useState<Plot[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(true);
   const [lastZoomValues, setLastZoomValues] = useState<{
     startValue?: number;
@@ -211,29 +86,67 @@ export const GraphDisplay = ({ robot }: Props) => {
 
   const plotDataOptions = parsePlotData(robot, plotIds);
 
-  const option = {
-    xAxis: plotDataOptions.xAxis,
-    yAxis: plotDataOptions.yAxis,
-    series: [
-      ...plotDataOptions.dataSeries,
-      ...robot.matchMarkers.map((marker) => {
-        return {
-          type: "line",
-          name: marker.type,
-          markLine: {
-            silent: true,
-            symbolSize: 5,
-            data: [{ xAxis: marker.timestamp }],
-            label: {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter: (params: any) => {
-                return params.seriesName;
-              },
+  const defaultXAxis = { ...getXAxis(referenceTimestamps), show: true };
+  const defaultYAxis = {
+    type: "value",
+    name: "errors",
+    min: 0,
+    max: 1,
+  };
+  const defaultSeries = {
+    id: "placeholder-series",
+    type: "line",
+    data: referenceTimestamps.map((timestamp) => [timestamp, -1]),
+    // showSymbol: false,
+    symbolSize: 2,
+    silent: true,
+  };
+  const hasOnlyErrors =
+    plotDataOptions.xAxis.length === 0 &&
+    plotDataOptions.errorSeries.length > 0;
+
+  const finalXAxis = hasOnlyErrors ? defaultXAxis : plotDataOptions.xAxis;
+
+  const finalYAxis = hasOnlyErrors
+    ? defaultYAxis
+    : plotDataOptions.yAxis.map((yAxis, index) => ({
+        ...yAxis,
+        offset: index > 1 ? index * 50 : 0,
+      }));
+
+  const finalSeries = [
+    ...plotDataOptions.series.map((series, index) => {
+      return {
+        ...series,
+        yAxisIndex: index,
+        xAxisIndex: index,
+      };
+    }),
+    ...plotDataOptions.errorSeries,
+    hasOnlyErrors && defaultSeries,
+    ...robot.matchMarkers.map((marker) => {
+      return {
+        type: "line",
+        name: marker.type,
+        markLine: {
+          silent: true,
+          symbolSize: 5,
+          data: [{ xAxis: marker.timestamp }],
+          label: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter: (params: any) => {
+              return params.seriesName;
             },
           },
-        };
-      }),
-    ],
+        },
+      };
+    }),
+  ].filter(Boolean);
+
+  const option = {
+    xAxis: finalXAxis,
+    yAxis: finalYAxis,
+    series: finalSeries,
     legend: {
       bottom: 50,
     },
@@ -306,12 +219,40 @@ export const GraphDisplay = ({ robot }: Props) => {
     animation: false,
   };
 
-  const handleDropdownChange = (event: SelectChangeEvent<typeof plotIds>) => {
+  const handleDropdownChange = (event: SelectChangeEvent<string[]>) => {
     const {
       target: { value },
     } = event;
     const ids = typeof value === "string" ? value.split(",") : value;
-    setPlotIds(ids as PlotId[]);
+
+    const plots = ids.map((id) => {
+      const components = id.split("-");
+      const escName = components[0] as EscName;
+      const typeOrMeasurement = components[1] as
+        | typeof INPUT
+        | typeof ERROR
+        | MeasurementName;
+
+      if (typeOrMeasurement === INPUT) {
+        return {
+          escName,
+          type: INPUT,
+        };
+      } else if (typeOrMeasurement === ERROR) {
+        return {
+          escName,
+          type: ERROR,
+        };
+      } else {
+        return {
+          escName,
+          type: "data",
+          measurementName: typeOrMeasurement,
+        };
+      }
+    });
+
+    setPlotIds(plots as Plot[]);
   };
 
   const MenuProps = {
@@ -328,22 +269,20 @@ export const GraphDisplay = ({ robot }: Props) => {
       <DropdownsHolder>
         {Object.values(robot.escs).map((esc) => {
           const inputId = `${esc.name}-${INPUT}`;
+          const errorId = `${esc.name}-${ERROR}`;
           return (
             <StyledSelectHolder key={esc.name}>
               <InputLabel>{esc.name}</InputLabel>
               <Select
                 multiple
-                value={plotIds}
+                value={plotIds.map((plot) => stringifyPlot(plot))}
                 onChange={handleDropdownChange}
                 input={<OutlinedInput label={esc.name} />}
                 MenuProps={MenuProps}
               >
                 {[
                   ...Object.values(esc.measurements).map((measurement) => {
-                    const id = getMeasurementId(
-                      esc.name,
-                      measurement.name as MeasurementName,
-                    );
+                    const id = `${esc.name}-${measurement.name}`;
                     return (
                       <MenuItem key={id} value={id}>
                         {measurement.name}
@@ -352,6 +291,9 @@ export const GraphDisplay = ({ robot }: Props) => {
                   }),
                   <MenuItem key={inputId} value={inputId}>
                     {INPUT}
+                  </MenuItem>,
+                  <MenuItem key={errorId} value={errorId}>
+                    Errors
                   </MenuItem>,
                 ]}
               </Select>

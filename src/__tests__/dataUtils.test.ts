@@ -22,8 +22,6 @@ import {
   getLatestValueDisplay,
   calculateTotal,
   addDerivedValues,
-  getMeasurementId,
-  parseMeasurementId,
 } from "../dataUtils";
 
 const mockMeasurement: Measurement = {
@@ -176,20 +174,5 @@ describe("addDerivedValues", () => {
     expect(robot.batteryVoltage.values).toContainEqual([10, 20, 40]);
     expect(robot.derivedValues[TOTAL_CURRENT].values).toContain(5);
     expect(robot.derivedValues[TOTAL_CONSUMPTION].values).toContain(6);
-  });
-});
-
-describe("getMeasurementId", () => {
-  it("combines esc and measurement name", () => {
-    expect(getMeasurementId(DRIVE_LEFT_ESC, VOLTAGE)).toBe("DriveLeft-Voltage");
-  });
-});
-
-describe("parseMeasurementId", () => {
-  it("parses esc and measurement name", () => {
-    expect(parseMeasurementId("DriveLeft-Voltage")).toStrictEqual({
-      escName: "DriveLeft",
-      measurementName: "Voltage",
-    });
   });
 });

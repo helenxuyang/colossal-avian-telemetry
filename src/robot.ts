@@ -29,6 +29,7 @@ export const VOLTAGE = "Voltage";
 export const CURRENT = "Current";
 export const CONSUMPTION = "Consumption";
 export const INPUT = "Input" as const;
+export const ERROR = "Error" as const;
 
 export type MeasurementName =
   | typeof TEMPERATURE

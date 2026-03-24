@@ -270,7 +270,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
 };
 
 export const getMockEscError = (startTime: number, escName?: EscName) => {
-  const escId = escName ? escToIdMap[escName] : (escIds[escIndex] as EscId);
+  const escId: EscId = escName ? escToIdMap[escName] : "a";
   const timestamp = Date.now() - startTime;
 
   return `<${escId} x ${timestamp}>`;

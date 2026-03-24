@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { getInitColossalAvian, type Robot } from "./robot";
+import {
+  ALL_ESCS,
+  getInitColossalAvian,
+  type EscName,
+  type Robot,
+} from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import { DebugDisplay } from "./DebugDisplay";
 import {
@@ -41,10 +46,10 @@ export const MockDataDisplay = () => {
     setMockDataIntervalId(setInterval(handleMockMessage, intervalMs));
   };
 
-  const handleMockError = () => {
+  const handleMockError = (escName?: EscName) => {
     setRobot((robot) => {
       if (startTime) {
-        const mockError = getMockEscError(startTime);
+        const mockError = getMockEscError(startTime, escName);
         const parsedData = parseData(mockError);
         return getUpdatedRobot(parsedData, robot);
       }
@@ -68,7 +73,10 @@ export const MockDataDisplay = () => {
     <div>
       <h2>Data</h2>
       <p>⚠ USING FAKE DATA ⚠</p>
-      <button onClick={handleMockError}>Mock ESC error</button>
+      {ALL_ESCS.map((esc) => (
+        <button onClick={() => handleMockError(esc)}>Mock {esc} error</button>
+      ))}
+
       <DebugDisplay robot={robot} />
     </div>
   );
