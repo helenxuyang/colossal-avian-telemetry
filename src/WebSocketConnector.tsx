@@ -16,6 +16,7 @@ const Controls = styled.div`
 
 type Props = {
   onReceiveData: HandleReceiveDataCallbackRef;
+  onConnect: () => void;
 };
 
 type WebSocketStatus = 0 | 1 | 2 | 3;
@@ -26,13 +27,14 @@ const connectionMap: Record<WebSocketStatus, string> = {
   [WebSocket.CLOSED]: "❌ Closed",
 };
 
-export const WebSocketConnector = ({ onReceiveData }: Props) => {
+export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
   const [shouldAutoRetryConnection, setShouldAutoRetryConnection] =
     useState<boolean>(true);
 
   const { connection, status, closeCodes, retryConnection } = useWebSocket(
     shouldAutoRetryConnection,
     onReceiveData,
+    onConnect,
   );
 
   const closeConnection = () => {

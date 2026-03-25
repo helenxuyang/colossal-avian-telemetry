@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  ALL_ESCS,
-  getInitColossalAvian,
-  type EscName,
-  type Robot,
-} from "./robot";
+import { getInitColossalAvian, type EscName, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import { DebugDisplay } from "./DebugDisplay";
 import {
@@ -13,6 +8,17 @@ import {
   getUpdatedRobot,
   getMockEscError,
 } from "./messageUtils";
+import styled from "styled-components";
+
+const MockDataControls = styled.div`
+  color: red;
+`;
+
+const ButtonsHolder = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
 
 export const MockDataDisplay = () => {
   const intervalMs = 30;
@@ -70,15 +76,19 @@ export const MockDataDisplay = () => {
   };
 
   const controls = (
-    <div>
+    <MockDataControls>
       <h2>Data</h2>
       <p>⚠ USING FAKE DATA ⚠</p>
-      {ALL_ESCS.map((esc) => (
-        <button onClick={() => handleMockError(esc)}>Mock {esc} error</button>
-      ))}
+      <ButtonsHolder>
+        {Object.keys(robot.escs).map((esc) => (
+          <button key={esc} onClick={() => handleMockError(esc as EscName)}>
+            Mock {esc} error
+          </button>
+        ))}
+      </ButtonsHolder>
 
       <DebugDisplay robot={robot} />
-    </div>
+    </MockDataControls>
   );
 
   return (

@@ -16,6 +16,7 @@ import { RobotImporter } from "./RobotImporter";
 import { RecordingControls } from "./RecordingControls";
 import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVWriter";
+import { RobotConfig } from "./RobotConfig";
 
 const Layout = styled.div`
   display: flex;
@@ -35,31 +36,20 @@ const ESCSection = styled.div`
 `;
 
 const ESCGrid = styled.div`
-  display: grid;
+  display: flex;
   gap: 8px;
-  grid-template-columns: 2fr 3fr 2fr;
-  grid-template-areas: "driveLeft weapon driveRight";
-
-  @media (max-width: ${SMALL_VIEWPORT}px) {
-    grid-template-columns: 1fr;
-    grid-template-areas: "driveLeft" "weapon" "driveRight";
-  }
 `;
 
 const DriveLeftESCSection = styled(ESCDisplay)`
-  grid-area: driveLeft;
+  flex: 2;
 `;
 
 const WeaponESCSection = styled(ESCDisplay)`
-  grid-area: weapon;
+  flex: 3;
 `;
 
-// const ArmESCSection = styled(InputDisplay)`
-//   grid-area: arm;
-// `;
-
 const DriveRightESCSection = styled(ESCDisplay)`
-  grid-area: driveRight;
+  flex: 2;
 `;
 
 const RobotSection = styled.div`
@@ -152,9 +142,13 @@ export const RobotDisplay = ({
       </RobotSection>
       <ESCSection>
         <ESCGrid>
-          <DriveLeftESCSection esc={driveLeftEsc} />
-          <WeaponESCSection esc={weaponEsc} />
-          <DriveRightESCSection esc={driveRightEsc} />
+          {driveLeftEsc.shouldShow && (
+            <DriveLeftESCSection esc={driveLeftEsc} />
+          )}
+          {weaponEsc.shouldShow && <WeaponESCSection esc={weaponEsc} />}
+          {driveRightEsc.shouldShow && (
+            <DriveRightESCSection esc={driveRightEsc} />
+          )}
         </ESCGrid>
       </ESCSection>
     </Layout>
@@ -169,12 +163,16 @@ export const RobotDisplay = ({
       name: "Graph",
       panelContent: <GraphGrid robot={robot} />,
     },
+    {
+      name: "Config",
+      panelContent: <RobotConfig robot={robot} setRobot={setRobot} />,
+    },
   ];
 
   return (
     <Layout>
       <HeaderHolder>
-        <h1>Colossal Avian</h1>
+        <h1>{robot.name}</h1>
         <MatchControls
           robot={robot}
           onStart={() => {

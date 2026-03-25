@@ -43,7 +43,6 @@ export const MatchControls = ({ robot, onStart }: Props) => {
   };
 
   const handleStart = (isResume: boolean = false) => {
-    console.log("handle start");
     robot.matchMarkers.push({
       type: isResume ? "RESUME" : "START",
       timestamp: getCurrentTimestamp(),

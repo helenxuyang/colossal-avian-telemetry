@@ -2,7 +2,6 @@ import ReactECharts from "echarts-for-react";
 import {
   ERROR,
   INPUT,
-  WEAPON_ESC,
   type EscName,
   type MeasurementName,
   type Robot,
@@ -78,7 +77,9 @@ export const GraphDisplay = ({ robot }: Props) => {
 
   const onEvents = useMemo(() => ({ datazoom: onZoom }), [onZoom]);
 
-  const referenceTimestamps = robot.escs[WEAPON_ESC].timestamps;
+  const referenceTimestamps = Object.values(robot.escs).filter(
+    (esc) => esc.shouldShow,
+  )[0].timestamps;
   const autoscrollStart =
     referenceTimestamps.length > 0
       ? referenceTimestamps[referenceTimestamps.length - 1] - 5000
@@ -267,39 +268,41 @@ export const GraphDisplay = ({ robot }: Props) => {
   return (
     <div>
       <DropdownsHolder>
-        {Object.values(robot.escs).map((esc) => {
-          const inputId = `${esc.name}-${INPUT}`;
-          const errorId = `${esc.name}-${ERROR}`;
-          return (
-            <StyledSelectHolder key={esc.name}>
-              <InputLabel>{esc.name}</InputLabel>
-              <Select
-                multiple
-                value={plotIds.map((plot) => stringifyPlot(plot))}
-                onChange={handleDropdownChange}
-                input={<OutlinedInput label={esc.name} />}
-                MenuProps={MenuProps}
-              >
-                {[
-                  ...Object.values(esc.measurements).map((measurement) => {
-                    const id = `${esc.name}-${measurement.name}`;
-                    return (
-                      <MenuItem key={id} value={id}>
-                        {measurement.name}
-                      </MenuItem>
-                    );
-                  }),
-                  <MenuItem key={inputId} value={inputId}>
-                    {INPUT}
-                  </MenuItem>,
-                  <MenuItem key={errorId} value={errorId}>
-                    Errors
-                  </MenuItem>,
-                ]}
-              </Select>
-            </StyledSelectHolder>
-          );
-        })}
+        {Object.values(robot.escs)
+          .filter((esc) => esc.shouldShow)
+          .map((esc) => {
+            const inputId = `${esc.name}-${INPUT}`;
+            const errorId = `${esc.name}-${ERROR}`;
+            return (
+              <StyledSelectHolder key={esc.name}>
+                <InputLabel>{esc.name}</InputLabel>
+                <Select
+                  multiple
+                  value={plotIds.map((plot) => stringifyPlot(plot))}
+                  onChange={handleDropdownChange}
+                  input={<OutlinedInput label={esc.name} />}
+                  MenuProps={MenuProps}
+                >
+                  {[
+                    ...Object.values(esc.measurements).map((measurement) => {
+                      const id = `${esc.name}-${measurement.name}`;
+                      return (
+                        <MenuItem key={id} value={id}>
+                          {measurement.name}
+                        </MenuItem>
+                      );
+                    }),
+                    <MenuItem key={inputId} value={inputId}>
+                      {INPUT}
+                    </MenuItem>,
+                    <MenuItem key={errorId} value={errorId}>
+                      Errors
+                    </MenuItem>,
+                  ]}
+                </Select>
+              </StyledSelectHolder>
+            );
+          })}
       </DropdownsHolder>
       {plotIds.length > 0 && (
         <ReactECharts

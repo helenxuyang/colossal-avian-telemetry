@@ -7,6 +7,7 @@ export type HandleReceiveDataCallbackRef =
 export const useWebSocket = (
   shouldAutoRetryConnection: boolean,
   onHandleReceiveData: HandleReceiveDataCallbackRef,
+  onConnect: () => void,
 ) => {
   const connection = useRef<WebSocket>(null);
   const [status, setStatus] = useState<number | null>(null);
@@ -24,6 +25,7 @@ export const useWebSocket = (
       connection.current?.send("Connect " + new Date());
       setStatus(connection.current?.readyState ?? null);
       clearInterval(checkStatus);
+      onConnect();
     });
 
     connection.current.addEventListener("error", (event) => {

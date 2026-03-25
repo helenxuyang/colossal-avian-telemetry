@@ -18,7 +18,6 @@ export const ConnectedDataDisplay = () => {
     (data: string) => {
       if (isRecording) {
         const parsedData = parseData(data);
-        console.log(parsedData);
         if (parsedData) {
           setRobot(getUpdatedRobot(parsedData, robot));
         }
@@ -38,7 +37,12 @@ export const ConnectedDataDisplay = () => {
       setRobot={setRobot}
       controls={[
         <WebSocketInfoHolder>
-          <WebSocketConnector onReceiveData={handleReceiveDataCallback} />
+          <WebSocketConnector
+            onReceiveData={handleReceiveDataCallback}
+            onConnect={() => {
+              setIsRecording(true);
+            }}
+          />
         </WebSocketInfoHolder>,
       ]}
       isRecording={isRecording}

@@ -70,14 +70,23 @@ export type ESC = {
   errors: EscError[];
   measurements: MeasurementMap;
   inputs: Input;
+  shouldShow?: boolean;
 };
 
 export const getInitEscMeasurements = ({
   rpmMax = 20000,
-  rpmHighlight,
+  rpmHighlight = undefined,
+  voltageMin = 16,
+  voltageMax = 26,
+  maxCurrent = 30,
+  maxConsumption = 3000,
 }: {
   rpmMax?: number;
   rpmHighlight?: number;
+  voltageMin?: number;
+  voltageMax?: number;
+  maxCurrent?: number;
+  maxConsumption?: number;
 }): MeasurementMap => {
   return {
     [RPM]: {
@@ -92,8 +101,8 @@ export const getInitEscMeasurements = ({
     [VOLTAGE]: {
       name: VOLTAGE,
       unit: "V",
-      min: 16,
-      max: 26,
+      min: voltageMin,
+      max: voltageMax,
       values: [],
       shouldShow: false,
       // shouldPlot: true,
@@ -102,7 +111,7 @@ export const getInitEscMeasurements = ({
       name: CURRENT,
       unit: "A",
       min: 0,
-      max: 30,
+      max: maxCurrent,
       values: [],
       shouldPlot: true,
     },
@@ -110,7 +119,7 @@ export const getInitEscMeasurements = ({
       name: CONSUMPTION,
       unit: "mAh",
       min: 0,
-      max: 3000,
+      max: maxConsumption,
       values: [],
       shouldShow: false,
     },
@@ -130,6 +139,33 @@ export const getInitEscMeasurements = ({
   };
 };
 
+export const getInitEsc = (
+  name: EscName,
+  measurements: MeasurementMap,
+): ESC => {
+  return {
+    name,
+    abbreviation: name
+      .split("")
+      .filter((char) => char.toUpperCase() === char)
+      .join(""),
+    timestamps: [],
+    measurements,
+    inputs: {
+      name: INPUT,
+      unit: "",
+      min: -100,
+      max: 100,
+      values: [],
+      timestamps: [],
+      shouldPlot: false,
+      shouldShowPercent: false,
+    },
+    errors: [],
+    shouldShow: true,
+  };
+};
+
 export type MatchMarker = {
   type: "START" | "PAUSE" | "RESUME" | "END";
   timestamp: number;
@@ -144,80 +180,124 @@ export type Robot = {
   matchMarkers: MatchMarker[];
 };
 
-export const DRIVE_LEFT_ESC = "DriveLeft";
-export const DRIVE_RIGHT_ESC = "DriveRight";
-export const ARM_ESC = "Arm";
-export const WEAPON_ESC = "Weapon";
+export const DRIVE_LEFT_ESC = "DriveLeft" as const;
+export const DRIVE_RIGHT_ESC = "DriveRight" as const;
+export const ARM_ESC = "Arm" as const;
+export const WEAPON_ESC = "Weapon" as const;
 
-// no arm yet
-export const ALL_ESCS = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC] as const;
-export type EscName = (typeof ALL_ESCS)[number];
+export type EscName =
+  | typeof DRIVE_LEFT_ESC
+  | typeof DRIVE_RIGHT_ESC
+  | typeof WEAPON_ESC;
+// | typeof ARM_ESC;
 
 export const getInitColossalAvian = (): Robot => {
-  const escs = ALL_ESCS.reduce(
+  // no arm yet
+  const allEscs: EscName[] = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC];
+  const escs = allEscs.reduce(
     (acc, name) => {
-      acc[name] = {
-        name,
-        abbreviation: name
-          .split("")
-          .filter((char) => char.toUpperCase() === char)
-          .join(""),
-        timestamps: [],
-        measurements: getInitEscMeasurements({
-          rpmMax:
-            name === DRIVE_LEFT_ESC || name === DRIVE_RIGHT_ESC ? 35000 : 20000,
-          rpmHighlight: name === WEAPON_ESC ? 15000 : undefined,
-        }),
-        inputs: {
-          name: INPUT,
-          unit: "",
-          min: -100,
-          max: 100,
-          values: [],
-          timestamps: [],
-          shouldPlot: false,
-          shouldShowPercent: false,
-        },
-        errors: [],
-      };
+      const measurementMap = getInitEscMeasurements({
+        rpmMax:
+          name === DRIVE_LEFT_ESC || name === DRIVE_RIGHT_ESC ? 35000 : 20000,
+        rpmHighlight: name === WEAPON_ESC ? 15000 : undefined,
+      });
+
+      acc[name] = getInitEsc(name, measurementMap);
       return acc;
     },
     {} as Record<string, ESC>,
   );
 
-  const derivedValues: Record<DerivedValueName, DerivedValue> = {
-    [TOTAL_CURRENT]: {
-      name: TOTAL_CURRENT,
-      measurementName: CURRENT,
-      unit: "A",
-      min: 0,
-      max: 400,
-      values: [],
-    },
-    [TOTAL_CONSUMPTION]: {
-      name: TOTAL_CONSUMPTION,
-      measurementName: CONSUMPTION,
-      unit: "mAh",
-      min: 0,
-      max: 12000,
-      values: [],
-      shouldShow: false,
-    },
-  };
-
-  const batteryVoltage: BatteryVoltageMeasurement = {
-    name: BATTERY_VOLTAGE,
-    unit: "V",
-    min: 16,
-    max: 26,
-    values: [],
-  };
-
   return {
     name: "Colossal Avian",
     escs,
-    derivedValues,
-    batteryVoltage,
+    derivedValues: {
+      [TOTAL_CURRENT]: {
+        name: TOTAL_CURRENT,
+        measurementName: CURRENT,
+        unit: "A",
+        min: 0,
+        max: 400,
+        values: [],
+      },
+      [TOTAL_CONSUMPTION]: {
+        name: TOTAL_CONSUMPTION,
+        measurementName: CONSUMPTION,
+        unit: "mAh",
+        min: 0,
+        max: 12000,
+        values: [],
+        shouldShow: false,
+      },
+    },
+    batteryVoltage: {
+      name: BATTERY_VOLTAGE,
+      unit: "V",
+      min: 16,
+      max: 26,
+      values: [],
+    },
+    initialTimestamp: null,
+    matchMarkers: [],
+  };
+};
+
+export const getInitStackOverflow = (): Robot => {
+  const voltageMin = 0; // TODO: update?
+  const voltageMax = 15.2;
+  const rpmMax = 18000;
+  const maxCurrent = 80;
+  const maxConsumption = 850;
+
+  return {
+    name: "Stack Overflow",
+    escs: {
+      [WEAPON_ESC]: getInitEsc(
+        WEAPON_ESC,
+        getInitEscMeasurements({
+          rpmMax,
+          rpmHighlight: rpmMax * 0.8,
+          maxConsumption: 850,
+          maxCurrent,
+          voltageMin,
+          voltageMax,
+        }),
+      ),
+      [DRIVE_LEFT_ESC]: {
+        ...getInitEsc(DRIVE_LEFT_ESC, getInitEscMeasurements({})),
+        shouldShow: false,
+      }, // NOT USED
+      [DRIVE_RIGHT_ESC]: {
+        ...getInitEsc(DRIVE_RIGHT_ESC, getInitEscMeasurements({})),
+        shouldShow: false,
+      }, // NOT USED
+    },
+    derivedValues: {
+      [TOTAL_CURRENT]: {
+        name: TOTAL_CURRENT,
+        measurementName: CURRENT,
+        unit: "A",
+        min: 0,
+        max: maxCurrent,
+        values: [],
+      },
+      [TOTAL_CONSUMPTION]: {
+        name: TOTAL_CONSUMPTION,
+        measurementName: CONSUMPTION,
+        unit: "mAh",
+        min: 0,
+        max: maxConsumption,
+        values: [],
+        shouldShow: false,
+      },
+    },
+    batteryVoltage: {
+      name: BATTERY_VOLTAGE,
+      unit: "V",
+      min: voltageMin,
+      max: voltageMax,
+      values: [],
+    },
     initialTimestamp: null,
     matchMarkers: [],
   };
