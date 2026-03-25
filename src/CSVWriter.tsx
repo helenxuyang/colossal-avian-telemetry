@@ -1,9 +1,8 @@
 import { CSVLink } from "react-csv";
-import { INPUT, type Robot } from "./robot";
+import { type Robot } from "./robot";
 import { useState } from "react";
 import styled from "styled-components";
-
-type CSVRow = (string | number)[];
+import { getCsvData, type CSVRow } from "./csvUtils";
 
 const StyledCSVLink = styled(CSVLink)`
   display: block;
@@ -13,47 +12,6 @@ const StyledCSVLink = styled(CSVLink)`
   border-radius: 8px;
   width: fit-content;
 `;
-
-const getCsvData = (robot: Robot): CSVRow[] => {
-  const rows: CSVRow[] = [];
-  Object.values(robot.escs).forEach((esc) => {
-    const measurements = Object.values(esc.measurements);
-    const measurementNames = measurements.map(
-      (measurement) => measurement.name,
-    );
-    const dataHeaderRow = ["type", "escName", "timestamp", ...measurementNames];
-    rows.push(dataHeaderRow);
-
-    const dataRows = esc.timestamps.map((timestamp, index) => {
-      return [
-        "data",
-        esc.name,
-        timestamp,
-        ...measurements.map((measurement) => measurement.values[index]),
-      ];
-    });
-    dataRows.forEach((row) => rows.push(row));
-
-    const inputHeaderRow = ["type", "escName", "timestamp", INPUT];
-    rows.push(inputHeaderRow);
-    const inputRows =
-      esc.inputs.timestamps?.map((timestamp, index) => {
-        return ["input", esc.name, timestamp, esc.inputs.values[index]];
-      }) ?? [];
-    inputRows.forEach((row) => rows.push(row));
-  });
-
-  const matchMarkerRows = robot.matchMarkers.map(({ type, timestamp }) => {
-    return ["matchMarker", type, timestamp];
-  });
-  if (matchMarkerRows.length > 0) {
-    const matchMarkerHeaderRow = ["type", "event", "timestamp"];
-    rows.push(matchMarkerHeaderRow);
-    matchMarkerRows.forEach((row) => rows.push(row));
-  }
-
-  return rows;
-};
 
 const getFormattedFirstTimestamp = (robot: Robot): string => {
   const date = robot.initialTimestamp
