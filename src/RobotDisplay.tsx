@@ -16,7 +16,8 @@ import { RobotImporter } from "./RobotImporter";
 import { RecordingControls } from "./RecordingControls";
 import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVWriter";
-import { RobotConfig } from "./RobotConfig";
+import { ConfigDisplay } from "./RobotConfig";
+import { useCallback, useMemo } from "react";
 
 const Layout = styled.div`
   display: flex;
@@ -119,68 +120,73 @@ export const RobotDisplay = ({
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
 
-  const liveTabContent = (
-    <Layout>
-      <RobotSection>
-        <RobotLayout>
-          <BarsHolder>
-            <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
-            {Object.values(robot.derivedValues)
-              .filter((measurement) => measurement.shouldShow !== false)
-              .map((measurement) => {
-                return (
-                  <HorizontalBarDisplay
-                    key={`${robot.name}-${measurement.name}`}
-                    barColor="skyblue"
-                    measurement={measurement}
-                  />
-                );
-              })}
-          </BarsHolder>
-          <ConsumptionDonut robot={robot} />
-        </RobotLayout>
-      </RobotSection>
-      <ESCSection>
-        <ESCGrid>
-          {driveLeftEsc.shouldShow && (
-            <DriveLeftESCSection esc={driveLeftEsc} />
-          )}
-          {weaponEsc.shouldShow && <WeaponESCSection esc={weaponEsc} />}
-          {driveRightEsc.shouldShow && (
-            <DriveRightESCSection esc={driveRightEsc} />
-          )}
-        </ESCGrid>
-      </ESCSection>
-    </Layout>
+  const liveTabContent = useMemo(
+    () => (
+      <Layout>
+        <RobotSection>
+          <RobotLayout>
+            <BarsHolder>
+              <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
+              {Object.values(robot.derivedValues)
+                .filter((measurement) => measurement.shouldShow !== false)
+                .map((measurement) => {
+                  return (
+                    <HorizontalBarDisplay
+                      key={`${robot.name}-${measurement.name}`}
+                      barColor="skyblue"
+                      measurement={measurement}
+                    />
+                  );
+                })}
+            </BarsHolder>
+            <ConsumptionDonut robot={robot} />
+          </RobotLayout>
+        </RobotSection>
+        <ESCSection>
+          <ESCGrid>
+            {driveLeftEsc.shouldShow && (
+              <DriveLeftESCSection esc={driveLeftEsc} />
+            )}
+            {weaponEsc.shouldShow && <WeaponESCSection esc={weaponEsc} />}
+            {driveRightEsc.shouldShow && (
+              <DriveRightESCSection esc={driveRightEsc} />
+            )}
+          </ESCGrid>
+        </ESCSection>
+      </Layout>
+    ),
+    [driveLeftEsc, driveRightEsc, robot, weaponEsc],
   );
 
-  const tabs: Tab[] = [
-    {
-      name: "Live",
-      panelContent: liveTabContent,
-    },
-    {
-      name: "Graph",
-      panelContent: <GraphGrid robot={robot} />,
-    },
-    {
-      name: "Config",
-      panelContent: <RobotConfig robot={robot} setRobot={setRobot} />,
-    },
-  ];
+  const tabs: Tab[] = useMemo(
+    () => [
+      {
+        name: "Live",
+        panelContent: liveTabContent,
+      },
+      {
+        name: "Graph",
+        panelContent: <GraphGrid robot={robot} />,
+      },
+      {
+        name: "Config",
+        panelContent: <ConfigDisplay robot={robot} setRobot={setRobot} />,
+      },
+    ],
+    [liveTabContent, robot, setRobot],
+  );
+
+  const handleStartRecording = useCallback(() => {
+    if (!isRecording) {
+      setIsRecording(true);
+    }
+  }, [isRecording, setIsRecording]);
 
   return (
     <Layout>
       <HeaderHolder>
         <h1>{robot.name}</h1>
-        <MatchControls
-          robot={robot}
-          onStart={() => {
-            if (!isRecording) {
-              setIsRecording(true);
-            }
-          }}
-        />
+        <MatchControls robot={robot} onStart={handleStartRecording} />
       </HeaderHolder>
       <NavigationTabs tabs={tabs} />
       <ControlsGrid>
@@ -196,6 +202,10 @@ export const RobotDisplay = ({
             onPause={onPauseRecording}
             onClear={onClearRecording}
           />
+        </ControlsSection>
+        <ControlsSection>
+          <h2>Robot</h2>
+          <button onClick={() => console.log(robot)}>Log robot data</button>
         </ControlsSection>
         <ControlsSection>
           <h2>Import CSV</h2>

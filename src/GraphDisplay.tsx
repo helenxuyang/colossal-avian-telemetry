@@ -220,41 +220,56 @@ export const GraphDisplay = ({ robot }: Props) => {
     animation: false,
   };
 
-  const handleDropdownChange = (event: SelectChangeEvent<string[]>) => {
-    const {
-      target: { value },
-    } = event;
-    const ids = typeof value === "string" ? value.split(",") : value;
+  const handleDropdownChange = useCallback(
+    (event: SelectChangeEvent<string[]>) => {
+      const {
+        target: { value },
+      } = event;
+      const ids = typeof value === "string" ? value.split(",") : value;
 
-    const plots = ids.map((id) => {
-      const components = id.split("-");
-      const escName = components[0] as EscName;
-      const typeOrMeasurement = components[1] as
-        | typeof INPUT
-        | typeof ERROR
-        | MeasurementName;
+      const plots = ids.map((id) => {
+        const components = id.split("-");
+        const escName = components[0] as EscName;
+        const typeOrMeasurement = components[1] as
+          | typeof INPUT
+          | typeof ERROR
+          | MeasurementName;
 
-      if (typeOrMeasurement === INPUT) {
-        return {
-          escName,
-          type: INPUT,
-        };
-      } else if (typeOrMeasurement === ERROR) {
-        return {
-          escName,
-          type: ERROR,
-        };
-      } else {
-        return {
-          escName,
-          type: "data",
-          measurementName: typeOrMeasurement,
-        };
-      }
-    });
+        if (typeOrMeasurement === INPUT) {
+          return {
+            escName,
+            type: INPUT,
+          };
+        } else if (typeOrMeasurement === ERROR) {
+          return {
+            escName,
+            type: ERROR,
+          };
+        } else {
+          return {
+            escName,
+            type: "data",
+            measurementName: typeOrMeasurement,
+          };
+        }
+      });
 
-    setPlotIds(plots as Plot[]);
-  };
+      setPlotIds(plots as Plot[]);
+    },
+    [],
+  );
+
+  const toggleAutoScrolling = useCallback(() => {
+    if (isAutoScrolling) {
+      setLastZoomValues({
+        startValue: autoscrollStart ?? 0,
+        endValue: referenceTimestamps.at(-1) ?? 0,
+      });
+    } else {
+      setLastZoomValues({});
+    }
+    setIsAutoScrolling((scrolling) => !scrolling);
+  }, [autoscrollStart, isAutoScrolling, referenceTimestamps]);
 
   const MenuProps = {
     PaperProps: {
@@ -316,19 +331,7 @@ export const GraphDisplay = ({ robot }: Props) => {
             <span>
               {isAutoScrolling && <StatusDot dot="🟢" />} Auto-scroll{" "}
             </span>
-            <button
-              onClick={() => {
-                if (isAutoScrolling) {
-                  setLastZoomValues({
-                    startValue: autoscrollStart ?? 0,
-                    endValue: referenceTimestamps.at(-1) ?? 0,
-                  });
-                } else {
-                  setLastZoomValues({});
-                }
-                setIsAutoScrolling((scrolling) => !scrolling);
-              }}
-            >
+            <button onClick={toggleAutoScrolling}>
               {isAutoScrolling ? "⏸" : "▶"}
             </button>
           </AutoscrollHolder>
