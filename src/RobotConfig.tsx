@@ -3,10 +3,17 @@ import {
   getInitColossalAvian,
   getInitStackOverflow,
   type EscName,
+  type Measurement,
   type MeasurementName,
   type Robot,
 } from "./robot";
 import styled from "styled-components";
+import {
+  deleteRobotConfig,
+  getRobotStorage,
+  saveRobotConfig,
+} from "./storageUtils";
+import type { RobotConfig } from "./dataUtils";
 
 const ConfigLayout = styled.div`
   display: flex;
@@ -46,6 +53,12 @@ const UnsavedWarning = styled.div`
   color: darkorange;
 `;
 
+const CustomConfigButtons = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+`;
+
 type Props = {
   robot: Robot;
   setRobot: (robot: Robot) => void;
@@ -53,8 +66,15 @@ type Props = {
 
 const prebuiltRobots = [getInitColossalAvian(), getInitStackOverflow()];
 
-export const RobotConfig = ({ robot, setRobot }: Props) => {
+export const ConfigDisplay = ({ robot, setRobot }: Props) => {
   const [robotInput, setRobotInput] = useState<Robot>(robot);
+  const [robotStorage, setRobotStorage] = useState<Record<string, RobotConfig>>(
+    {},
+  );
+
+  useEffect(() => {
+    setRobotStorage(getRobotStorage());
+  }, []);
 
   useEffect(() => {
     setRobotInput(structuredClone(robot));
@@ -91,18 +111,77 @@ export const RobotConfig = ({ robot, setRobot }: Props) => {
       <PrebuiltRobotsLayout>
         <h2>Pre-built</h2>
         {prebuiltRobots.map((robot) => (
-          <button
-            key={robot.name}
-            onClick={() => {
-              setRobot(structuredClone(robot));
-            }}
-          >
-            Switch to {robot.name}
-          </button>
+          <div>
+            <button
+              key={robot.name}
+              onClick={() => {
+                setRobot(structuredClone(robot));
+              }}
+            >
+              Switch to {robot.name}
+            </button>
+          </div>
         ))}
+        <h2>Local</h2>
+        {Object.values(robotStorage).length === 0 ? (
+          <p>None</p>
+        ) : (
+          Object.values(robotStorage).map((config) => {
+            return (
+              <CustomConfigButtons>
+                <button
+                  key={config.name}
+                  onClick={() => {
+                    const robotCopy = structuredClone(robot);
+                    robotCopy.name = config.name;
+                    config.escConfigs.forEach((escConfig) => {
+                      escConfig.measurements.forEach((measurementConfig) => {
+                        Object.entries(measurementConfig).forEach(
+                          ([key, value]) => {
+                            const measurement =
+                              robotCopy.escs[escConfig.name].measurements[
+                                measurementConfig.name as MeasurementName
+                              ];
+                            // @ts-expect-error TODO types get weird when using Object.entries
+                            measurement[key as keyof Measurement] = value;
+                          },
+                        );
+                      });
+                    });
+                    setRobot(robotCopy);
+                  }}
+                >
+                  Switch to {config.name}
+                </button>
+                <button
+                  key={`${config.name}-delete`}
+                  onClick={() => {
+                    deleteRobotConfig(config.name);
+                    setRobotStorage(getRobotStorage());
+                  }}
+                >
+                  🗑️
+                </button>
+              </CustomConfigButtons>
+            );
+          })
+        )}
       </PrebuiltRobotsLayout>
       <br />
       <h2>Custom</h2>
+      <label htmlFor="name">Name</label>
+      <input
+        id="name"
+        name="name"
+        value={robotInput.name}
+        onChange={(e) => {
+          setRobotInput((input) => {
+            const newRobotInput = structuredClone(input);
+            newRobotInput.name = e.target.value;
+            return newRobotInput;
+          });
+        }}
+      ></input>
       <EscLayout>
         {Object.values(robotInput.escs).map((esc) => {
           return (
@@ -157,7 +236,15 @@ export const RobotConfig = ({ robot, setRobot }: Props) => {
           );
         })}
       </EscLayout>
-      <button onClick={() => setRobot(robotInput)}>Save</button>
+      <button
+        onClick={() => {
+          setRobot(robotInput);
+          saveRobotConfig(robotInput);
+          setRobotStorage(getRobotStorage());
+        }}
+      >
+        Save
+      </button>
     </ConfigLayout>
   );
 };
