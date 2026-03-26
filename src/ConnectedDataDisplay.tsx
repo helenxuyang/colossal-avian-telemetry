@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Robot, getInitColossalAvian } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import { WebSocketConnector } from "./WebSocketConnector";
@@ -31,27 +31,41 @@ export const ConnectedDataDisplay = () => {
     handleReceiveDataCallback.current = handleReceiveData;
   }, [handleReceiveData]);
 
+  const controls = useMemo(
+    () => [
+      <WebSocketInfoHolder>
+        <WebSocketConnector
+          onReceiveData={handleReceiveDataCallback}
+          onConnect={() => {
+            setIsRecording(true);
+          }}
+        />
+      </WebSocketInfoHolder>,
+    ],
+    [],
+  );
+
+  const handleStartRecording = useCallback(() => {
+    setIsRecording(true);
+  }, []);
+
+  const handlePauseRecording = useCallback(() => setIsRecording(false), []);
+
+  const handleClearRecording = useCallback(
+    () => setRobot(getInitColossalAvian()),
+    [],
+  );
+
   return (
     <RobotDisplay
       robot={robot}
       setRobot={setRobot}
-      controls={[
-        <WebSocketInfoHolder>
-          <WebSocketConnector
-            onReceiveData={handleReceiveDataCallback}
-            onConnect={() => {
-              setIsRecording(true);
-            }}
-          />
-        </WebSocketInfoHolder>,
-      ]}
+      controls={controls}
       isRecording={isRecording}
       setIsRecording={setIsRecording}
-      onStartRecording={() => {
-        setIsRecording(true);
-      }}
-      onPauseRecording={() => setIsRecording(false)}
-      onClearRecording={() => setRobot(getInitColossalAvian())}
+      onStartRecording={handleStartRecording}
+      onPauseRecording={handlePauseRecording}
+      onClearRecording={handleClearRecording}
     />
   );
 };

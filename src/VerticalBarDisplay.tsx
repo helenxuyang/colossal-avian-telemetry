@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { type Measurement } from "./robot";
 import { Container, Value } from "./styles";
-import { LineChart } from "./LineChart";
 import { getColor, getLatestPercent, getLatestValueDisplay } from "./dataUtils";
 
 type Props = {
@@ -38,7 +37,7 @@ const RangeText = styled.p`
 `;
 
 export const VerticalBarDisplay = ({ measurement, className = "" }: Props) => {
-  const { name, min, max, shouldPlot } = measurement;
+  const { name, min, max } = measurement;
 
   const percent = getLatestPercent(measurement);
   const barColor = getColor(measurement);
@@ -56,7 +55,6 @@ export const VerticalBarDisplay = ({ measurement, className = "" }: Props) => {
         </BarDisplay>
         <Value>{getLatestValueDisplay(measurement)}</Value>
       </Container>
-      {shouldPlot && <LineChart measurement={measurement} />}
     </div>
   );
 };

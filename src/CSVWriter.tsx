@@ -1,6 +1,6 @@
 import { CSVLink } from "react-csv";
 import { type Robot } from "./robot";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import styled from "styled-components";
 import { getCsvData, type CSVRow } from "./csvUtils";
 
@@ -28,10 +28,10 @@ export const CSVDownloader = ({ robot }: Props) => {
   const [fileName, setFileName] = useState<string>("");
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
 
-  const prepareDownload = () => {
+  const prepareDownload = useCallback(() => {
     setCsvData(getCsvData(robot));
     setFileName(`colossal-avian-${getFormattedFirstTimestamp(robot)}.csv`);
-  };
+  }, [robot]);
 
   return (
     <StyledCSVLink

@@ -51,7 +51,7 @@ export const ConsumptionDonut = ({ escs }: Props) => {
     let angle = 0;
 
     Object.values(escs).forEach((esc, index) => {
-      const value = getLatestValue(esc.measurements[CONSUMPTION]);
+      const value = getLatestValue(esc.measurements[CONSUMPTION].values);
       const percent = Math.round((value / totalConsumption) * 100);
       const color = colors[index];
       const strokeWidth = 10;

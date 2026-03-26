@@ -14,7 +14,7 @@ import {
   ArcElement,
 } from "chart.js";
 import { ConnectedDataDisplay } from "./ConnectedDataDisplay";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { FullscreenButton } from "./FullscreenButton";
 
 ChartJS.register(
@@ -46,6 +46,10 @@ const ControlsHolder = styled.div`
 
 function App() {
   const [isUsingFakeData, setIsUsingFakeData] = useState(false);
+  const toggleUsingFakeData = useCallback(
+    () => setIsUsingFakeData((isFake) => !isFake),
+    [],
+  );
   return (
     <Container>
       <DisplayHolder>
@@ -53,7 +57,7 @@ function App() {
       </DisplayHolder>
       <h2>App Controls</h2>
       <ControlsHolder>
-        <button onClick={() => setIsUsingFakeData((isFake) => !isFake)}>
+        <button onClick={toggleUsingFakeData}>
           Use {isUsingFakeData ? "real" : "fake"} data
         </button>
         <FullscreenButton />

@@ -1,3 +1,4 @@
+import { forEachEsc } from "./dataUtils";
 import {
   type MatchMarker,
   type Robot,
@@ -9,7 +10,7 @@ export type CSVRow = (string | number)[];
 
 export const getCsvData = (robot: Robot): CSVRow[] => {
   const rows: CSVRow[] = [];
-  Object.values(robot.escs).forEach((esc) => {
+  forEachEsc(robot.escs, (esc) => {
     const measurements = Object.values(esc.measurements);
     const measurementNames = measurements.map(
       (measurement) => measurement.name,
@@ -71,7 +72,7 @@ export const getCsvData = (robot: Robot): CSVRow[] => {
 export const importRobot = (csvData: string[][]): Robot => {
   const robot = getInitColossalAvian();
 
-  Object.values(robot.escs).forEach((esc) => {
+  forEachEsc(robot.escs, (esc) => {
     const dataRows = csvData.filter(
       (row) => row.includes(esc.name) && row[0] === "data",
     );

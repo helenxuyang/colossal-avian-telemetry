@@ -1,4 +1,5 @@
 import {
+  type ESC,
   type EscName,
   type Measurement,
   type MeasurementName,
@@ -11,7 +12,7 @@ export const HIGHLIGHT_COLOR = "green";
 export const getColor = (measurement: Measurement) => {
   const { colorThresholds, highlightThreshold } = measurement;
   let barColor = DEFAULT_COLOR;
-  const latestValue = getLatestValue(measurement);
+  const latestValue = getLatestValue(measurement.values);
 
   const shouldHighlight = highlightThreshold
     ? latestValue >= highlightThreshold
@@ -43,14 +44,13 @@ export const getClampedPercent = (value: number, min: number, max: number) => {
   return Math.round(Math.max(Math.min(percent, 100), 0));
 };
 
-export const getLatestValue = (measurement: Measurement) => {
-  const { values } = measurement;
+export const getLatestValue = (values: Measurement["values"]) => {
   return values.at(-1) ?? 0;
 };
 
 export const getLatestPercent = (measurement: Measurement) => {
   return getClampedPercent(
-    getLatestValue(measurement),
+    getLatestValue(measurement.values),
     measurement.min,
     measurement.max,
   );
@@ -61,7 +61,7 @@ export const getLatestValueDisplay = (measurement: Measurement) => {
   if (unit === "%") {
     return `${getLatestPercent(measurement)}%`;
   } else {
-    return `${getLatestValue(measurement)}${unit && ` ${unit}`}`;
+    return `${getLatestValue(measurement.values)}${unit && ` ${unit}`}`;
   }
 };
 
@@ -69,11 +69,52 @@ export const calculateTotal = (
   measurementName: MeasurementName,
   escs: Robot["escs"],
 ) => {
-  const values = Object.values(escs).map((esc) =>
-    getLatestValue(esc.measurements[measurementName]),
+  const values = mapEscs(escs, (esc) =>
+    getLatestValue(esc.measurements[measurementName].values),
   );
   const total = values.reduce((sum, curr) => sum + curr, 0);
   return Number(total.toFixed(2));
+};
+
+export const forEachEsc = (escs: Robot["escs"], fn: (esc: ESC) => void) => {
+  Object.values(escs).forEach((esc) => {
+    fn(esc);
+  });
+};
+
+export const forEachMeasurement = (
+  escs: Robot["escs"],
+  fn: (measurement: Measurement) => void,
+) => {
+  Object.values(escs).forEach((esc) => {
+    Object.values(esc.measurements).forEach((measurement) => {
+      fn(measurement);
+    });
+  });
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const mapEscs = (escs: Robot["escs"], fn: (esc: ESC) => any) => {
+  return Object.values(escs).map((esc) => fn(esc));
+};
+
+export const mapMeasurements = (
+  measurements: ESC["measurements"],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fn: (measurements: Measurement) => any,
+) => {
+  return Object.values(measurements).map((measurements) => fn(measurements));
+};
+
+export const clearValues = (robot: Robot) => {
+  forEachMeasurement(robot.escs, (measurement) => {
+    measurement.values = [];
+  });
+  forEachEsc(robot.escs, (esc) => {
+    esc.inputs.values = [];
+    esc.errors = [];
+  });
+  robot.matchMarkers = [];
 };
 
 type MeasurementConfig = {

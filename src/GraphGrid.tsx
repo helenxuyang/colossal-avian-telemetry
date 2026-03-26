@@ -76,9 +76,7 @@ type PlotConfig = {
   isFullWidth: boolean;
 };
 export const GraphGrid = ({ robot }: Props) => {
-  const [plotConfigs, setPlotConfigs] = useState<PlotConfig[]>([
-    { id: crypto.randomUUID(), isFullWidth: true },
-  ]);
+  const [plotConfigs, setPlotConfigs] = useState<PlotConfig[]>([]);
 
   const deletePlot = (index: number) =>
     setPlotConfigs(plotConfigs.filter((_, i) => i !== index));

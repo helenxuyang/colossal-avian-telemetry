@@ -84,21 +84,21 @@ describe("getLatestValue", () => {
   });
 
   it("defaults to 0 if no values", () => {
-    expect(getLatestValue(measurement)).toBe(0);
+    expect(getLatestValue(measurement.values)).toBe(0);
   });
 
   it("gets last value within min and max", () => {
     measurement.values.push(10);
-    expect(getLatestValue(measurement)).toBe(10);
+    expect(getLatestValue(measurement.values)).toBe(10);
     measurement.values.push(90);
-    expect(getLatestValue(measurement)).toBe(90);
+    expect(getLatestValue(measurement.values)).toBe(90);
   });
 
   it("gets last value if outside of min and max", () => {
     measurement.values.push(2);
-    expect(getLatestValue(measurement)).toBe(2);
+    expect(getLatestValue(measurement.values)).toBe(2);
     measurement.values.push(200);
-    expect(getLatestValue(measurement)).toBe(200);
+    expect(getLatestValue(measurement.values)).toBe(200);
   });
 });
 

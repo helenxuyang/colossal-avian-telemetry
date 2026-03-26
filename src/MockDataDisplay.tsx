@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { getInitColossalAvian, type EscName, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import { DebugDisplay } from "./DebugDisplay";
@@ -21,7 +21,7 @@ const ButtonsHolder = styled.div`
 `;
 
 export const MockDataDisplay = () => {
-  const intervalMs = 30;
+  const intervalMs = 8;
   const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
     null,
   );
@@ -29,7 +29,7 @@ export const MockDataDisplay = () => {
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
   const [startTime, setStartTime] = useState<number | null>(0);
 
-  const handleStart = () => {
+  const handleStart = useCallback(() => {
     const now = Date.now();
     if (!startTime) {
       setStartTime(now);
@@ -50,52 +50,57 @@ export const MockDataDisplay = () => {
     };
 
     setMockDataIntervalId(setInterval(handleMockMessage, intervalMs));
-  };
+  }, [startTime]);
 
-  const handleMockError = (escName?: EscName) => {
-    setRobot((robot) => {
-      if (startTime) {
-        const mockError = getMockEscError(startTime, escName);
-        const parsedData = parseData(mockError);
-        return getUpdatedRobot(parsedData, robot);
-      }
-      return robot;
-    });
-  };
+  const handleMockError = useCallback(
+    (escName?: EscName) => {
+      setRobot((robot) => {
+        if (startTime) {
+          const mockError = getMockEscError(startTime, escName);
+          const parsedData = parseData(mockError);
+          return getUpdatedRobot(parsedData, robot);
+        }
+        return robot;
+      });
+    },
+    [startTime],
+  );
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     if (mockDataIntervalId) {
       clearInterval(mockDataIntervalId);
     }
     setMockDataIntervalId(null);
-  };
+  }, [mockDataIntervalId]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setRobot(getInitColossalAvian());
     setStartTime(null);
-  };
+  }, []);
 
-  const controls = (
-    <MockDataControls>
-      <h2>Data</h2>
-      <p>⚠ USING FAKE DATA ⚠</p>
-      <ButtonsHolder>
-        {Object.keys(robot.escs).map((esc) => (
-          <button key={esc} onClick={() => handleMockError(esc as EscName)}>
-            Mock {esc} error
-          </button>
-        ))}
-      </ButtonsHolder>
+  const controls = useMemo(() => {
+    return [
+      <MockDataControls>
+        <h2>Data</h2>
+        <p>⚠ USING FAKE DATA ⚠</p>
+        <ButtonsHolder>
+          {Object.keys(robot.escs).map((esc) => (
+            <button key={esc} onClick={() => handleMockError(esc as EscName)}>
+              Mock {esc} error
+            </button>
+          ))}
+        </ButtonsHolder>
 
-      <DebugDisplay robot={robot} />
-    </MockDataControls>
-  );
+        <DebugDisplay robot={robot} />
+      </MockDataControls>,
+    ];
+  }, [handleMockError, robot]);
 
   return (
     <RobotDisplay
       robot={robot}
       setRobot={setRobot}
-      controls={[controls]}
+      controls={controls}
       isRecording={mockDataIntervalId !== null}
       setIsRecording={handleStart}
       onStartRecording={handleStart}

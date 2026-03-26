@@ -80,6 +80,7 @@ export const GraphDisplay = ({ robot }: Props) => {
   const referenceTimestamps = Object.values(robot.escs).filter(
     (esc) => esc.shouldShow,
   )[0].timestamps;
+
   const autoscrollStart =
     referenceTimestamps.length > 0
       ? referenceTimestamps[referenceTimestamps.length - 1] - 5000

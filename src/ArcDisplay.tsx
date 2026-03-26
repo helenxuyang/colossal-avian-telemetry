@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { type Measurement } from "./robot";
 import { getLatestValue, getColor, getLatestValueDisplay } from "./dataUtils";
+import { useMemo } from "react";
 
 type Props = {
   outerMeasurement: Measurement;
@@ -68,68 +69,92 @@ const convertValueToCoord = (
   };
 };
 
+const svgWidth = 400;
+const svgHeight = svgWidth / 2;
+
+const outerStrokeWidth = 75;
+const outerDiameter = svgWidth;
+const outerRadius = outerDiameter / 2;
+
+const innerScale = 0.6;
+const innerDiameter = outerDiameter * innerScale;
+const innerRadius = innerDiameter / 2;
+
+const outerStart = `0 ${svgHeight}`;
+const outerBaseEnd = `${svgWidth} ${svgHeight}`;
+
+const innerStart = `${outerRadius - innerRadius} ${svgHeight}`;
+const innerBaseEnd = `${svgWidth - (outerRadius - innerRadius)} ${svgHeight}`;
+
+const viewBoxOffset = outerStrokeWidth / 2;
+const viewBox = `-${viewBoxOffset} -${viewBoxOffset} ${svgWidth + 2 * viewBoxOffset} ${svgHeight + viewBoxOffset}`;
+
 export const ArcDisplay = ({
   outerMeasurement: outer,
   innerMeasurement: inner,
   className,
 }: Props) => {
-  const svgWidth = 400;
-  const outerStrokeWidth = 75;
-
-  const svgHeight = svgWidth / 2;
-  const outerDiameter = svgWidth;
-  const outerRadius = outerDiameter / 2;
-
-  const innerScale = 0.6;
-  const innerDiameter = outerDiameter * innerScale;
-  const innerRadius = innerDiameter / 2;
-  const outerValue = getLatestValue(outer);
-  const { x: outerArcX, y: outerArcY } = convertValueToCoord(
-    outerValue,
-    outer.min,
-    outer.max,
-    svgWidth,
-    outerRadius,
+  const outerValue = useMemo(
+    () => getLatestValue(outer.values),
+    [outer.values],
+  );
+  const { x: outerArcX, y: outerArcY } = useMemo(
+    () =>
+      convertValueToCoord(
+        outerValue,
+        outer.min,
+        outer.max,
+        svgWidth,
+        outerRadius,
+      ),
+    [outerValue, outer.min, outer.max],
   );
 
-  const innerValue = getLatestValue(inner);
-  const { x: innerArcX, y: innerArcY } = convertValueToCoord(
-    innerValue,
-    inner.min,
-    inner.max,
-    svgWidth,
-    innerRadius,
+  const innerValue = useMemo(
+    () => getLatestValue(inner.values),
+    [inner.values],
+  );
+  const { x: innerArcX, y: innerArcY } = useMemo(
+    () =>
+      convertValueToCoord(
+        innerValue,
+        inner.min,
+        inner.max,
+        svgWidth,
+        innerRadius,
+      ),
+    [innerValue, inner.min, inner.max],
   );
 
-  const outerStart = `0 ${svgHeight}`;
-  const outerBaseEnd = `${svgWidth} ${svgHeight}`;
   const outerColor = getColor(outer);
-
-  const innerStart = `${outerRadius - innerRadius} ${svgHeight}`;
-  const innerBaseEnd = `${svgWidth - (outerRadius - innerRadius)} ${svgHeight}`;
   const innerColor = getColor(inner);
-
-  const viewBoxOffset = outerStrokeWidth / 2;
-  const viewBox = `-${viewBoxOffset} -${viewBoxOffset} ${svgWidth + 2 * viewBoxOffset} ${svgHeight + viewBoxOffset}`;
 
   const target = outer.highlightThreshold ?? 0;
   const onePercent = (outer.max - outer.min) / 100;
   const targetStart = target - onePercent / 2;
   const targetEnd = target + onePercent / 2;
-  const { x: targetStartX, y: targetStartY } = convertValueToCoord(
-    targetStart,
-    outer.min,
-    outer.max,
-    svgWidth,
-    outerRadius,
+  const { x: targetStartX, y: targetStartY } = useMemo(
+    () =>
+      convertValueToCoord(
+        targetStart,
+        outer.min,
+        outer.max,
+        svgWidth,
+        outerRadius,
+      ),
+    [outer.max, outer.min, targetStart],
   );
 
-  const { x: targetEndX, y: targetEndY } = convertValueToCoord(
-    targetEnd,
-    outer.min,
-    outer.max,
-    svgWidth,
-    outerRadius,
+  const { x: targetEndX, y: targetEndY } = useMemo(
+    () =>
+      convertValueToCoord(
+        targetEnd,
+        outer.min,
+        outer.max,
+        svgWidth,
+        outerRadius,
+      ),
+    [outer.max, outer.min, targetEnd],
   );
 
   return (

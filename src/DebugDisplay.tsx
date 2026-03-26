@@ -1,3 +1,4 @@
+import { mapEscs, mapMeasurements } from "./dataUtils";
 import type { Robot } from "./robot";
 
 type Props = {
@@ -9,7 +10,7 @@ export const DebugDisplay = ({ robot }: Props) => {
     <details>
       <summary>Debug</summary>
       <div>
-        {Object.values(robot.escs).map((esc) => {
+        {mapEscs(robot.escs, (esc) => {
           const numValuesToShow = 5;
           return (
             <div key={esc.name}>
@@ -18,7 +19,7 @@ export const DebugDisplay = ({ robot }: Props) => {
                 {" "}
                 Timestamps: [{esc.timestamps.slice(-numValuesToShow).join(",")}]
               </p>
-              {Object.values(esc.measurements).map((measurement) => {
+              {mapMeasurements(esc.measurements, (measurement) => {
                 return (
                   <div key={`${esc.name}-${measurement.name}`}>
                     <p>
