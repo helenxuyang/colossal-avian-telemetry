@@ -48,12 +48,17 @@ export const ESCDisplay = ({ esc, className }: Props) => {
     <DisplayHolder className={className}>
       <h3>{esc.name}</h3>
       <DisplayLayout>
-        <TempDisplay measurement={esc.measurements[TEMPERATURE]} />
-        <RPMCurrentDisplay
-          outerMeasurement={esc.measurements[RPM]}
-          innerMeasurement={esc.measurements[CURRENT]}
-        />
-        <InputDisplay measurement={esc.inputs} />
+        {esc.measurements[TEMPERATURE].shouldShow && (
+          <TempDisplay measurement={esc.measurements[TEMPERATURE]} />
+        )}
+        {esc.measurements[RPM].shouldShow &&
+          esc.measurements[CURRENT].shouldShow && (
+            <RPMCurrentDisplay
+              outerMeasurement={esc.measurements[RPM]}
+              innerMeasurement={esc.measurements[CURRENT]}
+            />
+          )}
+        {esc.inputs.shouldShow && <InputDisplay measurement={esc.inputs} />}
       </DisplayLayout>
     </DisplayHolder>
   );

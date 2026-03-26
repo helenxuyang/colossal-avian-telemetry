@@ -1,4 +1,5 @@
 import {
+  ARM_ESC,
   CONSUMPTION,
   CURRENT,
   DRIVE_LEFT_ESC,
@@ -18,9 +19,12 @@ export const mergeBytes = (byte1: number, byte2: number) => {
   return (byte1 << 8) + byte2;
 };
 
-type EscId = "a" | "b" | "c" | "w" | "x" | "y";
-const escDataIds = ["a", "b", "c"];
-const escInputIds = ["w", "x", "y"];
+const escDataIds = ["a", "b", "c"] as const;
+const escInputIds = ["w", "x", "y", "z"] as const;
+type EscDataId = (typeof escDataIds)[number];
+type EscInputId = (typeof escInputIds)[number];
+type EscId = EscDataId | EscInputId;
+
 const idToEscMap: Record<EscId, EscName> = {
   a: DRIVE_LEFT_ESC,
   b: DRIVE_RIGHT_ESC,
@@ -28,6 +32,7 @@ const idToEscMap: Record<EscId, EscName> = {
   w: DRIVE_LEFT_ESC,
   x: DRIVE_RIGHT_ESC,
   y: WEAPON_ESC,
+  z: ARM_ESC,
 };
 const escToIdMap: Record<EscName, EscId> = Object.entries(idToEscMap).reduce(
   (acc, [key, val]) => {
@@ -98,8 +103,8 @@ export const parseData = (data: string): ParsedData => {
  */
 
   const splitData = data.slice(1, data.length - 1).split(" ");
-  const escId = splitData[0];
-  const escName = idToEscMap[escId as EscId];
+  const escId = splitData[0] as EscId;
+  const escName = idToEscMap[escId];
 
   const ERROR_MARKER = "x";
   if (splitData[1] === ERROR_MARKER) {
@@ -115,7 +120,7 @@ export const parseData = (data: string): ParsedData => {
 
   const values = splitData.slice(1).map((entry) => Number("0x" + entry));
 
-  if (escDataIds.includes(escId)) {
+  if (escDataIds.includes(escId as EscDataId)) {
     const rpmFactor =
       escId === escToIdMap[WEAPON_ESC]
         ? 1 / 7 // TODO: if add arm, it's also 1/7
@@ -135,7 +140,7 @@ export const parseData = (data: string): ParsedData => {
       },
     };
     return parsedData;
-  } else if (escInputIds.includes(escId)) {
+  } else if (escInputIds.includes(escId as EscInputId)) {
     const value = values[0];
     const timestamp = values[1];
     const parsedData: ParsedData = {
@@ -215,7 +220,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
     const messageComponents = [];
     const timestamp = Date.now() - startTime;
 
-    if (escDataIds.includes(escId)) {
+    if (escDataIds.includes(escId as EscDataId)) {
       // component 0: temp
       const mockTemp = generateMockValue(
         esc.measurements[TEMPERATURE],
@@ -249,7 +254,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
 
       // component 10: timestamp
       messageComponents.push(timestamp.toString(16));
-    } else if (escInputIds.includes(escId)) {
+    } else if (escInputIds.includes(escId as EscInputId)) {
       // component 1: input
       const mockInput = (generateMockValue(esc.inputs) + 300) * 5;
       messageComponents.push(mockInput.toString(16));

@@ -1,4 +1,5 @@
 import {
+  getInitColossalAvian,
   type ESC,
   type EscName,
   type Measurement,
@@ -111,13 +112,62 @@ export const clearValues = (robot: Robot) => {
     measurement.values = [];
   });
   forEachEsc(robot.escs, (esc) => {
+    esc.timestamps = [];
+    esc.inputs.timestamps = [];
     esc.inputs.values = [];
     esc.errors = [];
   });
   robot.matchMarkers = [];
 };
 
-type MeasurementConfig = {
+const ROBOT_CACHE = "robotCache";
+
+const getCachedRobot = () => {
+  const storedRobotStr = localStorage.getItem(ROBOT_CACHE);
+  const storedRobot = storedRobotStr
+    ? (JSON.parse(storedRobotStr) as Robot)
+    : getInitColossalAvian();
+  return storedRobot;
+};
+
+export const combineRobotData = (oldRobot: Robot, newRobot: Robot) => {
+  const combinedRobot = structuredClone(newRobot);
+
+  forEachEsc(combinedRobot.escs, (esc) => {
+    const oldRobotEsc = oldRobot.escs[esc.name];
+
+    Object.values(esc.measurements).forEach((measurement) => {
+      const storedValues = oldRobotEsc.measurements[measurement.name].values;
+      measurement.values = [...storedValues, ...measurement.values];
+    });
+    esc.timestamps = [...oldRobotEsc.timestamps, ...esc.timestamps];
+    esc.inputs.timestamps = [
+      ...oldRobotEsc.inputs.timestamps,
+      ...esc.inputs.timestamps,
+    ];
+    esc.inputs.values = [...oldRobotEsc.inputs.values, ...esc.inputs.values];
+    esc.errors = [...oldRobotEsc.errors, ...esc.errors];
+  });
+
+  combinedRobot.matchMarkers = [
+    ...oldRobot.matchMarkers,
+    ...newRobot.matchMarkers,
+  ];
+
+  return combinedRobot;
+};
+
+export const combineRobotWithCache = (currentRobot: Robot) => {
+  return combineRobotData(getCachedRobot(), currentRobot);
+};
+
+export const cacheRobotData = (robot: Robot) => {
+  const fullRobot = combineRobotWithCache(robot);
+  localStorage.setItem(ROBOT_CACHE, JSON.stringify(fullRobot));
+  clearValues(robot);
+};
+
+export type MeasurementConfig = {
   name: string;
   min: number;
   max: number;

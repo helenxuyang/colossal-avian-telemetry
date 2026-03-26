@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  CONSUMPTION,
-  CURRENT,
   DRIVE_LEFT_ESC,
   DRIVE_RIGHT_ESC,
   getInitColossalAvian,
   VOLTAGE,
-  WEAPON_ESC,
   type Measurement,
   type Robot,
 } from "../robot";
@@ -19,7 +16,10 @@ import {
   getLatestPercent,
   getLatestValueDisplay,
   calculateTotal,
+  clearValues,
+  combineRobotData,
 } from "../dataUtils";
+import { getMockRobotWithData } from "./testData";
 
 const mockMeasurement: Measurement = {
   name: VOLTAGE,
@@ -32,6 +32,7 @@ const mockMeasurement: Measurement = {
   },
   highlightThreshold: 80,
   values: [],
+  shouldShow: true,
 };
 
 const mockRobot: Robot = getInitColossalAvian();
@@ -152,19 +153,19 @@ describe("calculateTotal", () => {
   });
 });
 
-describe("addDerivedValues", () => {
-  it("calculates voltage, current, and consumption", () => {
-    const robot = {
-      ...structuredClone(mockRobot),
-    };
-    robot.escs[DRIVE_LEFT_ESC].measurements[VOLTAGE].values.push(10);
-    robot.escs[DRIVE_RIGHT_ESC].measurements[VOLTAGE].values.push(20);
-    robot.escs[WEAPON_ESC].measurements[VOLTAGE].values.push(40);
+describe("clearValues", () => {
+  it("clears all accumulated data", () => {
+    const robot = getMockRobotWithData();
+    clearValues(robot);
+    expect(robot).toEqual(getInitColossalAvian());
+  });
+});
 
-    robot.escs[DRIVE_RIGHT_ESC].measurements[CURRENT].values.push(2);
-    robot.escs[WEAPON_ESC].measurements[CURRENT].values.push(3);
-
-    robot.escs[DRIVE_LEFT_ESC].measurements[CONSUMPTION].values.push(2);
-    robot.escs[DRIVE_RIGHT_ESC].measurements[CONSUMPTION].values.push(4);
+describe("combineRobotData", () => {
+  it("combines empty robot and robot with data", () => {
+    const oldRobot = getInitColossalAvian();
+    const newRobot = getMockRobotWithData();
+    const combinedRobot = combineRobotData(oldRobot, newRobot);
+    expect(combinedRobot).toEqual(newRobot);
   });
 });

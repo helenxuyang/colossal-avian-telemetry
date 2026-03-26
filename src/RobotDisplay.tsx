@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import {
+  ARM_ESC,
   CONSUMPTION,
   CURRENT,
   DRIVE_LEFT_ESC,
@@ -22,7 +23,11 @@ import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVWriter";
 import { ConfigDisplay } from "./RobotConfig";
 import { useCallback, useMemo } from "react";
-import { calculateTotal } from "./dataUtils";
+import {
+  cacheRobotData,
+  calculateTotal,
+  combineRobotWithCache,
+} from "./dataUtils";
 
 const Layout = styled.div`
   display: flex;
@@ -46,11 +51,15 @@ const ESCGrid = styled.div`
   gap: 8px;
 `;
 
-const DriveEscSection = styled(ESCDisplay)`
+const SmallEscSection = styled(ESCDisplay)`
+  flex: 1;
+`;
+
+const MediumEscSection = styled(ESCDisplay)`
   flex: 2;
 `;
 
-const WeaponESCSection = styled(ESCDisplay)`
+const LargeEscSection = styled(ESCDisplay)`
   flex: 3;
 `;
 
@@ -120,6 +129,7 @@ export const RobotDisplay = ({
   const driveLeftEsc = robot.escs[DRIVE_LEFT_ESC];
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
+  const armEsc = robot.escs[ARM_ESC];
 
   const totalCurrent = useMemo(
     () => calculateTotal(CURRENT, robot.escs),
@@ -155,11 +165,10 @@ export const RobotDisplay = ({
         </RobotSection>
         <ESCSection>
           <ESCGrid>
-            {driveLeftEsc.shouldShow && <DriveEscSection esc={driveLeftEsc} />}
-            {weaponEsc.shouldShow && <WeaponESCSection esc={weaponEsc} />}
-            {driveRightEsc.shouldShow && (
-              <DriveEscSection esc={driveRightEsc} />
-            )}
+            {driveLeftEsc && <MediumEscSection esc={driveLeftEsc} />}
+            {weaponEsc && <LargeEscSection esc={weaponEsc} />}
+            {armEsc && <SmallEscSection esc={armEsc} />}
+            {driveRightEsc && <MediumEscSection esc={driveRightEsc} />}
           </ESCGrid>
         </ESCSection>
       </Layout>
@@ -169,6 +178,7 @@ export const RobotDisplay = ({
       driveLeftEsc,
       driveRightEsc,
       weaponEsc,
+      armEsc,
       totalConsumption,
       totalCurrent,
     ],
@@ -222,6 +232,17 @@ export const RobotDisplay = ({
         <ControlsSection>
           <h2>Robot</h2>
           <button onClick={() => console.log(robot)}>Log robot data</button>
+          <button onClick={() => cacheRobotData(robot)}>
+            Cache robot data
+          </button>
+          <button
+            onClick={() => {
+              cacheRobotData(robot);
+              setRobot(combineRobotWithCache(robot));
+            }}
+          >
+            Fetch full robot
+          </button>
         </ControlsSection>
         <ControlsSection>
           <h2>Import CSV</h2>

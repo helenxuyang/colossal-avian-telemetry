@@ -1,3 +1,5 @@
+import { mapMeasurements } from "./dataUtils";
+
 export type Measurement = {
   name: string;
   unit: string;
@@ -8,19 +10,14 @@ export type Measurement = {
   values: number[];
   colorThresholds?: Record<string, number>;
   highlightThreshold?: number;
-  shouldShow?: boolean;
-  shouldPlot?: boolean;
+  shouldShow: boolean;
   shouldShowPercent?: boolean;
 };
 
 export type Input = Omit<Measurement, "name"> & {
   name: typeof INPUT;
   timestamps: number[];
-};
-
-export type DerivedValue = Omit<Measurement, "name"> & {
-  name: DerivedValueName;
-  measurementName: MeasurementName;
+  shouldShow: boolean;
 };
 
 export const TEMPERATURE = "Temp";
@@ -44,7 +41,7 @@ export const TOTAL_CONSUMPTION = "Total Consumption";
 export const ALL_DERIVED_VALUES = [TOTAL_CURRENT, TOTAL_CONSUMPTION];
 export type DerivedValueName = (typeof ALL_DERIVED_VALUES)[number];
 
-type MeasurementMap = Record<MeasurementName, Measurement>;
+type MeasurementMap = Record<string, Measurement>;
 type EscError = {
   timestamp: number;
   // TODO: might have error codes or something later
@@ -57,7 +54,6 @@ export type ESC = {
   errors: EscError[];
   measurements: MeasurementMap;
   inputs: Input;
-  shouldShow?: boolean;
 };
 
 export const getInitEscMeasurements = ({
@@ -83,7 +79,7 @@ export const getInitEscMeasurements = ({
       max: rpmMax,
       values: [],
       highlightThreshold: rpmHighlight,
-      shouldPlot: true,
+      shouldShow: true,
     },
     [VOLTAGE]: {
       name: VOLTAGE,
@@ -92,7 +88,6 @@ export const getInitEscMeasurements = ({
       max: voltageMax,
       values: [],
       shouldShow: false,
-      // shouldPlot: true,
     },
     [CURRENT]: {
       name: CURRENT,
@@ -100,7 +95,7 @@ export const getInitEscMeasurements = ({
       min: 0,
       max: maxCurrent,
       values: [],
-      shouldPlot: true,
+      shouldShow: true,
     },
     [CONSUMPTION]: {
       name: CONSUMPTION,
@@ -121,7 +116,7 @@ export const getInitEscMeasurements = ({
         orange: 75,
         red: 85,
       },
-      shouldPlot: false,
+      shouldShow: true,
     },
   };
 };
@@ -145,11 +140,10 @@ export const getInitEsc = (
       max: 100,
       values: [],
       timestamps: [],
-      shouldPlot: false,
       shouldShowPercent: false,
+      shouldShow: true,
     },
     errors: [],
-    shouldShow: true,
   };
 };
 
@@ -170,15 +164,21 @@ export const DRIVE_RIGHT_ESC = "DriveRight" as const;
 export const ARM_ESC = "Arm" as const;
 export const WEAPON_ESC = "Weapon" as const;
 
-export type EscName =
-  | typeof DRIVE_LEFT_ESC
-  | typeof DRIVE_RIGHT_ESC
-  | typeof WEAPON_ESC;
+export type EscName = string;
+// TODO: fix types later?
+// | typeof DRIVE_LEFT_ESC
+// | typeof DRIVE_RIGHT_ESC
+// | typeof WEAPON_ESC;
 // | typeof ARM_ESC;
 
 export const getInitColossalAvian = (): Robot => {
   // no arm yet
-  const allEscs: EscName[] = [DRIVE_LEFT_ESC, DRIVE_RIGHT_ESC, WEAPON_ESC];
+  const allEscs: EscName[] = [
+    DRIVE_LEFT_ESC,
+    DRIVE_RIGHT_ESC,
+    WEAPON_ESC,
+    ARM_ESC,
+  ];
   const escs = allEscs.reduce(
     (acc, name) => {
       const measurementMap = getInitEscMeasurements({
@@ -187,10 +187,18 @@ export const getInitColossalAvian = (): Robot => {
         rpmHighlight: name === WEAPON_ESC ? 15000 : undefined,
       });
 
+      if (name === ARM_ESC) {
+        mapMeasurements(measurementMap, (measurement) => {
+          if (measurement.name !== INPUT) {
+            measurement.shouldShow = false;
+          }
+        });
+      }
+
       acc[name] = getInitEsc(name, measurementMap);
       return acc;
     },
-    {} as Record<string, ESC>,
+    {} as Record<EscName, ESC>,
   );
 
   return {
@@ -221,14 +229,6 @@ export const getInitStackOverflow = (): Robot => {
           voltageMax,
         }),
       ),
-      [DRIVE_LEFT_ESC]: {
-        ...getInitEsc(DRIVE_LEFT_ESC, getInitEscMeasurements({})),
-        shouldShow: false,
-      }, // NOT USED
-      [DRIVE_RIGHT_ESC]: {
-        ...getInitEsc(DRIVE_RIGHT_ESC, getInitEscMeasurements({})),
-        shouldShow: false,
-      }, // NOT USED
     },
     initialTimestamp: null,
     matchMarkers: [],
