@@ -68,6 +68,7 @@ describe("getMockEscMessageGenerator", () => {
     checkInputMessage("w");
     checkInputMessage("x");
     checkInputMessage("y");
+    checkInputMessage("z");
     checkDataMessage("a");
   });
 });

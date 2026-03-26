@@ -21,7 +21,7 @@ import { RobotImporter } from "./RobotImporter";
 import { RecordingControls } from "./RecordingControls";
 import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVWriter";
-import { ConfigDisplay } from "./RobotConfig";
+import { ConfigDisplay } from "./ConfigDisplay";
 import { useCallback, useMemo } from "react";
 import {
   cacheRobotData,
@@ -48,6 +48,7 @@ const ESCSection = styled.div`
 
 const ESCGrid = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 `;
 
@@ -167,8 +168,8 @@ export const RobotDisplay = ({
           <ESCGrid>
             {driveLeftEsc && <MediumEscSection esc={driveLeftEsc} />}
             {weaponEsc && <LargeEscSection esc={weaponEsc} />}
-            {armEsc && <SmallEscSection esc={armEsc} />}
             {driveRightEsc && <MediumEscSection esc={driveRightEsc} />}
+            {armEsc && <SmallEscSection esc={armEsc} />}
           </ESCGrid>
         </ESCSection>
       </Layout>

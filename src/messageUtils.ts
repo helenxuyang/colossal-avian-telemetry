@@ -122,8 +122,8 @@ export const parseData = (data: string): ParsedData => {
 
   if (escDataIds.includes(escId as EscDataId)) {
     const rpmFactor =
-      escId === escToIdMap[WEAPON_ESC]
-        ? 1 / 7 // TODO: if add arm, it's also 1/7
+      escId === escToIdMap[WEAPON_ESC] || escId === escToIdMap[ARM_ESC]
+        ? 1 / 7
         : 1 / 6;
     const timestamp = Number(values[10]);
 
@@ -209,7 +209,7 @@ export const generateMockValueTwoByteHex = (num: number) => {
   return combined;
 };
 
-const escIds = ["a", "b", "c", "w", "x", "y"];
+const escIds = [...escDataIds, ...escInputIds];
 let escIndex = 0;
 
 export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
@@ -245,7 +245,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
       // component 7-8: RPM
       const mockRPM =
         (generateMockValue(esc.measurements[RPM]) / 100) *
-        (escName === WEAPON_ESC ? 7 : 6); // TODO: if add arm, it's also 7
+        (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
       const mockRPMHex = generateMockValueTwoByteHex(mockRPM);
       messageComponents.push(mockRPMHex);
 

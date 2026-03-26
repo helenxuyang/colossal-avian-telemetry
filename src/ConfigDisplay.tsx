@@ -111,16 +111,14 @@ export const ConfigDisplay = ({ robot, setRobot }: Props) => {
       <PrebuiltRobotsLayout>
         <h2>Pre-built</h2>
         {prebuiltRobots.map((robot) => (
-          <div>
-            <button
-              key={robot.name}
-              onClick={() => {
-                setRobot(structuredClone(robot));
-              }}
-            >
-              Switch to {robot.name}
-            </button>
-          </div>
+          <button
+            key={robot.name}
+            onClick={() => {
+              setRobot(structuredClone(robot));
+            }}
+          >
+            Switch to {robot.name}
+          </button>
         ))}
         <h2>Local</h2>
         {Object.values(robotStorage).length === 0 ? (
