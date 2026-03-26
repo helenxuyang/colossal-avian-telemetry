@@ -305,31 +305,35 @@ export const GraphDisplay = ({ robot }: Props) => {
           })}
       </DropdownsHolder>
       {plotIds.length > 0 && (
-        <ReactECharts
-          ref={graphRef}
-          option={option}
-          notMerge={true}
-          onEvents={onEvents}
-        />
+        <div>
+          <ReactECharts
+            ref={graphRef}
+            option={option}
+            notMerge={true}
+            onEvents={onEvents}
+          />
+          <AutoscrollHolder>
+            <span>
+              {isAutoScrolling && <StatusDot dot="🟢" />} Auto-scroll{" "}
+            </span>
+            <button
+              onClick={() => {
+                if (isAutoScrolling) {
+                  setLastZoomValues({
+                    startValue: autoscrollStart ?? 0,
+                    endValue: referenceTimestamps.at(-1) ?? 0,
+                  });
+                } else {
+                  setLastZoomValues({});
+                }
+                setIsAutoScrolling((scrolling) => !scrolling);
+              }}
+            >
+              {isAutoScrolling ? "⏸" : "▶"}
+            </button>
+          </AutoscrollHolder>
+        </div>
       )}
-      <AutoscrollHolder>
-        <span>{isAutoScrolling && <StatusDot dot="🟢" />} Auto-scroll </span>
-        <button
-          onClick={() => {
-            if (isAutoScrolling) {
-              setLastZoomValues({
-                startValue: autoscrollStart ?? 0,
-                endValue: referenceTimestamps.at(-1) ?? 0,
-              });
-            } else {
-              setLastZoomValues({});
-            }
-            setIsAutoScrolling((scrolling) => !scrolling);
-          }}
-        >
-          {isAutoScrolling ? "⏸" : "▶"}
-        </button>
-      </AutoscrollHolder>
     </div>
   );
 };
