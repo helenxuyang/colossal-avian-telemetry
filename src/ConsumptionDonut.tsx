@@ -1,8 +1,8 @@
 import styled from "styled-components";
-import { CONSUMPTION, TOTAL_CONSUMPTION, type Robot } from "./robot";
-import type { ReactNode } from "react";
+import { CONSUMPTION, type Robot } from "./robot";
+import { useMemo, type ReactNode } from "react";
 import { Container } from "./styles";
-import { getLatestValue } from "./dataUtils";
+import { calculateTotal, getLatestValue } from "./dataUtils";
 
 const Pie = styled.svg`
   transform: rotate(-90deg);
@@ -32,76 +32,86 @@ const TotalLabel = styled.div`
 `;
 
 type Props = {
-  robot: Robot;
+  escs: Robot["escs"];
 };
 
-export const ConsumptionDonut = ({ robot }: Props) => {
-  const svgSize = 150;
-  const radius = svgSize / 3;
-  const totalConsumption = robot.derivedValues[TOTAL_CONSUMPTION];
-  const total = getLatestValue(totalConsumption);
-  const colors = ["cornflowerblue", "blue", "orange"];
+const svgSize = 150;
+const radius = svgSize / 3;
+const colors = ["cornflowerblue", "blue", "orange"];
 
-  let angle = 0;
-  const slices: ReactNode[] = [];
-  const labels: ReactNode[] = [];
-  Object.values(robot.escs).forEach((esc, index) => {
-    const value = getLatestValue(esc.measurements[CONSUMPTION]);
-    const percent = Math.round((value / total) * 100);
-    const color = colors[index];
-    const strokeWidth = 10;
-    slices.push(
-      <Slice
-        key={esc.name}
-        r={radius}
-        cx={svgSize / 2}
-        cy={svgSize / 2}
-        stroke={color}
-        strokeWidth={strokeWidth}
-        fill="none"
-        pathLength={100}
-        strokeDasharray={`${percent} ${100 - percent}`}
-        strokeDashoffset={0}
-        style={{ transform: `rotate(${angle}deg)` }}
-      ></Slice>,
-    );
-    // -90 because graph is rotated
-    // + half of value in degrees to center on slice
-    // * pi/180 to convert to radians
-    const labelAngleRadians =
-      (angle - 90 + ((percent / 100) * 360) / 2) * (Math.PI / 180);
-    const labelRadius = radius + strokeWidth * 2;
-    const translateX = Math.cos(labelAngleRadians) * labelRadius;
-    const translateY = Math.sin(labelAngleRadians) * labelRadius;
-    if (value > 0) {
-      labels.push(
-        <Label
+export const ConsumptionDonut = ({ escs }: Props) => {
+  const totalConsumption = useMemo(() => {
+    return calculateTotal(CONSUMPTION, escs);
+  }, [escs]);
+
+  const donutUI = useMemo(() => {
+    const slices: ReactNode[] = [];
+    const labels: ReactNode[] = [];
+
+    let angle = 0;
+
+    Object.values(escs).forEach((esc, index) => {
+      const value = getLatestValue(esc.measurements[CONSUMPTION]);
+      const percent = Math.round((value / totalConsumption) * 100);
+      const color = colors[index];
+      const strokeWidth = 10;
+      slices.push(
+        <Slice
           key={esc.name}
-          style={{
-            left: "50%",
-            bottom: "50%",
-            transform: `translate(calc(${translateX < 0 ? "-100" : "0"}% + ${translateX}px), calc(50% + ${translateY}px))`,
-          }}
-        >
-          {esc.abbreviation}: {value}
-        </Label>,
+          r={radius}
+          cx={svgSize / 2}
+          cy={svgSize / 2}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          pathLength={100}
+          strokeDasharray={`${percent} ${100 - percent}`}
+          strokeDashoffset={0}
+          style={{ transform: `rotate(${angle}deg)` }}
+        ></Slice>,
       );
-    }
-    angle += (percent / 100) * 360;
-  });
+      // -90 because graph is rotated
+      // + half of value in degrees to center on slice
+      // * pi/180 to convert to radians
+      const labelAngleRadians =
+        (angle - 90 + ((percent / 100) * 360) / 2) * (Math.PI / 180);
+      const labelRadius = radius + strokeWidth * 2;
+      const translateX = Math.cos(labelAngleRadians) * labelRadius;
+      const translateY = Math.sin(labelAngleRadians) * labelRadius;
+      if (value > 0) {
+        labels.push(
+          <Label
+            key={esc.name}
+            style={{
+              left: "50%",
+              bottom: "50%",
+              transform: `translate(calc(${translateX < 0 ? "-100" : "0"}% + ${translateX}px), calc(50% + ${translateY}px))`,
+            }}
+          >
+            {esc.abbreviation}: {value}
+          </Label>,
+        );
+      }
+      angle += (percent / 100) * 360;
+    });
+    return {
+      slices,
+      labels,
+    };
+  }, [escs, totalConsumption]);
 
   return (
     <Container>
       <h3>Consumption</h3>
       <StyledContainer>
         <Pie width={svgSize} height={svgSize}>
-          {slices}
+          {donutUI.slices}
         </Pie>
         <TotalLabel>
-          <p>{total}</p>
-          <p>{totalConsumption.unit}</p>
+          <p>{totalConsumption}</p>
+          <p>mAh</p>
         </TotalLabel>
-        {total > 0 && labels}
+        {totalConsumption > 0 && donutUI.labels}
       </StyledContainer>
     </Container>
   );

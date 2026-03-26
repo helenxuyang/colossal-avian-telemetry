@@ -1,4 +1,3 @@
-import { addDerivedValues } from "./dataUtils";
 import {
   CONSUMPTION,
   CURRENT,
@@ -180,8 +179,6 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
   } else if (dataType === "error") {
     newRobot.escs[escName].errors.push({ timestamp });
   }
-
-  addDerivedValues(newRobot);
   return newRobot;
 };
 

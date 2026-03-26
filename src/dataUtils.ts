@@ -1,5 +1,4 @@
 import {
-  VOLTAGE,
   type EscName,
   type Measurement,
   type MeasurementName,
@@ -68,27 +67,13 @@ export const getLatestValueDisplay = (measurement: Measurement) => {
 
 export const calculateTotal = (
   measurementName: MeasurementName,
-  robot: Robot,
+  escs: Robot["escs"],
 ) => {
-  const values = Object.values(robot.escs).map((esc) =>
+  const values = Object.values(escs).map((esc) =>
     getLatestValue(esc.measurements[measurementName]),
   );
   const total = values.reduce((sum, curr) => sum + curr, 0);
   return Number(total.toFixed(2));
-};
-
-export const addDerivedValues = (robot: Robot) => {
-  // battery voltage
-  const voltages = Object.values(robot.escs).map((esc) =>
-    getLatestValue(esc.measurements[VOLTAGE]),
-  );
-  robot.batteryVoltage.values.push(voltages);
-
-  // calculate totals
-  Object.values(robot.derivedValues).forEach(({ values, measurementName }) =>
-    values.push(calculateTotal(measurementName, robot)),
-  );
-  return robot;
 };
 
 type MeasurementConfig = {

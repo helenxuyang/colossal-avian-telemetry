@@ -1,7 +1,11 @@
 import styled from "styled-components";
 import {
+  CONSUMPTION,
+  CURRENT,
   DRIVE_LEFT_ESC,
   DRIVE_RIGHT_ESC,
+  TOTAL_CONSUMPTION,
+  TOTAL_CURRENT,
   WEAPON_ESC,
   type Robot,
 } from "./robot";
@@ -18,6 +22,7 @@ import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVWriter";
 import { ConfigDisplay } from "./RobotConfig";
 import { useCallback, useMemo } from "react";
+import { calculateTotal } from "./dataUtils";
 
 const Layout = styled.div`
   display: flex;
@@ -41,16 +46,12 @@ const ESCGrid = styled.div`
   gap: 8px;
 `;
 
-const DriveLeftESCSection = styled(ESCDisplay)`
+const DriveEscSection = styled(ESCDisplay)`
   flex: 2;
 `;
 
 const WeaponESCSection = styled(ESCDisplay)`
   flex: 3;
-`;
-
-const DriveRightESCSection = styled(ESCDisplay)`
-  flex: 2;
 `;
 
 const RobotSection = styled.div`
@@ -120,42 +121,57 @@ export const RobotDisplay = ({
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
 
+  const totalCurrent = useMemo(
+    () => calculateTotal(CURRENT, robot.escs),
+    [robot.escs],
+  );
+  const totalConsumption = useMemo(
+    () => calculateTotal(CONSUMPTION, robot.escs),
+    [robot.escs],
+  );
+
   const liveTabContent = useMemo(
     () => (
       <Layout>
         <RobotSection>
           <RobotLayout>
             <BarsHolder>
-              <VoltageDisplay batteryVoltage={robot.batteryVoltage} />
-              {Object.values(robot.derivedValues)
-                .filter((measurement) => measurement.shouldShow !== false)
-                .map((measurement) => {
-                  return (
-                    <HorizontalBarDisplay
-                      key={`${robot.name}-${measurement.name}`}
-                      barColor="skyblue"
-                      measurement={measurement}
-                    />
-                  );
-                })}
+              <VoltageDisplay escs={robot.escs} />
+              <HorizontalBarDisplay
+                name={TOTAL_CURRENT}
+                value={totalCurrent}
+                min={robot.escs[WEAPON_ESC].measurements[CURRENT].min}
+                max={robot.escs[WEAPON_ESC].measurements[CURRENT].max}
+              />
+              <HorizontalBarDisplay
+                name={TOTAL_CONSUMPTION}
+                value={totalConsumption}
+                min={robot.escs[WEAPON_ESC].measurements[CONSUMPTION].min}
+                max={robot.escs[WEAPON_ESC].measurements[CONSUMPTION].max}
+              />
             </BarsHolder>
-            <ConsumptionDonut robot={robot} />
+            <ConsumptionDonut escs={robot.escs} />
           </RobotLayout>
         </RobotSection>
         <ESCSection>
           <ESCGrid>
-            {driveLeftEsc.shouldShow && (
-              <DriveLeftESCSection esc={driveLeftEsc} />
-            )}
+            {driveLeftEsc.shouldShow && <DriveEscSection esc={driveLeftEsc} />}
             {weaponEsc.shouldShow && <WeaponESCSection esc={weaponEsc} />}
             {driveRightEsc.shouldShow && (
-              <DriveRightESCSection esc={driveRightEsc} />
+              <DriveEscSection esc={driveRightEsc} />
             )}
           </ESCGrid>
         </ESCSection>
       </Layout>
     ),
-    [driveLeftEsc, driveRightEsc, robot, weaponEsc],
+    [
+      robot.escs,
+      driveLeftEsc,
+      driveRightEsc,
+      weaponEsc,
+      totalConsumption,
+      totalCurrent,
+    ],
   );
 
   const tabs: Tab[] = useMemo(

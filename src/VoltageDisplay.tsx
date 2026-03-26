@@ -1,7 +1,8 @@
 import styled from "styled-components";
-import { type BatteryVoltageMeasurement } from "./robot";
+import { VOLTAGE, type Robot } from "./robot";
 import { Container, Value } from "./styles";
-import { getClampedPercent } from "./dataUtils";
+import { getClampedPercent, getLatestValue } from "./dataUtils";
+import { useMemo } from "react";
 
 const BarDisplay = styled.div`
   display: flex;
@@ -59,20 +60,46 @@ const RangeText = styled.p`
 `;
 
 type Props = {
-  batteryVoltage: BatteryVoltageMeasurement;
+  escs: Robot["escs"];
 };
 
-export const VoltageDisplay = ({ batteryVoltage }: Props) => {
-  const { name, min, max, unit, values } = batteryVoltage;
-  const latestValues = values.at(-1) ?? [0];
-  const minValue = Math.min(...latestValues);
-  const maxValue = Math.max(...latestValues);
-  const minPercent = getClampedPercent(minValue, min, max);
-  const maxPercent = getClampedPercent(maxValue, min, max);
+export const VoltageDisplay = ({ escs }: Props) => {
+  const latestValues = useMemo(() => {
+    return Object.values(escs).map((esc) =>
+      getLatestValue(esc.measurements[VOLTAGE]),
+    );
+  }, [escs]);
+
+  const min = useMemo(() => {
+    return Math.min(
+      ...Object.values(escs).map((esc) => esc.measurements[VOLTAGE].min),
+    );
+  }, [escs]);
+
+  const max = useMemo(() => {
+    return Math.min(
+      ...Object.values(escs).map((esc) => esc.measurements[VOLTAGE].max),
+    );
+  }, [escs]);
+
+  const minValue = useMemo(() => {
+    return Math.min(...latestValues);
+  }, [latestValues]);
+  const maxValue = useMemo(() => {
+    return Math.max(...latestValues);
+  }, [latestValues]);
+
+  const minPercent = useMemo(() => {
+    return getClampedPercent(minValue, min, max);
+  }, [minValue, min, max]);
+
+  const maxPercent = useMemo(() => {
+    return getClampedPercent(maxValue, min, max);
+  }, [maxValue, min, max]);
 
   return (
     <Container>
-      <h4>{name}</h4>
+      <h4>Battery Voltage</h4>
       <BarDisplay>
         <RangeText>{min}</RangeText>
         <BarHolder>
@@ -88,7 +115,7 @@ export const VoltageDisplay = ({ batteryVoltage }: Props) => {
         <RangeText>{max}</RangeText>
       </BarDisplay>
       <Value>
-        {minValue}-{maxValue} {unit}
+        {minValue}-{maxValue} V
       </Value>
     </Container>
   );

@@ -1,8 +1,6 @@
 import styled from "styled-components";
-import { type Measurement } from "./robot";
 import { Container, SMALL_VIEWPORT, Value } from "./styles";
-import { LineChart } from "./LineChart";
-import { getLatestPercent, getColor, getLatestValueDisplay } from "./dataUtils";
+import { getClampedPercent, DEFAULT_COLOR } from "./dataUtils";
 
 const StyledContainer = styled(Container)`
   @media (max-width: ${SMALL_VIEWPORT}px) {
@@ -38,19 +36,22 @@ const RangeText = styled.p`
 `;
 
 type Props = {
-  barColor: string;
-  measurement: Measurement;
+  name: string;
+  value: number;
+  min: number;
+  max: number;
   className?: string;
 };
 
 export const HorizontalBarDisplay = ({
-  measurement,
+  name,
+  value,
+  min,
+  max,
   className = "",
 }: Props) => {
-  const { name, min, max, shouldPlot } = measurement;
-
-  const percent = getLatestPercent(measurement);
-  const barColor = getColor(measurement);
+  const percent = getClampedPercent(value, min, max);
+  const barColor = DEFAULT_COLOR;
 
   return (
     <StyledContainer className={className}>
@@ -62,8 +63,7 @@ export const HorizontalBarDisplay = ({
         </BarHolder>
         <RangeText>{max}</RangeText>
       </BarDisplay>
-      <Value>{getLatestValueDisplay(measurement)}</Value>
-      {shouldPlot && <LineChart measurement={measurement} />}
+      <Value>{value}</Value>
     </StyledContainer>
   );
 };

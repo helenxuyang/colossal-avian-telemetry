@@ -38,24 +38,11 @@ export type MeasurementName =
   | typeof CURRENT
   | typeof CONSUMPTION;
 
-export const BATTERY_VOLTAGE = "Battery Voltage";
 export const TOTAL_CURRENT = "Total Current";
 export const TOTAL_CONSUMPTION = "Total Consumption";
 
 export const ALL_DERIVED_VALUES = [TOTAL_CURRENT, TOTAL_CONSUMPTION];
 export type DerivedValueName = (typeof ALL_DERIVED_VALUES)[number];
-
-export type BatteryVoltageRange = {
-  min: number;
-  max: number;
-};
-export type BatteryVoltageMeasurement = {
-  name: string;
-  unit: string;
-  min: number;
-  max: number;
-  values: number[][];
-};
 
 type MeasurementMap = Record<MeasurementName, Measurement>;
 type EscError = {
@@ -174,8 +161,6 @@ export type MatchMarker = {
 export type Robot = {
   name: string;
   escs: Record<EscName, ESC>;
-  derivedValues: Record<DerivedValueName, DerivedValue>;
-  batteryVoltage: BatteryVoltageMeasurement;
   initialTimestamp: number | null;
   matchMarkers: MatchMarker[];
 };
@@ -211,32 +196,6 @@ export const getInitColossalAvian = (): Robot => {
   return {
     name: "Colossal Avian",
     escs,
-    derivedValues: {
-      [TOTAL_CURRENT]: {
-        name: TOTAL_CURRENT,
-        measurementName: CURRENT,
-        unit: "A",
-        min: 0,
-        max: 400,
-        values: [],
-      },
-      [TOTAL_CONSUMPTION]: {
-        name: TOTAL_CONSUMPTION,
-        measurementName: CONSUMPTION,
-        unit: "mAh",
-        min: 0,
-        max: 12000,
-        values: [],
-        shouldShow: false,
-      },
-    },
-    batteryVoltage: {
-      name: BATTERY_VOLTAGE,
-      unit: "V",
-      min: 16,
-      max: 26,
-      values: [],
-    },
     initialTimestamp: null,
     matchMarkers: [],
   };
@@ -247,7 +206,6 @@ export const getInitStackOverflow = (): Robot => {
   const voltageMax = 15.2;
   const rpmMax = 18000;
   const maxCurrent = 80;
-  const maxConsumption = 850;
 
   return {
     name: "Stack Overflow",
@@ -271,32 +229,6 @@ export const getInitStackOverflow = (): Robot => {
         ...getInitEsc(DRIVE_RIGHT_ESC, getInitEscMeasurements({})),
         shouldShow: false,
       }, // NOT USED
-    },
-    derivedValues: {
-      [TOTAL_CURRENT]: {
-        name: TOTAL_CURRENT,
-        measurementName: CURRENT,
-        unit: "A",
-        min: 0,
-        max: maxCurrent,
-        values: [],
-      },
-      [TOTAL_CONSUMPTION]: {
-        name: TOTAL_CONSUMPTION,
-        measurementName: CONSUMPTION,
-        unit: "mAh",
-        min: 0,
-        max: maxConsumption,
-        values: [],
-        shouldShow: false,
-      },
-    },
-    batteryVoltage: {
-      name: BATTERY_VOLTAGE,
-      unit: "V",
-      min: voltageMin,
-      max: voltageMax,
-      values: [],
     },
     initialTimestamp: null,
     matchMarkers: [],

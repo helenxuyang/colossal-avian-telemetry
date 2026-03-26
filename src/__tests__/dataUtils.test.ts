@@ -5,8 +5,6 @@ import {
   DRIVE_LEFT_ESC,
   DRIVE_RIGHT_ESC,
   getInitColossalAvian,
-  TOTAL_CONSUMPTION,
-  TOTAL_CURRENT,
   VOLTAGE,
   WEAPON_ESC,
   type Measurement,
@@ -21,7 +19,6 @@ import {
   getLatestPercent,
   getLatestValueDisplay,
   calculateTotal,
-  addDerivedValues,
 } from "../dataUtils";
 
 const mockMeasurement: Measurement = {
@@ -147,11 +144,11 @@ describe("getLatestValueDisplay", () => {
 describe("calculateTotal", () => {
   it("calculates total and rounds", () => {
     const robot = { ...structuredClone(mockRobot) };
-    expect(calculateTotal(VOLTAGE, robot)).toBe(0);
+    expect(calculateTotal(VOLTAGE, robot.escs)).toBe(0);
     robot.escs[DRIVE_LEFT_ESC].measurements[VOLTAGE].values.push(30);
-    expect(calculateTotal(VOLTAGE, robot)).toBe(30);
+    expect(calculateTotal(VOLTAGE, robot.escs)).toBe(30);
     robot.escs[DRIVE_RIGHT_ESC].measurements[VOLTAGE].values.push(40.123);
-    expect(calculateTotal(VOLTAGE, robot)).toBe(70.12);
+    expect(calculateTotal(VOLTAGE, robot.escs)).toBe(70.12);
   });
 });
 
@@ -169,10 +166,5 @@ describe("addDerivedValues", () => {
 
     robot.escs[DRIVE_LEFT_ESC].measurements[CONSUMPTION].values.push(2);
     robot.escs[DRIVE_RIGHT_ESC].measurements[CONSUMPTION].values.push(4);
-
-    addDerivedValues(robot);
-    expect(robot.batteryVoltage.values).toContainEqual([10, 20, 40]);
-    expect(robot.derivedValues[TOTAL_CURRENT].values).toContain(5);
-    expect(robot.derivedValues[TOTAL_CONSUMPTION].values).toContain(6);
   });
 });
