@@ -44,6 +44,6 @@ export const pulseAnimation = (speedSec: number = 2) => css`
   animation: pulse ${speedSec ?? 2}s infinite;
 `;
 
-export const WarningText = styled.p`
+export const WarningText = styled.div`
   color: red;
 `;

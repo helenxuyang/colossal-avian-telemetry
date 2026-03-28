@@ -5,13 +5,14 @@ type Props = {
   robot: Robot;
 };
 
+const numValuesToShow = 5;
+
 export const DebugDisplay = ({ robot }: Props) => {
   return (
     <details>
       <summary>Debug</summary>
       <div>
         {mapEscs(robot.escs, (esc) => {
-          const numValuesToShow = 5;
           return (
             <div key={esc.name}>
               <strong>{esc.name}</strong>
@@ -33,19 +34,19 @@ export const DebugDisplay = ({ robot }: Props) => {
                 Error timestamps: [
                 {esc.errors.map((error) => error.timestamp).join(",")}]
               </div>
-              <div>
-                Unknown errors:
-                {robot.unknownMessages
-                  .slice(-numValuesToShow)
-                  .map(
-                    (unknownMessage) =>
-                      `${unknownMessage.message} (${unknownMessage.reason})`,
-                  )
-                  .join(",")}
-              </div>
             </div>
           );
         })}
+        <div>
+          Unknown errors:
+          {robot.unknownMessages
+            .slice(-numValuesToShow)
+            .map(
+              (unknownMessage) =>
+                `${unknownMessage.message} (${unknownMessage.reason})`,
+            )
+            .join(",")}
+        </div>
       </div>
     </details>
   );
