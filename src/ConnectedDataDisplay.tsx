@@ -4,7 +4,12 @@ import { WebSocketConnector } from "./WebSocketConnector";
 import styled from "styled-components";
 import { parseMessage } from "./messageUtils";
 import { getInitRobot } from "./storageUtils";
-import { useSetRobot, useUpdateRobot } from "./store";
+import {
+  useAddMessage,
+  useMessages,
+  useSetRobot,
+  useUpdateRobot,
+} from "./store";
 
 const WebSocketInfoHolder = styled.div`
   display: flex;
@@ -14,6 +19,8 @@ const WebSocketInfoHolder = styled.div`
 export const ConnectedDataDisplay = () => {
   const setRobot = useSetRobot();
   const updateRobot = useUpdateRobot();
+  const messages = useMessages();
+  const addMessage = useAddMessage();
 
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
@@ -21,8 +28,9 @@ export const ConnectedDataDisplay = () => {
     setIsRecording(true);
   }, []);
 
-  const handleReceiveData = useCallback(
+  const handleMessage = useCallback(
     (data: string) => {
+      addMessage(data);
       if (isRecording) {
         const parsedData = parseMessage(data);
         if (parsedData) {
@@ -30,26 +38,38 @@ export const ConnectedDataDisplay = () => {
         }
       }
     },
-    [isRecording, updateRobot],
+    [isRecording, updateRobot, addMessage],
   );
 
   // use ref so websocket doesn't re-render
-  const handleReceiveDataCallback = useRef<(data: string) => void | null>(null);
+  const handleMessageCallback = useRef<(data: string) => void | null>(null);
 
   useEffect(() => {
-    handleReceiveDataCallback.current = handleReceiveData;
-  }, [handleReceiveData]);
+    handleMessageCallback.current = handleMessage;
+  }, [handleMessage]);
 
   const controls = useMemo(
     () => [
       <WebSocketInfoHolder>
         <WebSocketConnector
-          onReceiveData={handleReceiveDataCallback}
+          onReceiveData={handleMessageCallback}
           onConnect={handleConnect}
         />
       </WebSocketInfoHolder>,
+      <div>
+        <h3>Messages</h3>
+        {messages.length > 0 ? (
+          <>
+            {messages.slice(0, 5)}
+            ...
+            {messages.slice(messages.length - 6)}
+          </>
+        ) : (
+          "None"
+        )}
+      </div>,
     ],
-    [handleConnect],
+    [handleConnect, messages],
   );
 
   const handleStartRecording = useCallback(() => {

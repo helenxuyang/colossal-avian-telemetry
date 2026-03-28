@@ -4,16 +4,19 @@ import { INPUT, type Robot } from "./robot";
 import { immer } from "zustand/middleware/immer";
 import type { ParsedMessage } from "./messageUtils";
 
-type State = {
+type RobotState = {
   robot: Robot;
 };
 
-type Action = {
-  setRobot: (robot: State["robot"]) => void;
+type RobotActions = {
+  setRobot: (robot: RobotState["robot"]) => void;
   updateRobot: (parsedMessage: ParsedMessage) => void;
 };
 
-const useRobotStore = create<State & Action, [["zustand/immer", never]]>(
+const useRobotStore = create<
+  RobotState & RobotActions,
+  [["zustand/immer", never]]
+>(
   immer((set) => ({
     robot: getInitRobot(),
     setRobot: (robot: Robot) => set(() => ({ robot })),
@@ -71,3 +74,25 @@ const useRobotStore = create<State & Action, [["zustand/immer", never]]>(
 export const useRobot = () => useRobotStore((state) => state.robot);
 export const useSetRobot = () => useRobotStore((state) => state.setRobot);
 export const useUpdateRobot = () => useRobotStore((state) => state.updateRobot);
+
+type MessagesState = {
+  messages: string[];
+};
+type MessagesActions = {
+  addMessage: (message: string) => void;
+};
+
+const useMessagesStore = create<
+  MessagesState & MessagesActions,
+  [["zustand/immer", never]]
+>(
+  immer((set) => ({
+    messages: [],
+    addMessage: (message: string) =>
+      set((state) => state.messages.push(message)),
+  })),
+);
+
+export const useMessages = () => useMessagesStore((state) => state.messages);
+export const useAddMessage = () =>
+  useMessagesStore((state) => state.addMessage);
