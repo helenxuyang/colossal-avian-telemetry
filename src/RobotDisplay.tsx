@@ -13,7 +13,7 @@ import {
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
 import { ESCDisplay } from "./ESCDisplay";
 import { VoltageDisplay } from "./VoltageDisplay";
-import { SMALL_VIEWPORT } from "./styles";
+import { BACKGROUND, SMALL_VIEWPORT, WarningText } from "./styles";
 import { ConsumptionDonut } from "./ConsumptionDonut";
 import { NavigationTabs, type Tab } from "./Tabs";
 import { GraphGrid } from "./GraphGrid";
@@ -23,11 +23,8 @@ import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVWriter";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { useCallback, useMemo } from "react";
-import {
-  cacheRobotData,
-  calculateTotal,
-  combineRobotWithCache,
-} from "./dataUtils";
+import { calculateTotal } from "./dataUtils";
+import { DebugDisplay } from "./DebugDisplay";
 
 const Layout = styled.div`
   display: flex;
@@ -83,6 +80,12 @@ const RobotLayout = styled.div`
       width: auto;
     }
   }
+`;
+
+const LayoutColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  background: ${BACKGROUND};
 `;
 
 const BarsHolder = styled.div`
@@ -161,7 +164,18 @@ export const RobotDisplay = ({
                 max={robot.escs[WEAPON_ESC].measurements[CONSUMPTION].max}
               />
             </BarsHolder>
-            <ConsumptionDonut escs={robot.escs} />
+            <LayoutColumn>
+              <ConsumptionDonut escs={robot.escs} />
+              {robot.unknownMessages.length > 0 && (
+                <div>
+                  <h3>Errors</h3>
+                  <WarningText>
+                    <p>Unknown messages: {robot.unknownMessages.length}</p>
+                    <p>First: {robot.unknownMessages[0].message}</p>
+                  </WarningText>
+                </div>
+              )}
+            </LayoutColumn>
           </RobotLayout>
         </RobotSection>
         <ESCSection>
@@ -176,12 +190,13 @@ export const RobotDisplay = ({
     ),
     [
       robot.escs,
-      driveLeftEsc,
-      driveRightEsc,
-      weaponEsc,
-      armEsc,
-      totalConsumption,
+      robot.unknownMessages,
       totalCurrent,
+      totalConsumption,
+      driveLeftEsc,
+      weaponEsc,
+      driveRightEsc,
+      armEsc,
     ],
   );
 
@@ -232,8 +247,11 @@ export const RobotDisplay = ({
         </ControlsSection>
         <ControlsSection>
           <h2>Robot</h2>
-          <button onClick={() => console.log(robot)}>Log robot data</button>
-          <button onClick={() => cacheRobotData(robot)}>
+          <DebugDisplay robot={robot} />
+          <button onClick={() => console.log(robot)}>
+            console.log full robot data
+          </button>
+          {/* <button onClick={() => cacheRobotData(robot)}>
             Cache robot data
           </button>
           <button
@@ -243,7 +261,7 @@ export const RobotDisplay = ({
             }}
           >
             Fetch full robot
-          </button>
+          </button> */}
         </ControlsSection>
         <ControlsSection>
           <h2>Import CSV</h2>

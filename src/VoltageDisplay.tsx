@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { VOLTAGE, type Robot } from "./robot";
 import { Container, Value } from "./styles";
-import { getClampedPercent, getLatestValue, mapEscs } from "./dataUtils";
+import { getClampedPercent, getLatestValue } from "./dataUtils";
 import { useMemo } from "react";
 
 const BarDisplay = styled.div`
@@ -65,9 +65,9 @@ type Props = {
 
 export const VoltageDisplay = ({ escs }: Props) => {
   const latestValues = useMemo(() => {
-    return mapEscs(escs, (esc) =>
-      getLatestValue(esc.measurements[VOLTAGE].values),
-    );
+    return Object.values(escs)
+      .filter((esc) => esc.measurements[VOLTAGE].shouldShow)
+      .map((esc) => getLatestValue(esc.measurements[VOLTAGE].values));
   }, [escs]);
 
   const min = useMemo(() => {

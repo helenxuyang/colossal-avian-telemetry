@@ -153,11 +153,17 @@ export type MatchMarker = {
   timestamp: number;
 };
 
+export type UnknownMessage = {
+  message: string;
+  reason: string;
+};
+
 export type Robot = {
   name: string;
   escs: Record<EscName, ESC>;
   initialTimestamp: number | null;
   matchMarkers: MatchMarker[];
+  unknownMessages: UnknownMessage[];
 };
 
 export const DRIVE_LEFT_ESC = "DriveLeft" as const;
@@ -207,6 +213,7 @@ export const getInitColossalAvian = (): Robot => {
     escs,
     initialTimestamp: null,
     matchMarkers: [],
+    unknownMessages: [],
   };
 };
 
@@ -233,5 +240,6 @@ export const getInitStackOverflow = (): Robot => {
     },
     initialTimestamp: null,
     matchMarkers: [],
+    unknownMessages: [],
   };
 };

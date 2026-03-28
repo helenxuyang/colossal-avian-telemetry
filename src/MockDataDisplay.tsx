@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { getInitColossalAvian, type EscName, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
-import { DebugDisplay } from "./DebugDisplay";
 import {
   getMockEscMessageGenerator,
   parseData,
@@ -28,6 +27,8 @@ export const MockDataDisplay = () => {
 
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
   const [startTime, setStartTime] = useState<number | null>(0);
+
+  const [mockMessage, setMockMessage] = useState<string>("");
 
   const handleStart = useCallback(() => {
     const now = Date.now();
@@ -66,6 +67,19 @@ export const MockDataDisplay = () => {
     [startTime],
   );
 
+  const handleMockMessage = useCallback(
+    (message: string) => {
+      setRobot((robot) => {
+        if (startTime) {
+          const parsedData = parseData(message);
+          return getUpdatedRobot(parsedData, robot);
+        }
+        return robot;
+      });
+    },
+    [startTime],
+  );
+
   const handlePause = useCallback(() => {
     if (mockDataIntervalId) {
       clearInterval(mockDataIntervalId);
@@ -90,11 +104,16 @@ export const MockDataDisplay = () => {
             </button>
           ))}
         </ButtonsHolder>
-
-        <DebugDisplay robot={robot} />
+        <input
+          value={mockMessage}
+          onChange={(e) => setMockMessage(e.target.value)}
+        />
+        <button onClick={() => handleMockMessage(mockMessage)}>
+          Mock message
+        </button>
       </MockDataControls>,
     ];
-  }, [handleMockError, robot]);
+  }, [handleMockError, handleMockMessage, mockMessage, robot]);
 
   return (
     <RobotDisplay

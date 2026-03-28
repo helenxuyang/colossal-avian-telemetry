@@ -33,6 +33,16 @@ export const DebugDisplay = ({ robot }: Props) => {
                 Error timestamps: [
                 {esc.errors.map((error) => error.timestamp).join(",")}]
               </div>
+              <div>
+                Unknown errors:
+                {robot.unknownMessages
+                  .slice(-numValuesToShow)
+                  .map(
+                    (unknownMessage) =>
+                      `${unknownMessage.message} (${unknownMessage.reason})`,
+                  )
+                  .join(",")}
+              </div>
             </div>
           );
         })}

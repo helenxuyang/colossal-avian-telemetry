@@ -3,6 +3,7 @@ import { CURRENT, RPM, TEMPERATURE, type ESC } from "./robot";
 import { VerticalBarDisplay } from "./VerticalBarDisplay";
 import { ArcDisplay } from "./ArcDisplay";
 import { Container, MEDIUM_VIEWPORT } from "./styles";
+import { ErrorDisplay } from "./ErrorDisplay";
 
 const DisplayHolder = styled(Container)`
   display: flex;
@@ -60,6 +61,7 @@ export const ESCDisplay = ({ esc, className }: Props) => {
           )}
         {esc.inputs.shouldShow && <InputDisplay measurement={esc.inputs} />}
       </DisplayLayout>
+      {esc.errors.length > 0 && <ErrorDisplay errors={esc.errors} />}
     </DisplayHolder>
   );
 };

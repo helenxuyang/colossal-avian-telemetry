@@ -42,31 +42,86 @@ const escToIdMap: Record<EscName, EscId> = Object.entries(idToEscMap).reduce(
   {} as Record<EscName, EscId>,
 );
 
-export type EscData = {
-  dataType: "data";
-  [TEMPERATURE]: number;
-  [VOLTAGE]: number;
-  [CURRENT]: number;
-  [CONSUMPTION]: number;
-  [RPM]: number;
-};
-
-export type EscInputData = {
-  dataType: "input";
-  [INPUT]: number;
-};
-
-export type ErrorData = {
-  dataType: "error";
-};
-
-export type ParsedData = {
+export type EscDataMessage = {
+  messageType: "data";
   escName: EscName;
   timestamp: number;
-  escData: EscData | EscInputData | ErrorData;
+  escData: {
+    [TEMPERATURE]: number;
+    [VOLTAGE]: number;
+    [CURRENT]: number;
+    [CONSUMPTION]: number;
+    [RPM]: number;
+  };
 };
 
-export const parseData = (data: string): ParsedData => {
+export type EscInputMessage = {
+  messageType: "input";
+  escName: EscName;
+  timestamp: number;
+  escData: {
+    [INPUT]: number;
+  };
+};
+
+export type EscErrorMessage = {
+  messageType: "error";
+  escName: EscName;
+  timestamp: number;
+};
+
+export type UnknownMessage = {
+  messageType: "unknown";
+  message: string;
+  reason: string;
+};
+
+export type ParsedMessage =
+  | EscDataMessage
+  | EscInputMessage
+  | EscErrorMessage
+  | UnknownMessage;
+
+export const getUnknownMessageReason = (message: string): string | null => {
+  if (typeof message !== "string") {
+    return "message is not string";
+  }
+  const components = message.slice(1, message.length - 1).split(" ");
+
+  if (components.length < 3) {
+    return "message does not have enough components";
+  }
+  if (message[0] !== "<") {
+    return "message missing start marker";
+  }
+  const id = components[0];
+  if (
+    !escDataIds.includes(id as EscDataId) &&
+    !escInputIds.includes(id as EscInputId)
+  ) {
+    return "message does not have valid ESC ID";
+  }
+
+  if (components[1] === "x") {
+    if (isNaN(Number("0x" + components[2]))) {
+      return "message has invalid timestamp";
+    }
+  } else {
+    for (let i = 1; i < components.length - 1; i++) {
+      if (isNaN(Number("0x" + components[i]))) {
+        return `message has invalid component ${components[i]}`;
+      }
+    }
+  }
+
+  if (message[message.length - 1] !== ">") {
+    return "message missing end marker";
+  }
+
+  return null;
+};
+
+export const parseData = (message: string): ParsedMessage => {
   /* Data formats:
   
   ESC telemetry data: 
@@ -102,7 +157,16 @@ export const parseData = (data: string): ParsedData => {
   time since start: as-is, in ms
  */
 
-  const splitData = data.slice(1, data.length - 1).split(" ");
+  const unknownErrorReason = getUnknownMessageReason(message);
+  if (unknownErrorReason) {
+    return {
+      messageType: "unknown",
+      message,
+      reason: unknownErrorReason,
+    };
+  }
+
+  const splitData = message.slice(1, message.length - 1).split(" ");
   const escId = splitData[0] as EscId;
   const escName = idToEscMap[escId];
 
@@ -110,11 +174,9 @@ export const parseData = (data: string): ParsedData => {
   if (splitData[1] === ERROR_MARKER) {
     const timestamp = Number(splitData[2]);
     return {
+      messageType: "error",
       escName,
       timestamp,
-      escData: {
-        dataType: "error",
-      },
     };
   }
 
@@ -127,11 +189,11 @@ export const parseData = (data: string): ParsedData => {
         : 1 / 6;
     const timestamp = Number(values[10]);
 
-    const parsedData: ParsedData = {
+    const parsedData: ParsedMessage = {
+      messageType: "data",
       escName,
       timestamp,
       escData: {
-        dataType: "data",
         [TEMPERATURE]: values[0],
         [VOLTAGE]: Number((mergeBytes(values[1], values[2]) / 100).toFixed(2)),
         [CURRENT]: Number((mergeBytes(values[3], values[4]) / 100).toFixed(2)),
@@ -143,11 +205,11 @@ export const parseData = (data: string): ParsedData => {
   } else if (escInputIds.includes(escId as EscInputId)) {
     const value = values[0];
     const timestamp = values[1];
-    const parsedData: ParsedData = {
+    const parsedData: ParsedMessage = {
+      messageType: "input",
       escName,
       timestamp,
       escData: {
-        dataType: "input",
         [INPUT]: Math.round(0.2 * value - 300), // scale from [1000, 2000] -> [-100, 100]
       },
     };
@@ -156,17 +218,32 @@ export const parseData = (data: string): ParsedData => {
   throw Error("invalid message");
 };
 
-export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
-  const { escName, timestamp, escData } = data;
+export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
   const newRobot = structuredClone(robot);
+
+  const { messageType } = parsedMessage;
+
+  if (parsedMessage.messageType === "unknown") {
+    newRobot.unknownMessages.push({
+      message: parsedMessage.message,
+      reason: parsedMessage.reason,
+    });
+    return newRobot;
+  }
+
+  const { timestamp, escName } = parsedMessage;
   if (newRobot.initialTimestamp === null) {
     newRobot.initialTimestamp = Date.now() - timestamp;
   }
 
-  const { dataType, ...dataValues } = escData;
+  if (messageType === "error") {
+    newRobot.escs[escName].errors.push({ timestamp });
+    return newRobot;
+  }
 
-  if (dataType === "data") {
-    Object.entries(dataValues).forEach(([measurementKey, measurementValue]) => {
+  if (messageType === "data") {
+    const { escData } = parsedMessage;
+    Object.entries(escData).forEach(([measurementKey, measurementValue]) => {
       const measurement =
         newRobot.escs[escName].measurements[measurementKey as MeasurementName];
       measurement.values.push(measurementValue);
@@ -178,12 +255,12 @@ export const getUpdatedRobot = (data: ParsedData, robot: Robot) => {
       }
     });
     newRobot.escs[escName].timestamps.push(timestamp);
-  } else if (dataType === "input") {
+  } else if (messageType === "input") {
+    const { escData } = parsedMessage;
     newRobot.escs[escName].inputs.timestamps.push(timestamp);
     newRobot.escs[escName].inputs.values.push(escData[INPUT]);
-  } else if (dataType === "error") {
-    newRobot.escs[escName].errors.push({ timestamp });
   }
+
   return newRobot;
 };
 
@@ -263,7 +340,7 @@ export const getMockEscMessageGenerator = (startTime: number, robot: Robot) => {
     }
 
     const message = `<${escId} ${messageComponents.join(" ")}>`;
-    // end marker
+
     escIndex = escIndex >= escIds.length - 1 ? 0 : escIndex + 1;
     return message;
   };
