@@ -2,6 +2,7 @@ import ReactECharts from "echarts-for-react";
 import {
   ERROR,
   INPUT,
+  POWER,
   type EscName,
   type MeasurementName,
   type Robot,
@@ -34,6 +35,10 @@ const DropdownsHolder = styled.div`
 
 const StyledSelectHolder = styled(FormControl)`
   width: 100%;
+`;
+
+const StyledSelect = styled(Select)`
+  height: 40px;
 `;
 
 const AutoscrollHolder = styled.div`
@@ -105,14 +110,24 @@ export const GraphDisplay = ({ robot }: Props) => {
     plotDataOptions.xAxis.length === 0 &&
     plotDataOptions.errorSeries.length > 0;
 
-  const finalXAxis = hasOnlyErrors ? defaultXAxis : plotDataOptions.xAxis;
+  const hasOnlyPower =
+    plotDataOptions.series.length === 0 &&
+    plotDataOptions.powerSeries.length > 0;
 
-  const finalYAxis = hasOnlyErrors
-    ? defaultYAxis
-    : plotDataOptions.yAxis.map((yAxis, index) => ({
-        ...yAxis,
-        offset: index > 1 ? index * 50 : 0,
-      }));
+  const finalXAxis = [
+    ...(hasOnlyErrors ? [defaultXAxis] : plotDataOptions.xAxis),
+    ...(hasOnlyPower ? plotDataOptions.powerXAxis : []),
+  ];
+
+  const finalYAxis = [
+    ...(hasOnlyErrors
+      ? [defaultYAxis]
+      : plotDataOptions.yAxis.map((yAxis, index) => ({
+          ...yAxis,
+          offset: index > 1 ? index * 50 : 0,
+        }))),
+    ...(hasOnlyPower ? plotDataOptions.powerYAxis : []),
+  ];
 
   const finalSeries = [
     ...plotDataOptions.series.map((series, index) => {
@@ -124,6 +139,7 @@ export const GraphDisplay = ({ robot }: Props) => {
     }),
     ...plotDataOptions.errorSeries,
     hasOnlyErrors && defaultSeries,
+    ...(hasOnlyPower ? plotDataOptions.powerSeries : []),
     ...robot.matchMarkers.map((marker) => {
       return {
         type: "line",
@@ -159,12 +175,16 @@ export const GraphDisplay = ({ robot }: Props) => {
         }
         const [escName, measurementOrInputName] = params.seriesName.split(" ");
 
-        const unit =
-          measurementOrInputName === INPUT
-            ? robot.escs[escName as EscName].inputs.unit
-            : (robot.escs[escName as EscName].measurements[
-                measurementOrInputName as MeasurementName
-              ].unit ?? null);
+        let unit = "";
+        if (measurementOrInputName === INPUT) {
+          unit = robot.escs[escName].inputs.unit;
+        } else if (measurementOrInputName === POWER) {
+          unit = "W";
+        } else {
+          unit =
+            robot.escs[escName].measurements[measurementOrInputName].unit ??
+            null;
+        }
         return [params.value[1], unit, `(${params.value[0] / 1000} sec)`]
           .filter(Boolean)
           .join(" ");
@@ -220,11 +240,12 @@ export const GraphDisplay = ({ robot }: Props) => {
   };
 
   const handleDropdownChange = useCallback(
-    (event: SelectChangeEvent<string[]>) => {
+    (event: SelectChangeEvent<unknown>) => {
       const {
         target: { value },
       } = event;
-      const ids = typeof value === "string" ? value.split(",") : value;
+      const ids =
+        typeof value === "string" ? value.split(",") : (value as string[]);
 
       const plots = ids.map((id) => {
         const components = id.split("-");
@@ -232,6 +253,7 @@ export const GraphDisplay = ({ robot }: Props) => {
         const typeOrMeasurement = components[1] as
           | typeof INPUT
           | typeof ERROR
+          | typeof POWER
           | MeasurementName;
 
         if (typeOrMeasurement === INPUT) {
@@ -243,6 +265,11 @@ export const GraphDisplay = ({ robot }: Props) => {
           return {
             escName,
             type: ERROR,
+          };
+        } else if (typeOrMeasurement === POWER) {
+          return {
+            escName,
+            type: POWER,
           };
         } else {
           return {
@@ -284,11 +311,12 @@ export const GraphDisplay = ({ robot }: Props) => {
       <DropdownsHolder>
         {Object.values(robot.escs).map((esc) => {
           const inputId = `${esc.name}-${INPUT}`;
+          const powerId = `${esc.name}-${POWER}`;
           const errorId = `${esc.name}-${ERROR}`;
           return (
             <StyledSelectHolder key={esc.name}>
               <InputLabel>{esc.name}</InputLabel>
-              <Select
+              <StyledSelect
                 multiple
                 value={plotIds.map((plot) => stringifyPlot(plot))}
                 onChange={handleDropdownChange}
@@ -307,11 +335,14 @@ export const GraphDisplay = ({ robot }: Props) => {
                   <MenuItem key={inputId} value={inputId}>
                     {INPUT}
                   </MenuItem>,
+                  <MenuItem key={powerId} value={powerId}>
+                    {POWER}
+                  </MenuItem>,
                   <MenuItem key={errorId} value={errorId}>
                     Errors
                   </MenuItem>,
                 ]}
-              </Select>
+              </StyledSelect>
             </StyledSelectHolder>
           );
         })}

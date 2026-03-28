@@ -6,6 +6,9 @@ import {
   type Input,
   type Measurement,
   ERROR,
+  POWER,
+  VOLTAGE,
+  CURRENT,
 } from "./robot";
 
 type DataPlot = {
@@ -19,13 +22,18 @@ type InputPlot = {
   type: typeof INPUT;
 };
 
+type PowerPlot = {
+  escName: EscName;
+  type: typeof POWER;
+};
+
 type ErrorPlot = {
   escName: EscName;
   type: typeof ERROR;
 };
 
-export type Plot = DataPlot | InputPlot | ErrorPlot;
-export type PlotMeasurementName = MeasurementName | typeof INPUT;
+export type Plot = DataPlot | InputPlot | PowerPlot | ErrorPlot;
+export type PlotMeasurementName = MeasurementName | typeof POWER | typeof INPUT;
 
 export const stringifyPlot = (plot: Plot) => {
   if (plot.type === "data") {
@@ -113,6 +121,29 @@ export const getInputSeries = (robot: Robot, escName: EscName) => {
   return series;
 };
 
+export const getPowerSeries = (robot: Robot, escName: EscName) => {
+  const timestamps = robot.escs[escName].timestamps;
+  const esc = robot.escs[escName];
+  const voltage = esc.measurements[VOLTAGE];
+  const current = esc.measurements[CURRENT];
+  const values = voltage.values.map(
+    (val, index) => val * current.values[index],
+  );
+  const seriesData = [
+    ...timestamps.map((time, index) => {
+      return [time, values[index]];
+    }),
+  ];
+  const series = {
+    id: `${escName} ${POWER}`,
+    type: "line",
+    name: `${escName} ${POWER}`,
+    data: seriesData,
+    symbolSize: 2,
+  };
+  return series;
+};
+
 export const getXAxis = (timestamps: number[]) => {
   const axis = {
     name: "seconds",
@@ -138,8 +169,24 @@ export const getYAxis = (
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min: Math.min(measurement.min, measurement.actualMin ?? measurement.min),
-    max: Math.max(measurement.max, measurement.actualMax ?? measurement.max),
+    min: Math.min(...measurement.values, measurement.min),
+    max: Math.max(...measurement.values, measurement.max),
+  };
+  return axis;
+};
+
+export const getPowerYAxis = (robot: Robot, escName: EscName) => {
+  const esc = robot.escs[escName];
+  const voltage = esc.measurements[VOLTAGE];
+  const current = esc.measurements[CURRENT];
+  const values = voltage.values
+    .map((val, index) => val * current.values[index])
+    .map((val) => Number(val.toFixed(2)));
+  const axis = {
+    type: "value",
+    name: `${esc.abbreviation}-W`,
+    min: Math.min(...values),
+    max: Math.max(...values),
   };
   return axis;
 };
@@ -175,6 +222,21 @@ export const parsePlotData = (robot: Robot, plots: Plot[]) => {
     };
   });
 
+  const powerPlots = plots.filter((plot) => plot.type === POWER);
+  const powerXAxis = powerPlots.map(({ escName }) => {
+    return {
+      ...getXAxis(robot.escs[escName].timestamps),
+    };
+  });
+  const powerYAxis = powerPlots.map(({ escName }) => {
+    return getPowerYAxis(robot, escName);
+  });
+  const powerSeries = powerPlots.map(({ escName }) => {
+    return {
+      ...getPowerSeries(robot, escName),
+    };
+  });
+
   const errorPlots = plots.filter((plot) => plot.type === ERROR);
   const errorSeries = errorPlots
     .map((plot) => {
@@ -202,7 +264,10 @@ export const parsePlotData = (robot: Robot, plots: Plot[]) => {
   return {
     series: [...dataSeries, ...inputSeries],
     errorSeries,
+    powerSeries,
     xAxis: [...dataXAxes, ...inputXAxes],
+    powerXAxis: powerXAxis,
     yAxis: [...dataYAxes, ...inputYAxes],
+    powerYAxis: powerYAxis,
   };
 };
