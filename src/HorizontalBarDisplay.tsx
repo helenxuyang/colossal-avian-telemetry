@@ -3,6 +3,8 @@ import { Container, SMALL_VIEWPORT, Value } from "./styles";
 import { getClampedPercent, DEFAULT_COLOR } from "./dataUtils";
 
 const StyledContainer = styled(Container)`
+  flex: 1;
+
   padding: 2px;
   @media (max-width: ${SMALL_VIEWPORT}px) {
     width: auto;

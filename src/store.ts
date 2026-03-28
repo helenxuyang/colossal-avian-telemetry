@@ -89,10 +89,30 @@ const useMessagesStore = create<
   immer((set) => ({
     messages: [],
     addMessage: (message: string) =>
-      set((state) => state.messages.push(message)),
+      set((state) => {
+        state.messages.push(message);
+      }),
   })),
 );
 
 export const useMessages = () => useMessagesStore((state) => state.messages);
 export const useAddMessage = () =>
   useMessagesStore((state) => state.addMessage);
+
+type AppState = {
+  isFakeData: boolean;
+};
+type AppActions = {
+  toggleFakeData: () => void;
+};
+
+const useAppStore = create<AppState & AppActions, [["zustand/immer", never]]>(
+  immer((set) => ({
+    isFakeData: false,
+    toggleFakeData: () => set((state) => ({ isFakeData: !state.isFakeData })),
+  })),
+);
+
+export const useIsFakeData = () => useAppStore((state) => state.isFakeData);
+export const useToggleFakeData = () =>
+  useAppStore((state) => state.toggleFakeData);

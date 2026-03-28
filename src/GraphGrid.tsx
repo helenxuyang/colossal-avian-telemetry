@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { GraphDisplay } from "./GraphDisplay";
-import type { Robot } from "./robot";
 import styled from "styled-components";
-
-type Props = {
-  robot: Robot;
-};
+import { useRobot } from "./store";
 
 type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
@@ -75,7 +71,8 @@ type PlotConfig = {
   id: UUID;
   isFullWidth: boolean;
 };
-export const GraphGrid = ({ robot }: Props) => {
+export const GraphGrid = () => {
+  const robot = useRobot();
   const [plotConfigs, setPlotConfigs] = useState<PlotConfig[]>([]);
 
   const deletePlot = (index: number) =>

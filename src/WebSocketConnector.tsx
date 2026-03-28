@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   useWebSocket,
+  type HandleConnectCallbackRef,
   type HandleReceiveDataCallbackRef,
 } from "./useWebSocket";
 import styled from "styled-components";
@@ -16,7 +17,7 @@ const Controls = styled.div`
 
 type Props = {
   onReceiveData: HandleReceiveDataCallbackRef;
-  onConnect: () => void;
+  onConnect: HandleConnectCallbackRef;
 };
 
 type WebSocketStatus = 0 | 1 | 2 | 3;
@@ -47,7 +48,7 @@ export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
       <Status>
         {status === null ? "none" : connectionMap[status as WebSocketStatus]}
       </Status>
-      <p>Close codes received: {closeCodes?.join(", ") ?? "none"}</p>
+      <p># close codes: {closeCodes?.length}</p>
       <Controls>
         {status === WebSocket.OPEN && (
           <button onClick={closeConnection}>Close connection</button>

@@ -42,9 +42,12 @@ const InputDisplay = styled(VerticalBarDisplay)`
     background-color: unset;
   }
 `;
-type Props = { esc: ESC; className?: string };
+type Props = { esc?: ESC; className?: string };
 
 export const ESCDisplay = ({ esc, className }: Props) => {
+  if (!esc) {
+    return null;
+  }
   return (
     <DisplayHolder className={className}>
       <h3>{esc.name}</h3>

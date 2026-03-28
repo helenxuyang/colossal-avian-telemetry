@@ -1,32 +1,6 @@
 import styled from "styled-components";
 import "./App.css";
-import { MockDataDisplay } from "./MockDataDisplay";
-
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from "chart.js";
-import { ConnectedDataDisplay } from "./ConnectedDataDisplay";
-import { useCallback, useState } from "react";
-import { FullscreenButton } from "./FullscreenButton";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-);
+import { DashboardDisplay } from "./DashboardDisplay";
 
 const Container = styled.div`
   display: flex;
@@ -34,34 +8,10 @@ const Container = styled.div`
   width: 100%;
 `;
 
-const DisplayHolder = styled.div`
-  width: 100%;
-`;
-
-const ControlsHolder = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-`;
-
 function App() {
-  const [isUsingFakeData, setIsUsingFakeData] = useState(false);
-  const toggleUsingFakeData = useCallback(
-    () => setIsUsingFakeData((isFake) => !isFake),
-    [],
-  );
   return (
     <Container>
-      <DisplayHolder>
-        {isUsingFakeData ? <MockDataDisplay /> : <ConnectedDataDisplay />}
-      </DisplayHolder>
-      <h2>App Controls</h2>
-      <ControlsHolder>
-        <button onClick={toggleUsingFakeData}>
-          Use {isUsingFakeData ? "real" : "fake"} data
-        </button>
-        <FullscreenButton />
-      </ControlsHolder>
+      <DashboardDisplay />
     </Container>
   );
 }
