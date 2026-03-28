@@ -1,11 +1,10 @@
 import {
-  getInitColossalAvian,
   type ESC,
-  type EscName,
   type Measurement,
   type MeasurementName,
   type Robot,
 } from "./robot";
+import { getInitColossalAvian } from "./storageUtils";
 
 export const DEFAULT_COLOR = "skyblue";
 export const HIGHLIGHT_COLOR = "green";
@@ -165,38 +164,4 @@ export const cacheRobotData = (robot: Robot) => {
   const fullRobot = combineRobotWithCache(robot);
   localStorage.setItem(ROBOT_CACHE, JSON.stringify(fullRobot));
   clearValues(robot);
-};
-
-export type MeasurementConfig = {
-  name: string;
-  min: number;
-  max: number;
-  colorThresholds?: Record<string, number>;
-  highlightThreshold?: number;
-};
-
-type EscConfig = {
-  name: EscName;
-  measurements: MeasurementConfig[];
-};
-
-export type RobotConfig = {
-  name: string;
-  escConfigs: EscConfig[];
-};
-
-export const getConfig = (robot: Robot): RobotConfig => {
-  return {
-    name: robot.name,
-    escConfigs: Object.values(robot.escs).map((esc) => {
-      return {
-        name: esc.name,
-        measurements: Object.values(esc.measurements).map(
-          ({ name, min, max, colorThresholds, highlightThreshold }) => {
-            return { name, min, max, colorThresholds, highlightThreshold };
-          },
-        ),
-      };
-    }),
-  };
 };

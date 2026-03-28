@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  generateMockESCMessage,
   generateMockValueTwoByteHex,
-  getMockEscMessageGenerator,
   mergeBytes,
 } from "../messageUtils";
-import { getInitColossalAvian } from "../robot";
+import { getInitColossalAvian } from "../storageUtils";
 
 describe("mergeBytes", () => {
   it("combines high and low bytes", () => {
@@ -47,28 +47,15 @@ describe("generateMockValueTwoByteHex", () => {
 });
 
 describe("getMockEscMessageGenerator", () => {
-  it("rotates between ESCs including data and input", () => {
-    const generator = getMockEscMessageGenerator(
-      Date.now(),
-      getInitColossalAvian(),
-    );
-    const checkDataMessage = (id: string) => {
-      const message = generator();
-      expect(message).toContain(`<${id}`);
-      expect(message.split(" ").length).toBe(12);
-    };
-    const checkInputMessage = (id: string) => {
-      const message = generator();
-      expect(message).toContain(`<${id}`);
-      expect(message.split(" ").length).toBe(3);
-    };
-    checkDataMessage("a");
-    checkDataMessage("b");
-    checkDataMessage("c");
-    checkInputMessage("w");
-    checkInputMessage("x");
-    checkInputMessage("y");
-    checkInputMessage("z");
-    checkDataMessage("a");
+  it("generates data message", () => {
+    const message = generateMockESCMessage(100, "a", getInitColossalAvian());
+    expect(message).toContain(`<a`);
+    expect(message.split(" ").length).toBe(12);
+  });
+
+  it("generates input message", () => {
+    const message = generateMockESCMessage(100, "x", getInitColossalAvian());
+    expect(message).toContain(`<x`);
+    expect(message.split(" ").length).toBe(3);
   });
 });

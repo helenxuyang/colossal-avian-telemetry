@@ -1,13 +1,16 @@
-import { useCallback, useMemo, useState } from "react";
-import { getInitColossalAvian, type EscName, type Robot } from "./robot";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { type EscName, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import {
-  getMockEscMessageGenerator,
   parseMessage,
   getUpdatedRobot,
   getMockEscError,
+  ALL_ESC_IDS,
+  idToEscMap,
+  generateMockESCMessage,
 } from "./messageUtils";
 import styled from "styled-components";
+import { getInitRobot } from "./storageUtils";
 
 const MockDataControls = styled.div`
   color: red;
@@ -25,8 +28,9 @@ export const MockDataDisplay = () => {
     null,
   );
 
-  const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
+  const [robot, setRobot] = useState<Robot>(getInitRobot());
   const [startTime, setStartTime] = useState<number | null>(0);
+  const escIndex = useRef<number>(0);
 
   const [mockMessage, setMockMessage] = useState<string>("");
 
@@ -38,14 +42,18 @@ export const MockDataDisplay = () => {
 
     const handleMockMessage = () => {
       setRobot((robot) => {
-        const generateEscMessage = getMockEscMessageGenerator(
-          startTime || now,
-          robot,
-        );
-
-        const data = generateEscMessage();
+        const escIds = ALL_ESC_IDS.filter((id) => {
+          const escName = idToEscMap[id];
+          return Object.keys(robot.escs).includes(escName);
+        });
+        const escId = escIds[escIndex.current];
+        const data = generateMockESCMessage(startTime || now, escId, robot);
         const parsedData = parseMessage(data);
         const newRobot = getUpdatedRobot(parsedData, robot);
+
+        escIndex.current =
+          escIndex.current >= escIds.length - 1 ? 0 : escIndex.current + 1;
+
         return newRobot;
       });
     };
@@ -88,7 +96,7 @@ export const MockDataDisplay = () => {
   }, [mockDataIntervalId]);
 
   const handleClear = useCallback(() => {
-    setRobot(getInitColossalAvian());
+    setRobot(getInitRobot());
     setStartTime(null);
   }, []);
 

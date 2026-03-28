@@ -1,19 +1,18 @@
-import { useEffect, useState } from "react";
-import {
-  getInitColossalAvian,
-  getInitStackOverflow,
-  type EscName,
-  type Measurement,
-  type MeasurementName,
-  type Robot,
-} from "./robot";
+import { useState } from "react";
+import { type EscName, type MeasurementName, type Robot } from "./robot";
 import styled from "styled-components";
 import {
   deleteRobotConfig,
-  getRobotStorage,
+  getConfigFromRobot,
+  getCurrentRobotConfig,
+  getCurrentRobotName,
+  getRobotConfigs,
+  initRobotFromConfig,
+  isDefaultConfig,
   saveRobotConfig,
+  type MeasurementConfig,
+  type RobotConfig,
 } from "./storageUtils";
-import type { RobotConfig } from "./dataUtils";
 
 const ConfigLayout = styled.div`
   display: flex;
@@ -64,129 +63,90 @@ type Props = {
   setRobot: (robot: Robot) => void;
 };
 
-const prebuiltRobots = [getInitColossalAvian(), getInitStackOverflow()];
-
 export const ConfigDisplay = ({ robot, setRobot }: Props) => {
-  const [robotInput, setRobotInput] = useState<Robot>(robot);
-  const [robotStorage, setRobotStorage] = useState<Record<string, RobotConfig>>(
-    {},
+  const [robotInput, setRobotInput] = useState<RobotConfig>(
+    getConfigFromRobot(robot),
   );
 
-  useEffect(() => {
-    setRobotStorage(getRobotStorage());
-  }, []);
+  console.log("###", robot, robotInput);
+  const robotConfigsMap = getRobotConfigs();
+  const robotConfigs = Object.values(robotConfigsMap);
 
-  useEffect(() => {
-    setRobotInput(structuredClone(robot));
-  }, [robot]);
-
-  const updateMinOrMax = (
-    escName: EscName,
-    measurementName: string,
-    type: "min" | "max",
-    value: string,
-  ) => {
+  const updateRobotInput = (mutation: (input: RobotConfig) => void) => {
     const newRobotInput = structuredClone(robotInput);
-    newRobotInput.escs[escName].measurements[
-      measurementName as MeasurementName
-    ][type] = Number(value);
+    mutation(newRobotInput);
     setRobotInput(newRobotInput);
   };
 
   const getShouldHighlight = (
     escName: EscName,
-    measurementName: string,
-    type: "min" | "max",
+    measurementName: MeasurementName,
+    key: keyof MeasurementConfig,
   ) => {
     return (
-      robotInput.escs[escName].measurements[measurementName as MeasurementName][
-        type
-      ] !==
-      robot.escs[escName].measurements[measurementName as MeasurementName][type]
+      robotInput.escConfigs[escName].measurementConfigs[measurementName][
+        key
+      ] !== robot.escs[escName].measurements[measurementName][key]
     );
+  };
+
+  const onSelectConfig = (config: RobotConfig) => {
+    saveRobotConfig(config);
+    setRobot(initRobotFromConfig(config));
+    setRobotInput(config);
   };
 
   return (
     <ConfigLayout>
       <PrebuiltRobotsLayout>
-        <h2>Pre-built</h2>
-        {prebuiltRobots.map((robot) => (
-          <button
-            key={robot.name}
-            onClick={() => {
-              setRobot(structuredClone(robot));
-            }}
-          >
-            Switch to {robot.name}
-          </button>
-        ))}
-        <h2>Local</h2>
-        {Object.values(robotStorage).length === 0 ? (
-          <p>None</p>
-        ) : (
-          Object.values(robotStorage).map((config) => {
-            return (
-              <CustomConfigButtons>
+        <h2>Configs</h2>
+        {robotConfigs.map((config) => {
+          return (
+            config.name !== getCurrentRobotName() && (
+              <CustomConfigButtons key={config.name}>
                 <button
                   key={config.name}
-                  onClick={() => {
-                    const robotCopy = structuredClone(robot);
-                    robotCopy.name = config.name;
-                    config.escConfigs.forEach((escConfig) => {
-                      escConfig.measurements.forEach((measurementConfig) => {
-                        Object.entries(measurementConfig).forEach(
-                          ([key, value]) => {
-                            const measurement =
-                              robotCopy.escs[escConfig.name].measurements[
-                                measurementConfig.name as MeasurementName
-                              ];
-                            // @ts-expect-error TODO types get weird when using Object.entries
-                            measurement[key as keyof Measurement] = value;
-                          },
-                        );
-                      });
-                    });
-                    setRobot(robotCopy);
-                  }}
+                  onClick={() => onSelectConfig(config)}
                 >
                   Switch to {config.name}
                 </button>
-                <button
-                  key={`${config.name}-delete`}
-                  onClick={() => {
-                    deleteRobotConfig(config.name);
-                    setRobotStorage(getRobotStorage());
-                  }}
-                >
-                  🗑️
-                </button>
+
+                {!isDefaultConfig(config.name) && (
+                  <button
+                    key={`${config.name}-delete`}
+                    onClick={() => {
+                      deleteRobotConfig(config.name);
+                      setRobotInput(getCurrentRobotConfig());
+                    }}
+                  >
+                    🗑️
+                  </button>
+                )}
               </CustomConfigButtons>
-            );
-          })
-        )}
+            )
+          );
+        })}
       </PrebuiltRobotsLayout>
-      <br />
-      <h2>Custom</h2>
+
+      <h2>Create/Edit</h2>
       <label htmlFor="name">Name</label>
       <input
         id="name"
         name="name"
         value={robotInput.name}
         onChange={(e) => {
-          setRobotInput((input) => {
-            const newRobotInput = structuredClone(input);
-            newRobotInput.name = e.target.value;
-            return newRobotInput;
+          updateRobotInput((config) => {
+            config.name = e.target.value;
           });
         }}
       ></input>
       <EscLayout>
-        {Object.values(robotInput.escs).map((esc) => {
+        {Object.values(robotInput.escConfigs).map((esc) => {
           return (
-            <div>
+            <div key={esc.name}>
               <h3>{esc.name}</h3>
               <MeasurementLayout key={esc.name}>
-                {Object.values(esc.measurements).map((measurement) => {
+                {Object.values(esc.measurementConfigs).map((measurement) => {
                   const { name, min, max } = measurement;
                   const measurementId = `${esc.name}-${name}`;
                   const isMinUnsaved = getShouldHighlight(
@@ -208,7 +168,11 @@ export const ConfigDisplay = ({ robot, setRobot }: Props) => {
                         value={min}
                         type="number"
                         onChange={(e) => {
-                          updateMinOrMax(esc.name, name, "min", e.target.value);
+                          updateRobotInput((robot: RobotConfig) => {
+                            robot.escConfigs[esc.name].measurementConfigs[
+                              measurement.name
+                            ].min = Number(e.target.value);
+                          });
                         }}
                         $shouldHighlight={isMinUnsaved}
                       ></StyledInput>
@@ -219,7 +183,11 @@ export const ConfigDisplay = ({ robot, setRobot }: Props) => {
                         value={max}
                         type="number"
                         onChange={(e) => {
-                          updateMinOrMax(esc.name, name, "max", e.target.value);
+                          updateRobotInput((robot: RobotConfig) => {
+                            robot.escConfigs[esc.name].measurementConfigs[
+                              measurement.name
+                            ].max = Number(e.target.value);
+                          });
                         }}
                         $shouldHighlight={isMaxUnsaved}
                       ></StyledInput>
@@ -236,9 +204,8 @@ export const ConfigDisplay = ({ robot, setRobot }: Props) => {
       </EscLayout>
       <button
         onClick={() => {
-          setRobot(robotInput);
           saveRobotConfig(robotInput);
-          setRobotStorage(getRobotStorage());
+          setRobot(initRobotFromConfig(robotInput));
         }}
       >
         Save

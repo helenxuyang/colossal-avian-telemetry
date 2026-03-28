@@ -108,14 +108,15 @@ export const VoltageDisplay = ({ escs }: Props) => {
           {latestValues.map((value, index) => (
             <Marker key={index} $percent={getClampedPercent(value, min, max)} />
           ))}
-
-          <MinValueText $percent={minPercent}>{minValue}</MinValueText>
+          {minValue !== maxValue && (
+            <MinValueText $percent={minPercent}>{minValue}</MinValueText>
+          )}
           <ValueText $percent={maxPercent}>{maxValue}</ValueText>
         </BarHolder>
         <RangeText>{max}</RangeText>
       </BarDisplay>
       <Value>
-        {minValue}-{maxValue} V
+        {minValue === maxValue ? minValue : `${minValue}-${maxValue}` + " V"}
       </Value>
     </Container>
   );

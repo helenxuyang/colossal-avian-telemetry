@@ -13,6 +13,7 @@ import {
 } from "../robot";
 import { getCsvData, importRobot } from "../csvUtils";
 import { getMockRobotWithData } from "./testData";
+import { getDefaultColossalAvianConfig } from "../storageUtils";
 
 describe("csvUtils", () => {
   let robot: Robot;
@@ -75,7 +76,10 @@ describe("csvUtils", () => {
       const mockCsvData = expectedCsvData.map((row) =>
         row.map((entry) => String(entry)),
       );
-      const importedRobot = importRobot(mockCsvData);
+      const importedRobot = importRobot(
+        getDefaultColossalAvianConfig(),
+        mockCsvData,
+      );
       expect(importedRobot).toEqual(robot);
     });
   });

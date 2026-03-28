@@ -1,4 +1,10 @@
-import { mapMeasurements } from "./dataUtils";
+export type Robot = {
+  name: string;
+  escs: Record<EscName, ESC>;
+  initialTimestamp: number | null;
+  matchMarkers: MatchMarker[];
+  unknownMessages: UnknownMessage[];
+};
 
 export type Measurement = {
   name: string;
@@ -11,7 +17,6 @@ export type Measurement = {
   colorThresholds?: Record<string, number>;
   highlightThreshold?: number;
   shouldShow: boolean;
-  shouldShowPercent?: boolean;
 };
 
 export type Input = Omit<Measurement, "name"> & {
@@ -28,6 +33,14 @@ export const CONSUMPTION = "Consumption";
 export const INPUT = "Input" as const;
 export const POWER = "Power" as const;
 export const ERROR = "Error" as const;
+
+export const UNITS: Record<MeasurementName, string> = {
+  [TEMPERATURE]: "°C",
+  [RPM]: "RPM",
+  [VOLTAGE]: "V",
+  [CURRENT]: "A",
+  [CONSUMPTION]: "mAh",
+} as const;
 
 export type MeasurementName =
   | typeof TEMPERATURE
@@ -141,7 +154,6 @@ export const getInitEsc = (
       max: 100,
       values: [],
       timestamps: [],
-      shouldShowPercent: false,
       shouldShow: true,
     },
     errors: [],
@@ -158,14 +170,6 @@ export type UnknownMessage = {
   reason: string;
 };
 
-export type Robot = {
-  name: string;
-  escs: Record<EscName, ESC>;
-  initialTimestamp: number | null;
-  matchMarkers: MatchMarker[];
-  unknownMessages: UnknownMessage[];
-};
-
 export const DRIVE_LEFT_ESC = "DriveLeft" as const;
 export const DRIVE_RIGHT_ESC = "DriveRight" as const;
 export const ARM_ESC = "Arm" as const;
@@ -177,69 +181,3 @@ export type EscName = string;
 // | typeof DRIVE_RIGHT_ESC
 // | typeof WEAPON_ESC;
 // | typeof ARM_ESC;
-
-export const getInitColossalAvian = (): Robot => {
-  // no arm yet
-  const allEscs: EscName[] = [
-    DRIVE_LEFT_ESC,
-    DRIVE_RIGHT_ESC,
-    WEAPON_ESC,
-    ARM_ESC,
-  ];
-  const escs = allEscs.reduce(
-    (acc, name) => {
-      const measurementMap = getInitEscMeasurements({
-        rpmMax:
-          name === DRIVE_LEFT_ESC || name === DRIVE_RIGHT_ESC ? 35000 : 20000,
-        rpmHighlight: name === WEAPON_ESC ? 15000 : undefined,
-      });
-
-      if (name === ARM_ESC) {
-        mapMeasurements(measurementMap, (measurement) => {
-          if (measurement.name !== INPUT) {
-            measurement.shouldShow = false;
-          }
-        });
-      }
-
-      acc[name] = getInitEsc(name, measurementMap);
-      return acc;
-    },
-    {} as Record<EscName, ESC>,
-  );
-
-  return {
-    name: "Colossal Avian",
-    escs,
-    initialTimestamp: null,
-    matchMarkers: [],
-    unknownMessages: [],
-  };
-};
-
-export const getInitStackOverflow = (): Robot => {
-  const voltageMin = 0; // TODO: update?
-  const voltageMax = 15.2;
-  const rpmMax = 18000;
-  const maxCurrent = 80;
-
-  return {
-    name: "Stack Overflow",
-    escs: {
-      [WEAPON_ESC]: getInitEsc(
-        WEAPON_ESC,
-        getInitEscMeasurements({
-          rpmMax,
-          rpmHighlight: rpmMax * 0.8,
-          maxConsumption: 850,
-          maxCurrent,
-          voltageMin,
-          voltageMax,
-        }),
-      ),
-    },
-    initialTimestamp: null,
-    matchMarkers: [],
-    unknownMessages: [],
-  };
-};

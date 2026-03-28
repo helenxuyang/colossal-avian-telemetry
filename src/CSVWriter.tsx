@@ -28,9 +28,15 @@ export const CSVDownloader = ({ robot }: Props) => {
   const [fileName, setFileName] = useState<string>("");
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
 
+  const getRobotKebab = (robotName: string) => {
+    return robotName.toLowerCase().replaceAll(" ", "-");
+  };
+
   const prepareDownload = useCallback(() => {
     setCsvData(getCsvData(robot));
-    setFileName(`colossal-avian-${getFormattedFirstTimestamp(robot)}.csv`);
+    setFileName(
+      `${getRobotKebab(robot.name)}-${getFormattedFirstTimestamp(robot)}.csv`,
+    );
   }, [robot]);
 
   return (

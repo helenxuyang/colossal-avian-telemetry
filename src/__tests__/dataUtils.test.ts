@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DRIVE_LEFT_ESC,
   DRIVE_RIGHT_ESC,
-  getInitColossalAvian,
   VOLTAGE,
   type Measurement,
   type Robot,
@@ -20,6 +19,7 @@ import {
   combineRobotData,
 } from "../dataUtils";
 import { getMockRobotWithData } from "./testData";
+import { getInitColossalAvian } from "../storageUtils";
 
 const mockMeasurement: Measurement = {
   name: VOLTAGE,

@@ -3,9 +3,10 @@ import {
   type MatchMarker,
   type Robot,
   type UnknownMessage,
-  getInitColossalAvian,
   INPUT,
+  VOLTAGE,
 } from "./robot";
+import { initRobotFromConfig, type RobotConfig } from "./storageUtils";
 
 export type CSVRow = (string | number)[];
 
@@ -79,17 +80,32 @@ export const getCsvData = (robot: Robot): CSVRow[] => {
   return rows;
 };
 
-export const importRobot = (csvData: string[][]): Robot => {
-  const robot = getInitColossalAvian();
+export const importRobot = (
+  config: RobotConfig,
+  csvData: string[][],
+): Robot => {
+  const robot = initRobotFromConfig(config);
 
   forEachEsc(robot.escs, (esc) => {
-    const dataRows = csvData.filter(
-      (row) => row.includes(esc.name) && row[0] === "data",
+    const dataHeaderRow = csvData.find(
+      (row) =>
+        row[0] === "type" && row[1] === "escName" && row.includes(VOLTAGE),
     );
-    esc.timestamps = dataRows.map((row) => Number(row[2]));
-    Object.values(esc.measurements).forEach((measurement, index) => {
-      measurement.values = dataRows.map((row) => Number(row[3 + index]));
-    });
+    if (dataHeaderRow) {
+      const measurementNames = dataHeaderRow.slice(3);
+      const dataRows = csvData.filter(
+        (row) => row[0] === "data" && row[1] === esc.name,
+      );
+      esc.timestamps = dataRows.map((row) => Number(row[2]));
+      Object.values(measurementNames).forEach((name, index) => {
+        console.log("###", name, dataRows);
+        esc.measurements[name].values = dataRows.map((row) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const [_type, _escName, _timestamp, ...values] = row;
+          return Number(values[index]);
+        });
+      });
+    }
 
     const inputRows = csvData.filter(
       (row) => row.includes(esc.name) && row[0] === "input",
