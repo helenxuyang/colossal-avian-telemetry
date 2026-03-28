@@ -2,6 +2,7 @@ import { forEachEsc } from "./dataUtils";
 import {
   type MatchMarker,
   type Robot,
+  type UnknownMessage,
   getInitColossalAvian,
   INPUT,
 } from "./robot";
@@ -66,6 +67,15 @@ export const getCsvData = (robot: Robot): CSVRow[] => {
     matchMarkerRows.forEach((row) => rows.push(row));
   }
 
+  const unknownMessages = robot.unknownMessages.map(({ message, reason }) => {
+    return [message, reason];
+  });
+  if (unknownMessages.length > 0) {
+    const unknownMessageHeaderRow = ["unknownMessage", "reason"];
+    rows.push(unknownMessageHeaderRow);
+    unknownMessages.forEach((row) => rows.push(row));
+  }
+
   return rows;
 };
 
@@ -104,6 +114,17 @@ export const importRobot = (csvData: string[][]): Robot => {
         type: row[1],
         timestamp: Number(row[2]),
       }) as MatchMarker,
+  );
+
+  const unknownMessageRows = csvData.filter(
+    (row) => row[0] === "unknownMessage",
+  );
+  robot.unknownMessages = unknownMessageRows.map(
+    (row) =>
+      ({
+        message: row[0],
+        reason: row[1],
+      }) as UnknownMessage,
   );
   return robot;
 };
