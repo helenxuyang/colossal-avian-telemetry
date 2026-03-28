@@ -14,6 +14,10 @@ export const ConnectedDataDisplay = () => {
   const [robot, setRobot] = useState<Robot>(getInitColossalAvian());
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
+  const handleConnect = useCallback(() => {
+    setIsRecording(true);
+  }, []);
+
   const handleReceiveData = useCallback(
     (data: string) => {
       if (isRecording) {
@@ -27,6 +31,7 @@ export const ConnectedDataDisplay = () => {
   );
 
   const handleReceiveDataCallback = useRef<(data: string) => void | null>(null);
+
   useEffect(() => {
     handleReceiveDataCallback.current = handleReceiveData;
   }, [handleReceiveData]);
@@ -36,13 +41,11 @@ export const ConnectedDataDisplay = () => {
       <WebSocketInfoHolder>
         <WebSocketConnector
           onReceiveData={handleReceiveDataCallback}
-          onConnect={() => {
-            setIsRecording(true);
-          }}
+          onConnect={handleConnect}
         />
       </WebSocketInfoHolder>,
     ],
-    [],
+    [handleConnect],
   );
 
   const handleStartRecording = useCallback(() => {

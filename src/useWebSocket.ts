@@ -52,7 +52,7 @@ export const useWebSocket = (
       }
       clearInterval(checkStatus);
     };
-  }, [retryCount, onHandleReceiveData]);
+  }, [retryCount, onHandleReceiveData, onConnect]);
 
   const retryConnection = () => {
     setRetryCount((count) => {
