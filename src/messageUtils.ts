@@ -121,7 +121,7 @@ export const getUnknownMessageReason = (message: string): string | null => {
   return null;
 };
 
-export const parseData = (message: string): ParsedMessage => {
+export const parseMessage = (message: string): ParsedMessage => {
   /* Data formats:
   
   ESC telemetry data: 
@@ -189,7 +189,7 @@ export const parseData = (message: string): ParsedMessage => {
         : 1 / 6;
     const timestamp = Number(values[10]);
 
-    const parsedData: ParsedMessage = {
+    const parsedMessage: ParsedMessage = {
       messageType: "data",
       escName,
       timestamp,
@@ -201,11 +201,11 @@ export const parseData = (message: string): ParsedMessage => {
         [RPM]: Math.round(mergeBytes(values[7], values[8]) * 100 * rpmFactor),
       },
     };
-    return parsedData;
+    return parsedMessage;
   } else if (escInputIds.includes(escId as EscInputId)) {
     const value = values[0];
     const timestamp = values[1];
-    const parsedData: ParsedMessage = {
+    const parsedMessage: ParsedMessage = {
       messageType: "input",
       escName,
       timestamp,
@@ -213,7 +213,7 @@ export const parseData = (message: string): ParsedMessage => {
         [INPUT]: Math.round(0.2 * value - 300), // scale from [1000, 2000] -> [-100, 100]
       },
     };
-    return parsedData;
+    return parsedMessage;
   }
   throw Error("invalid message");
 };

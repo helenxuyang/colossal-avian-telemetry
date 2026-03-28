@@ -3,7 +3,7 @@ import { getInitColossalAvian, type EscName, type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import {
   getMockEscMessageGenerator,
-  parseData,
+  parseMessage,
   getUpdatedRobot,
   getMockEscError,
 } from "./messageUtils";
@@ -44,7 +44,7 @@ export const MockDataDisplay = () => {
         );
 
         const data = generateEscMessage();
-        const parsedData = parseData(data);
+        const parsedData = parseMessage(data);
         const newRobot = getUpdatedRobot(parsedData, robot);
         return newRobot;
       });
@@ -58,7 +58,7 @@ export const MockDataDisplay = () => {
       setRobot((robot) => {
         if (startTime) {
           const mockError = getMockEscError(startTime, escName);
-          const parsedData = parseData(mockError);
+          const parsedData = parseMessage(mockError);
           return getUpdatedRobot(parsedData, robot);
         }
         return robot;
@@ -71,7 +71,7 @@ export const MockDataDisplay = () => {
     (message: string) => {
       setRobot((robot) => {
         if (startTime) {
-          const parsedData = parseData(message);
+          const parsedData = parseMessage(message);
           return getUpdatedRobot(parsedData, robot);
         }
         return robot;

@@ -3,7 +3,7 @@ import { type Robot, getInitColossalAvian } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import { WebSocketConnector } from "./WebSocketConnector";
 import styled from "styled-components";
-import { getUpdatedRobot, parseData } from "./messageUtils";
+import { getUpdatedRobot, parseMessage } from "./messageUtils";
 
 const WebSocketInfoHolder = styled.div`
   display: flex;
@@ -21,7 +21,7 @@ export const ConnectedDataDisplay = () => {
   const handleReceiveData = useCallback(
     (data: string) => {
       if (isRecording) {
-        const parsedData = parseData(data);
+        const parsedData = parseMessage(data);
         if (parsedData) {
           setRobot(getUpdatedRobot(parsedData, robot));
         }
