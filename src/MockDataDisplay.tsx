@@ -1,9 +1,8 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { type EscName, type Robot } from "./robot";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type EscName } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import {
   parseMessage,
-  getUpdatedRobot,
   getMockEscError,
   ALL_ESC_IDS,
   idToEscMap,
@@ -11,6 +10,7 @@ import {
 } from "./messageUtils";
 import styled from "styled-components";
 import { getInitRobot } from "./storageUtils";
+import { useRobot, useSetRobot, useUpdateRobot } from "./store";
 
 const MockDataControls = styled.div`
   color: red;
@@ -22,71 +22,68 @@ const ButtonsHolder = styled.div`
   gap: 8px;
 `;
 
+const intervalMs = 8;
+
 export const MockDataDisplay = () => {
-  const intervalMs = 8;
+  const robot = useRobot();
+  const setRobot = useSetRobot();
+  const updateRobot = useUpdateRobot();
+
+  // to avoid stale closure in setInterval when mocking messages depending on robot state:
+  const robotRef = useRef(robot);
+  useEffect(() => {
+    robotRef.current = robot;
+  }, [robot]);
+
   const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
     null,
   );
-
-  const [robot, setRobot] = useState<Robot>(getInitRobot());
-  const [startTime, setStartTime] = useState<number | null>(0);
-  const escIndex = useRef<number>(0);
-
   const [mockMessage, setMockMessage] = useState<string>("");
 
-  const handleStart = useCallback(() => {
-    const now = Date.now();
-    if (!startTime) {
-      setStartTime(now);
+  const startTime = useRef<number | null>(null);
+  const escIndex = useRef<number>(0);
+
+  const mockReceiveAndHandleMessage = useCallback(() => {
+    if (!startTime.current) {
+      return;
     }
+    const escIds = ALL_ESC_IDS.filter((id) => {
+      const escName = idToEscMap[id];
+      return Object.keys(robotRef.current.escs).includes(escName);
+    });
+    const escId = escIds[escIndex.current];
+    const data = generateMockESCMessage(
+      startTime.current,
+      escId,
+      robotRef.current,
+    );
+    console.log("mock message", data);
+    const parsedData = parseMessage(data);
 
-    const handleMockMessage = () => {
-      setRobot((robot) => {
-        const escIds = ALL_ESC_IDS.filter((id) => {
-          const escName = idToEscMap[id];
-          return Object.keys(robot.escs).includes(escName);
-        });
-        const escId = escIds[escIndex.current];
-        const data = generateMockESCMessage(startTime || now, escId, robot);
-        const parsedData = parseMessage(data);
-        const newRobot = getUpdatedRobot(parsedData, robot);
+    escIndex.current =
+      escIndex.current >= escIds.length - 1 ? 0 : escIndex.current + 1;
 
-        escIndex.current =
-          escIndex.current >= escIds.length - 1 ? 0 : escIndex.current + 1;
+    updateRobot(parsedData);
+  }, [startTime, updateRobot]);
 
-        return newRobot;
-      });
-    };
-
-    setMockDataIntervalId(setInterval(handleMockMessage, intervalMs));
-  }, [startTime]);
-
-  const handleMockError = useCallback(
+  const mockReceiveAndHandleError = useCallback(
     (escName?: EscName) => {
-      setRobot((robot) => {
-        if (startTime) {
-          const mockError = getMockEscError(startTime, escName);
-          const parsedData = parseMessage(mockError);
-          return getUpdatedRobot(parsedData, robot);
-        }
-        return robot;
-      });
+      if (!startTime.current) {
+        return;
+      }
+      const mockError = getMockEscError(startTime.current, escName);
+      const parsedData = parseMessage(mockError);
+      updateRobot(parsedData);
     },
-    [startTime],
+    [startTime, updateRobot],
   );
 
-  const handleMockMessage = useCallback(
-    (message: string) => {
-      setRobot((robot) => {
-        if (startTime) {
-          const parsedData = parseMessage(message);
-          return getUpdatedRobot(parsedData, robot);
-        }
-        return robot;
-      });
-    },
-    [startTime],
-  );
+  const handleStart = useCallback(() => {
+    if (!startTime.current) {
+      startTime.current = Date.now();
+    }
+    setMockDataIntervalId(setInterval(mockReceiveAndHandleMessage, intervalMs));
+  }, [mockReceiveAndHandleMessage]);
 
   const handlePause = useCallback(() => {
     if (mockDataIntervalId) {
@@ -97,8 +94,8 @@ export const MockDataDisplay = () => {
 
   const handleClear = useCallback(() => {
     setRobot(getInitRobot());
-    setStartTime(null);
-  }, []);
+    startTime.current = null;
+  }, [setRobot]);
 
   const controls = useMemo(() => {
     return [
@@ -107,7 +104,10 @@ export const MockDataDisplay = () => {
         <p>⚠ USING FAKE DATA ⚠</p>
         <ButtonsHolder>
           {Object.keys(robot.escs).map((esc) => (
-            <button key={esc} onClick={() => handleMockError(esc as EscName)}>
+            <button
+              key={esc}
+              onClick={() => mockReceiveAndHandleError(esc as EscName)}
+            >
               Mock {esc} error
             </button>
           ))}
@@ -116,17 +116,18 @@ export const MockDataDisplay = () => {
           value={mockMessage}
           onChange={(e) => setMockMessage(e.target.value)}
         />
-        <button onClick={() => handleMockMessage(mockMessage)}>
-          Mock message
-        </button>
+        <button onClick={mockReceiveAndHandleMessage}>Mock message</button>
       </MockDataControls>,
     ];
-  }, [handleMockError, handleMockMessage, mockMessage, robot]);
+  }, [
+    mockReceiveAndHandleError,
+    mockReceiveAndHandleMessage,
+    mockMessage,
+    robot,
+  ]);
 
   return (
     <RobotDisplay
-      robot={robot}
-      setRobot={setRobot}
       controls={controls}
       isRecording={mockDataIntervalId !== null}
       setIsRecording={handleStart}

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { type Robot } from "./robot";
 import { RobotDisplay } from "./RobotDisplay";
 import { WebSocketConnector } from "./WebSocketConnector";
 import styled from "styled-components";
-import { getUpdatedRobot, parseMessage } from "./messageUtils";
+import { parseMessage } from "./messageUtils";
 import { getInitRobot } from "./storageUtils";
+import { useSetRobot, useUpdateRobot } from "./store";
 
 const WebSocketInfoHolder = styled.div`
   display: flex;
@@ -12,7 +12,9 @@ const WebSocketInfoHolder = styled.div`
 `;
 
 export const ConnectedDataDisplay = () => {
-  const [robot, setRobot] = useState<Robot>(getInitRobot());
+  const setRobot = useSetRobot();
+  const updateRobot = useUpdateRobot();
+
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
   const handleConnect = useCallback(() => {
@@ -24,11 +26,11 @@ export const ConnectedDataDisplay = () => {
       if (isRecording) {
         const parsedData = parseMessage(data);
         if (parsedData) {
-          setRobot((robot) => getUpdatedRobot(parsedData, robot));
+          updateRobot(parsedData);
         }
       }
     },
-    [isRecording],
+    [isRecording, updateRobot],
   );
 
   // use ref so websocket doesn't re-render
@@ -56,12 +58,13 @@ export const ConnectedDataDisplay = () => {
 
   const handlePauseRecording = useCallback(() => setIsRecording(false), []);
 
-  const handleClearRecording = useCallback(() => setRobot(getInitRobot()), []);
+  const handleClearRecording = useCallback(
+    () => setRobot(getInitRobot()),
+    [setRobot],
+  );
 
   return (
     <RobotDisplay
-      robot={robot}
-      setRobot={setRobot}
       controls={controls}
       isRecording={isRecording}
       setIsRecording={setIsRecording}

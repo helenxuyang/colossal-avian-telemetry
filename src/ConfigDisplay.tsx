@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type EscName, type MeasurementName, type Robot } from "./robot";
+import { type EscName, type MeasurementName } from "./robot";
 import styled from "styled-components";
 import {
   deleteRobotConfig,
@@ -13,6 +13,7 @@ import {
   type MeasurementConfig,
   type RobotConfig,
 } from "./storageUtils";
+import { useRobot, useSetRobot } from "./store";
 
 const ConfigLayout = styled.div`
   display: flex;
@@ -58,12 +59,10 @@ const CustomConfigButtons = styled.div`
   justify-content: center;
 `;
 
-type Props = {
-  robot: Robot;
-  setRobot: (robot: Robot) => void;
-};
+export const ConfigDisplay = () => {
+  const robot = useRobot();
+  const setRobot = useSetRobot();
 
-export const ConfigDisplay = ({ robot, setRobot }: Props) => {
   const [robotInput, setRobotInput] = useState<RobotConfig>(
     getConfigFromRobot(robot),
   );

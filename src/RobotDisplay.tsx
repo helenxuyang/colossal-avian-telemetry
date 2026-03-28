@@ -8,7 +8,6 @@ import {
   TOTAL_CONSUMPTION,
   TOTAL_CURRENT,
   WEAPON_ESC,
-  type Robot,
 } from "./robot";
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
 import { ESCDisplay } from "./ESCDisplay";
@@ -25,6 +24,7 @@ import { ConfigDisplay } from "./ConfigDisplay";
 import { useCallback, useMemo } from "react";
 import { calculateTotal } from "./dataUtils";
 import { DebugDisplay } from "./DebugDisplay";
+import { useRobot } from "./store";
 
 const Layout = styled.div`
   display: flex;
@@ -110,8 +110,6 @@ const ControlsSection = styled.div`
 `;
 
 type Props = {
-  robot: Robot;
-  setRobot: (robot: Robot) => void;
   controls?: React.ReactNode[];
   isRecording: boolean;
   setIsRecording: (isRecording: boolean) => void;
@@ -121,8 +119,6 @@ type Props = {
 };
 
 export const RobotDisplay = ({
-  robot,
-  setRobot,
   controls,
   isRecording,
   setIsRecording,
@@ -130,6 +126,8 @@ export const RobotDisplay = ({
   onPauseRecording,
   onClearRecording,
 }: Props) => {
+  const robot = useRobot();
+
   const driveLeftEsc = robot.escs[DRIVE_LEFT_ESC];
   const driveRightEsc = robot.escs[DRIVE_RIGHT_ESC];
   const weaponEsc = robot.escs[WEAPON_ESC];
@@ -212,10 +210,10 @@ export const RobotDisplay = ({
       },
       {
         name: "Config",
-        panelContent: <ConfigDisplay robot={robot} setRobot={setRobot} />,
+        panelContent: <ConfigDisplay />,
       },
     ],
-    [liveTabContent, robot, setRobot],
+    [liveTabContent, robot],
   );
 
   const handleStartRecording = useCallback(() => {
@@ -265,7 +263,7 @@ export const RobotDisplay = ({
         </ControlsSection>
         <ControlsSection>
           <h2>Import CSV</h2>
-          <RobotImporter setRobot={setRobot} />
+          <RobotImporter />
           <h2>Export CSV</h2>
           <CSVDownloader robot={robot} />
         </ControlsSection>

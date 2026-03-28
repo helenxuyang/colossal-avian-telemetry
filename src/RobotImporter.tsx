@@ -1,13 +1,10 @@
 import CSVReader from "react-csv-reader";
-import { type Robot } from "./robot";
 import { importRobot } from "./csvUtils";
 import { getCurrentRobotConfig } from "./storageUtils";
+import { useSetRobot } from "./store";
 
-type Props = {
-  setRobot: (robot: Robot) => void;
-};
-
-export const RobotImporter = ({ setRobot }: Props) => {
+export const RobotImporter = () => {
+  const setRobot = useSetRobot();
   const handleFileLoaded = (data: string[][]) => {
     const robot = importRobot(getCurrentRobotConfig(), data);
     setRobot(robot);
