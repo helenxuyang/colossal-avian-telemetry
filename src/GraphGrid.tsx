@@ -83,7 +83,7 @@ export const GraphGrid = () => {
       ...plotConfigs,
       {
         id: crypto.randomUUID(),
-        isFullWidth: false,
+        isFullWidth: true,
       },
     ]);
 

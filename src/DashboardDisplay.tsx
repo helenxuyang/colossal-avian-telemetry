@@ -11,8 +11,6 @@ import { DebugDisplay } from "./DebugDisplay";
 import {
   useIsFakeData,
   useMessages,
-  useRobot,
-  useSetRobot,
   useToggleFakeData,
   useUpdateRobot,
 } from "./store";
@@ -22,11 +20,15 @@ import {
   idToEscMap,
   generateMockESCMessage,
   parseMessage,
+  type ParsedMessage,
+  getUpdatedRobot,
 } from "./messageUtils";
 import { MockDataControls } from "./MockDataControls";
 import { ConnectedDataControls } from "./ConnectedDataControls";
 import { FullscreenButton } from "./FullscreenButton";
 import { RobotDisplay } from "./RobotDisplay";
+import type { Robot } from "./robot";
+import { extractLatestRobot } from "./dataUtils";
 
 const Layout = styled.div`
   display: flex;
@@ -60,8 +62,10 @@ const ControlsSection = styled.div`
 const intervalMs = 8;
 
 export const DashboardDisplay = () => {
-  const robot = useRobot();
-  const setRobot = useSetRobot();
+  const robotRef = useRef<Robot>(getInitRobot()); // all data
+  const [renderedRobot, setRenderedRobot] = useState<Robot>(getInitRobot()); // only what's rendered
+  const renderInterval = useRef<number | null>(null);
+
   const updateRobot = useUpdateRobot();
   const messages = useMessages();
 
@@ -69,11 +73,18 @@ export const DashboardDisplay = () => {
   const toggleFakeData = useToggleFakeData();
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
-  // to avoid stale closure in setInterval when mocking messages depending on robot state:
-  const robotRef = useRef(robot);
   useEffect(() => {
-    robotRef.current = robot;
-  }, [robot]);
+    renderInterval.current = setInterval(() => {
+      setRenderedRobot(extractLatestRobot(robotRef.current));
+    }, 200);
+
+    return () => {
+      if (renderInterval.current) {
+        clearInterval(renderInterval.current);
+        renderInterval.current = null;
+      }
+    };
+  }, []);
 
   const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
     null,
@@ -108,7 +119,7 @@ export const DashboardDisplay = () => {
     () => [
       {
         name: "Live",
-        panelContent: <RobotDisplay />,
+        panelContent: <RobotDisplay renderedRobot={renderedRobot} />,
       },
       {
         name: "Graph",
@@ -119,7 +130,7 @@ export const DashboardDisplay = () => {
         panelContent: <ConfigDisplay />,
       },
     ],
-    [],
+    [renderedRobot],
   );
 
   const handleStartRecording = useCallback(() => {
@@ -138,20 +149,28 @@ export const DashboardDisplay = () => {
     setIsRecording(false);
     if (mockDataIntervalId) {
       clearInterval(mockDataIntervalId);
+      setMockDataIntervalId(null);
+    } else if (renderInterval.current) {
+      clearInterval(renderInterval.current);
     }
-    setMockDataIntervalId(null);
   }, [mockDataIntervalId]);
 
   const handleClearRecording = useCallback(() => {
-    setRobot(getInitRobot());
+    robotRef.current = getInitRobot();
+    setRenderedRobot(getInitRobot());
     startTime.current = null;
-  }, [setRobot]);
+  }, []);
+
+  const handleUpdateRobot = useCallback((parsedMessage: ParsedMessage) => {
+    const updatedRobot = getUpdatedRobot(parsedMessage, robotRef.current);
+    robotRef.current = updatedRobot;
+  }, []);
 
   return (
     <Layout>
       <HeaderHolder>
-        <h1>{robot.name}</h1>
-        <MatchControls robot={robot} onStart={handleStartRecording} />
+        <h1>{renderedRobot.name}</h1>
+        <MatchControls robot={renderedRobot} onStart={handleStartRecording} />
       </HeaderHolder>
       <NavigationTabs tabs={tabs} />
       <ControlsGrid>
@@ -169,6 +188,7 @@ export const DashboardDisplay = () => {
             <ConnectedDataControls
               isRecording={isRecording}
               startRecording={() => setIsRecording(true)}
+              updateRobot={handleUpdateRobot}
             />
           )}
         </ControlsSection>
@@ -183,8 +203,12 @@ export const DashboardDisplay = () => {
         </ControlsSection>
         <ControlsSection>
           <h2>Robot</h2>
-          <DebugDisplay robot={robot} />
-          <button onClick={() => console.log(robot)}>
+          <DebugDisplay robot={renderedRobot} />
+          <button
+            onClick={() =>
+              console.log({ rendered: renderedRobot, full: robotRef.current })
+            }
+          >
             console.log full robot data
           </button>
           {/* <button onClick={() => cacheRobotData(robot)}>
@@ -204,8 +228,13 @@ export const DashboardDisplay = () => {
           {messages.length > 0 ? (
             <div>
               <p>Latest:</p>
-              {messages.slice(-5).map((message) => (
-                <p>{message}</p>
+              {messages.slice(-1).map((message) => (
+                <p>
+                  {message}{" "}
+                  {Number(
+                    `0x${message.substring(message.lastIndexOf(" ") + 1, message.length - 1)}`,
+                  )}
+                </p>
               ))}
             </div>
           ) : (
@@ -216,7 +245,7 @@ export const DashboardDisplay = () => {
           <h2>Import CSV</h2>
           <RobotImporter />
           <h2>Export CSV</h2>
-          <CSVDownloader robot={robot} />
+          <CSVDownloader robot={robotRef} />
         </ControlsSection>
       </ControlsGrid>
     </Layout>

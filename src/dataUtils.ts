@@ -165,3 +165,18 @@ export const cacheRobotData = (robot: Robot) => {
   localStorage.setItem(ROBOT_CACHE, JSON.stringify(fullRobot));
   clearValues(robot);
 };
+
+export const extractLatestRobot = (fullRobot: Robot) => {
+  const latestRobot = structuredClone(fullRobot);
+  Object.values(latestRobot.escs).forEach((esc) => {
+    esc.timestamps = [esc.timestamps.at(-1) ?? 0];
+    Object.values(esc.measurements).forEach((measurement) => {
+      measurement.values = [measurement.values.at(-1) ?? 0];
+    });
+
+    esc.inputs.values = [esc.inputs.values.at(-1) ?? 0];
+    esc.inputs.timestamps = [esc.inputs.timestamps.at(-1) ?? 0];
+  });
+
+  return latestRobot;
+};

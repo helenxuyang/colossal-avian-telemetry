@@ -76,12 +76,13 @@ export const getSeries = (
   escName: EscName,
   measurementName: MeasurementName | typeof INPUT,
 ) => {
-  const timestamps = robot.escs[escName].timestamps;
   const measurement =
     measurementName === INPUT
       ? robot.escs[escName].inputs
       : robot.escs[escName].measurements[measurementName];
-  const values = measurement.values;
+  const values = measurement.values.filter((val) => !isNaN(val));
+  const timestamps = robot.escs[escName].timestamps; // TODO: remove timestamps for NaNs too
+
   if (!timestamps) {
     return {};
   }
@@ -169,14 +170,8 @@ export const getYAxis = (
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min:
-      measurementName === INPUT
-        ? measurement.min
-        : Math.min(...measurement.values, measurement.min),
-    max:
-      measurementName === INPUT
-        ? measurement.max
-        : Math.max(...measurement.values, measurement.max),
+    min: measurement.min, // Math.min(...measurement.values.filter((val) => !isNaN(val))),
+    max: measurement.max, // Math.max(...measurement.values.filter((val) => !isNaN(val))),
   };
   return axis;
 };
@@ -191,8 +186,8 @@ export const getPowerYAxis = (robot: Robot, escName: EscName) => {
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-W`,
-    min: Math.min(...values),
-    max: Math.max(...values),
+    min: Math.min(...values.filter((val) => !isNaN(val))),
+    max: Math.max(...values.filter((val) => !isNaN(val))),
   };
   return axis;
 };

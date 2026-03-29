@@ -90,7 +90,7 @@ const useMessagesStore = create<
     messages: [],
     addMessage: (message: string) =>
       set((state) => {
-        state.messages.push(message);
+        state.messages = [message];
       }),
   })),
 );

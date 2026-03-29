@@ -10,8 +10,8 @@ import {
   ARM_ESC,
   CONSUMPTION,
   CURRENT,
+  type Robot,
 } from "./robot";
-import { useRobot } from "./store";
 import { BACKGROUND, SMALL_VIEWPORT, WarningText } from "./styles";
 import { VoltageDisplay } from "./VoltageDisplay";
 import styled from "styled-components";
@@ -86,24 +86,32 @@ const HorizontalBarsHolder = styled.div`
   background: ${BACKGROUND};
 `;
 
-export const RobotDisplay = () => {
-  const robot = useRobot();
-  const referenceEsc = Object.values(robot.escs)[0];
+type Props = {
+  renderedRobot: Robot;
+};
+export const RobotDisplay = ({ renderedRobot }: Props) => {
+  const referenceEsc = Object.values(renderedRobot.escs)[0];
 
   const { min: minCurrent, max: maxCurrent } =
     referenceEsc.measurements[CURRENT];
   const { min: minConsumption, max: maxConsumption } =
     referenceEsc.measurements[CONSUMPTION];
 
-  const totalCurrent = calculateTotal(CURRENT, robot.escs);
-  const totalConsumption = calculateTotal(CONSUMPTION, robot.escs);
+  const totalCurrent = calculateTotal(CURRENT, renderedRobot.escs);
+  const totalConsumption = calculateTotal(CONSUMPTION, renderedRobot.escs);
 
   return (
     <Layout>
       <RobotSection>
+        Latest timestamp:
+        {Math.max(
+          ...Object.values(renderedRobot.escs).map(
+            (esc) => esc.timestamps.at(-1) ?? 0,
+          ),
+        )}
         <RobotLayout>
           <BarsHolder>
-            <VoltageDisplay escs={robot.escs} />
+            <VoltageDisplay escs={renderedRobot.escs} />
             <HorizontalBarsHolder>
               <HorizontalBarDisplay
                 name={TOTAL_CURRENT}
@@ -120,13 +128,15 @@ export const RobotDisplay = () => {
             </HorizontalBarsHolder>
           </BarsHolder>
           <LayoutColumn>
-            <ConsumptionDonut escs={robot.escs} />
-            {robot.unknownMessages.length > 0 && (
+            <ConsumptionDonut escs={renderedRobot.escs} />
+            {renderedRobot.unknownMessages.length > 0 && (
               <div>
                 <h3>Errors</h3>
                 <WarningText>
-                  <p>Unknown messages: {robot.unknownMessages.length}</p>
-                  <p>First: {robot.unknownMessages[0].message}</p>
+                  <p>
+                    Unknown messages: {renderedRobot.unknownMessages.length}
+                  </p>
+                  <p>First: {renderedRobot.unknownMessages[0].message}</p>
                 </WarningText>
               </div>
             )}
@@ -135,10 +145,10 @@ export const RobotDisplay = () => {
       </RobotSection>
       <ESCSection>
         <ESCGrid>
-          <MediumEscSection esc={robot.escs[DRIVE_LEFT_ESC]} />
-          <LargeEscSection esc={robot.escs[WEAPON_ESC]} />
-          <MediumEscSection esc={robot.escs[DRIVE_RIGHT_ESC]} />
-          <SmallEscSection esc={robot.escs[ARM_ESC]} />
+          <MediumEscSection esc={renderedRobot.escs[DRIVE_LEFT_ESC]} />
+          <LargeEscSection esc={renderedRobot.escs[WEAPON_ESC]} />
+          <MediumEscSection esc={renderedRobot.escs[DRIVE_RIGHT_ESC]} />
+          <SmallEscSection esc={renderedRobot.escs[ARM_ESC]} />
         </ESCGrid>
       </ESCSection>
     </Layout>

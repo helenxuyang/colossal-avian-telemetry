@@ -98,7 +98,6 @@ export const importRobot = (
       );
       esc.timestamps = dataRows.map((row) => Number(row[2]));
       Object.values(measurementNames).forEach((name, index) => {
-        console.log("###", name, dataRows);
         esc.measurements[name].values = dataRows.map((row) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const [_type, _escName, _timestamp, ...values] = row;

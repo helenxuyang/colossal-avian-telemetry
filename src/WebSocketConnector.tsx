@@ -30,7 +30,7 @@ const connectionMap: Record<WebSocketStatus, string> = {
 
 export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
   const [shouldAutoRetryConnection, setShouldAutoRetryConnection] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   const { connection, status, closeCodes, retryConnection } = useWebSocket(
     shouldAutoRetryConnection,
@@ -53,9 +53,6 @@ export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
         {status === WebSocket.OPEN && (
           <button onClick={closeConnection}>Close connection</button>
         )}
-        {status === WebSocket.CLOSED && (
-          <button onClick={retryConnection}>Retry connection</button>
-        )}
         <label>
           <input
             type="checkbox"
@@ -66,6 +63,9 @@ export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
           />
           Auto retry connection
         </label>
+        {status === WebSocket.CLOSED && (
+          <button onClick={retryConnection}>Retry connection</button>
+        )}
       </Controls>
     </div>
   );

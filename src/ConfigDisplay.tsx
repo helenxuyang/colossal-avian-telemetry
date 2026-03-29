@@ -67,7 +67,6 @@ export const ConfigDisplay = () => {
     getConfigFromRobot(robot),
   );
 
-  console.log("###", robot, robotInput);
   const robotConfigsMap = getRobotConfigs();
   const robotConfigs = Object.values(robotConfigsMap);
 

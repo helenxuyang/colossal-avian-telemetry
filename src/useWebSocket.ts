@@ -7,8 +7,6 @@ export type HandleReceiveDataCallbackRef =
 export type HandleConnectCallback = () => void;
 export type HandleConnectCallbackRef = RefObject<HandleConnectCallback | null>;
 
-const THROTTLE_NUM_MESSAGES = 100;
-
 const USE_MOCK_WEBSOCKET = false;
 
 export const useWebSocket = (
@@ -20,7 +18,6 @@ export const useWebSocket = (
   const [status, setStatus] = useState<number | null>(null);
   const [closeCodes, setCloseCodes] = useState<number[]>();
   const [retryCount, setRetryCount] = useState<number>(0);
-  const messageBufferRef = useRef<string[]>([]);
 
   useEffect(() => {
     console.log("websocket setup start");
@@ -28,14 +25,14 @@ export const useWebSocket = (
       `ws://${USE_MOCK_WEBSOCKET ? "localhost" : "192.168.4.1"}:81`,
       ["arduino"],
     );
-    const checkStatus = setInterval(() => {
-      setStatus(connection.current?.readyState ?? null);
-    }, 100);
+    // const checkStatus = setInterval(() => {
+    //   setStatus(connection.current?.readyState ?? null);
+    // }, 100);
     connection.current.addEventListener("open", () => {
       console.log("websocket open");
       connection.current?.send("Connect " + new Date());
       setStatus(connection.current?.readyState ?? null);
-      clearInterval(checkStatus);
+      // clearInterval(checkStatus);
       onConnect.current?.();
     });
 
@@ -45,11 +42,8 @@ export const useWebSocket = (
     });
 
     connection.current.addEventListener("message", (event) => {
-      console.log(`websocket message: ${event.data}`);
-      messageBufferRef.current.push(event.data);
-      if (messageBufferRef.current.length > THROTTLE_NUM_MESSAGES) {
-        onHandleReceiveData.current?.(event.data);
-      }
+      // console.log(`websocket message: ${event.data}`);
+      onHandleReceiveData.current?.(event.data);
       // setStatus(connection.current?.readyState ?? null);
     });
 
@@ -57,14 +51,14 @@ export const useWebSocket = (
       console.log("websocket close", event);
       setCloseCodes((codes) => [...(codes ? codes : []), event.code]);
       setStatus(connection.current?.readyState ?? null);
-      clearInterval(checkStatus);
+      // clearInterval(checkStatus);
     });
 
     return () => {
       if (connection.current?.readyState === WebSocket.OPEN) {
         connection.current?.close();
       }
-      clearInterval(checkStatus);
+      // clearInterval(checkStatus);
     };
   }, [retryCount, onHandleReceiveData, onConnect]);
 

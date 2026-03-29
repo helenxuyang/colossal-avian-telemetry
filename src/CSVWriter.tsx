@@ -1,6 +1,6 @@
 import { CSVLink } from "react-csv";
 import { type Robot } from "./robot";
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import styled from "styled-components";
 import { getCsvData, type CSVRow } from "./csvUtils";
 
@@ -21,7 +21,7 @@ const getFormattedFirstTimestamp = (robot: Robot): string => {
 };
 
 type Props = {
-  robot: Robot;
+  robot: RefObject<Robot>;
 };
 
 export const CSVDownloader = ({ robot }: Props) => {
@@ -33,9 +33,9 @@ export const CSVDownloader = ({ robot }: Props) => {
   };
 
   const prepareDownload = () => {
-    setCsvData(getCsvData(robot));
+    setCsvData(getCsvData(robot.current));
     setFileName(
-      `${getRobotKebab(robot.name)}-${getFormattedFirstTimestamp(robot)}.csv`,
+      `${getRobotKebab(robot.current.name)}-${getFormattedFirstTimestamp(robot.current)}.csv`,
     );
   };
 
