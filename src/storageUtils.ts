@@ -56,7 +56,12 @@ const getDefaultMeasurementConfigs = (): Record<
   MeasurementConfig
 > => {
   return {
-    [RPM]: { name: RPM, min: 0, max: 20000, shouldShow: true },
+    [RPM]: {
+      name: RPM,
+      min: 0,
+      max: 20000,
+      shouldShow: true,
+    },
     [VOLTAGE]: { name: VOLTAGE, min: 16, max: 26, shouldShow: true },
     [CURRENT]: { name: CURRENT, min: 0, max: 100, shouldShow: true },
     [CONSUMPTION]: { name: CONSUMPTION, min: 0, max: 3000, shouldShow: false },
@@ -187,7 +192,9 @@ export const getDefaultColossalAvianConfig = (): RobotConfig => ({
     },
     [WEAPON_ESC]: {
       name: WEAPON_ESC,
-      measurementConfigs: getMeasurementConfigs(),
+      measurementConfigs: getMeasurementConfigs({
+        [RPM]: { max: 35000, highlightThreshold: 20000 },
+      }),
     },
     [ARM_ESC]: {
       name: ARM_ESC,
