@@ -7,6 +7,10 @@ export type HandleReceiveDataCallbackRef =
 export type HandleConnectCallback = () => void;
 export type HandleConnectCallbackRef = RefObject<HandleConnectCallback | null>;
 
+const THROTTLE_NUM_MESSAGES = 100;
+
+const USE_MOCK_WEBSOCKET = false;
+
 export const useWebSocket = (
   shouldAutoRetryConnection: boolean,
   onHandleReceiveData: HandleReceiveDataCallbackRef,
@@ -16,10 +20,14 @@ export const useWebSocket = (
   const [status, setStatus] = useState<number | null>(null);
   const [closeCodes, setCloseCodes] = useState<number[]>();
   const [retryCount, setRetryCount] = useState<number>(0);
+  const messageBufferRef = useRef<string[]>([]);
 
   useEffect(() => {
     console.log("websocket setup start");
-    connection.current = new WebSocket("ws://192.168.4.1:81", ["arduino"]);
+    connection.current = new WebSocket(
+      `ws://${USE_MOCK_WEBSOCKET ? "localhost" : "192.168.4.1"}:81`,
+      ["arduino"],
+    );
     const checkStatus = setInterval(() => {
       setStatus(connection.current?.readyState ?? null);
     }, 100);
@@ -38,8 +46,11 @@ export const useWebSocket = (
 
     connection.current.addEventListener("message", (event) => {
       console.log(`websocket message: ${event.data}`);
-      onHandleReceiveData.current?.(event.data);
-      setStatus(connection.current?.readyState ?? null);
+      messageBufferRef.current.push(event.data);
+      if (messageBufferRef.current.length > THROTTLE_NUM_MESSAGES) {
+        onHandleReceiveData.current?.(event.data);
+      }
+      // setStatus(connection.current?.readyState ?? null);
     });
 
     connection.current.addEventListener("close", (event) => {
