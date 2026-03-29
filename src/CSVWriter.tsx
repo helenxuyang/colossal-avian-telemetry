@@ -1,6 +1,6 @@
 import { CSVLink } from "react-csv";
 import { type Robot } from "./robot";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import { getCsvData, type CSVRow } from "./csvUtils";
 
@@ -32,12 +32,12 @@ export const CSVDownloader = ({ robot }: Props) => {
     return robotName.toLowerCase().replaceAll(" ", "-");
   };
 
-  const prepareDownload = useCallback(() => {
+  const prepareDownload = () => {
     setCsvData(getCsvData(robot));
     setFileName(
       `${getRobotKebab(robot.name)}-${getFormattedFirstTimestamp(robot)}.csv`,
     );
-  }, [robot]);
+  };
 
   return (
     <StyledCSVLink

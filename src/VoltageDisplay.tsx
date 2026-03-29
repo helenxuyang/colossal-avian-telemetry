@@ -2,7 +2,6 @@ import styled from "styled-components";
 import { VOLTAGE, type Robot } from "./robot";
 import { Container, Value } from "./styles";
 import { getClampedPercent, getLatestValue } from "./dataUtils";
-import { useMemo } from "react";
 
 const BarDisplay = styled.div`
   display: flex;
@@ -64,38 +63,22 @@ type Props = {
 };
 
 export const VoltageDisplay = ({ escs }: Props) => {
-  const latestValues = useMemo(() => {
-    return Object.values(escs)
-      .filter((esc) => esc.measurements[VOLTAGE].shouldShow)
-      .map((esc) => getLatestValue(esc.measurements[VOLTAGE].values));
-  }, [escs]);
+  const latestValues = Object.values(escs)
+    .filter((esc) => esc.measurements[VOLTAGE].shouldShow)
+    .map((esc) => getLatestValue(esc.measurements[VOLTAGE].values));
 
-  const min = useMemo(() => {
-    return Math.min(
-      ...Object.values(escs).map((esc) => esc.measurements[VOLTAGE].min),
-    );
-  }, [escs]);
+  const min = Math.min(
+    ...Object.values(escs).map((esc) => esc.measurements[VOLTAGE].min),
+  );
 
-  const max = useMemo(() => {
-    return Math.min(
-      ...Object.values(escs).map((esc) => esc.measurements[VOLTAGE].max),
-    );
-  }, [escs]);
+  const max = Math.min(
+    ...Object.values(escs).map((esc) => esc.measurements[VOLTAGE].max),
+  );
 
-  const minValue = useMemo(() => {
-    return Math.min(...latestValues);
-  }, [latestValues]);
-  const maxValue = useMemo(() => {
-    return Math.max(...latestValues);
-  }, [latestValues]);
-
-  const minPercent = useMemo(() => {
-    return getClampedPercent(minValue, min, max);
-  }, [minValue, min, max]);
-
-  const maxPercent = useMemo(() => {
-    return getClampedPercent(maxValue, min, max);
-  }, [maxValue, min, max]);
+  const minValue = Math.min(...latestValues);
+  const maxValue = Math.max(...latestValues);
+  const minPercent = getClampedPercent(minValue, min, max);
+  const maxPercent = getClampedPercent(maxValue, min, max);
 
   return (
     <Container>

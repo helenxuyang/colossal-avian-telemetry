@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { ConsumptionDonut } from "./ConsumptionDonut";
 import { calculateTotal } from "./dataUtils";
 import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
@@ -96,14 +95,9 @@ export const RobotDisplay = () => {
   const { min: minConsumption, max: maxConsumption } =
     referenceEsc.measurements[CONSUMPTION];
 
-  const totalCurrent = useMemo(
-    () => calculateTotal(CURRENT, robot.escs),
-    [robot.escs],
-  );
-  const totalConsumption = useMemo(
-    () => calculateTotal(CONSUMPTION, robot.escs),
-    [robot.escs],
-  );
+  const totalCurrent = calculateTotal(CURRENT, robot.escs);
+  const totalConsumption = calculateTotal(CONSUMPTION, robot.escs);
+
   return (
     <Layout>
       <RobotSection>

@@ -94,36 +94,24 @@ export const ArcDisplay = ({
   innerMeasurement: inner,
   className,
 }: Props) => {
-  const outerValue = useMemo(
-    () => getLatestValue(outer.values),
-    [outer.values],
-  );
-  const { x: outerArcX, y: outerArcY } = useMemo(
-    () =>
-      convertValueToCoord(
-        outerValue,
-        outer.min,
-        outer.max,
-        svgWidth,
-        outerRadius,
-      ),
-    [outerValue, outer.min, outer.max],
+  const outerValue = getLatestValue(outer.values);
+
+  const { x: outerArcX, y: outerArcY } = convertValueToCoord(
+    outerValue,
+    outer.min,
+    outer.max,
+    svgWidth,
+    outerRadius,
   );
 
-  const innerValue = useMemo(
-    () => getLatestValue(inner.values),
-    [inner.values],
-  );
-  const { x: innerArcX, y: innerArcY } = useMemo(
-    () =>
-      convertValueToCoord(
-        innerValue,
-        inner.min,
-        inner.max,
-        svgWidth,
-        innerRadius,
-      ),
-    [innerValue, inner.min, inner.max],
+  const innerValue = getLatestValue(inner.values);
+
+  const { x: innerArcX, y: innerArcY } = convertValueToCoord(
+    innerValue,
+    inner.min,
+    inner.max,
+    svgWidth,
+    innerRadius,
   );
 
   const outerColor = getColor(outer);
