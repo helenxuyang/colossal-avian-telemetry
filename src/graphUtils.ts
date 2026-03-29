@@ -169,8 +169,14 @@ export const getYAxis = (
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min: Math.min(...measurement.values, measurement.min),
-    max: Math.max(...measurement.values, measurement.max),
+    min:
+      measurementName === INPUT
+        ? measurement.min
+        : Math.min(...measurement.values, measurement.min),
+    max:
+      measurementName === INPUT
+        ? measurement.max
+        : Math.max(...measurement.values, measurement.max),
   };
   return axis;
 };
