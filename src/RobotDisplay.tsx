@@ -81,6 +81,7 @@ const BarsHolder = styled.div`
 
 const HorizontalBarsHolder = styled.div`
   width: 100%;
+  height: 100%;
   display: flex;
   gap: 8px;
   background: ${BACKGROUND};
