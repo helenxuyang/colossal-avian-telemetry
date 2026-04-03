@@ -2,8 +2,8 @@ import {
   ARM_ESC,
   CONSUMPTION,
   CURRENT,
-  // DRIVE_LEFT_ESC,
-  // DRIVE_RIGHT_ESC,
+  DRIVE_LEFT_ESC,
+  DRIVE_RIGHT_ESC,
   INPUT,
   RPM,
   TEMPERATURE,
@@ -182,14 +182,14 @@ const COLOSSAL_AVIAN = "Colossal Avian";
 export const getDefaultColossalAvianConfig = (): RobotConfig => ({
   name: COLOSSAL_AVIAN,
   escConfigs: {
-    // [DRIVE_LEFT_ESC]: {
-    //   name: DRIVE_LEFT_ESC,
-    //   measurementConfigs: getMeasurementConfigs(),
-    // },
-    // [DRIVE_RIGHT_ESC]: {
-    //   name: DRIVE_RIGHT_ESC,
-    //   measurementConfigs: getMeasurementConfigs(),
-    // },
+    [DRIVE_LEFT_ESC]: {
+      name: DRIVE_LEFT_ESC,
+      measurementConfigs: getMeasurementConfigs(),
+    },
+    [DRIVE_RIGHT_ESC]: {
+      name: DRIVE_RIGHT_ESC,
+      measurementConfigs: getMeasurementConfigs(),
+    },
     [WEAPON_ESC]: {
       name: WEAPON_ESC,
       measurementConfigs: getMeasurementConfigs({

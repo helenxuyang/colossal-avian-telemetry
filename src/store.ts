@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { getInitRobot } from "./storageUtils";
 import { INPUT, type Robot } from "./robot";
 import { immer } from "zustand/middleware/immer";
-import type { ParsedMessage } from "./messageUtils";
+import { type ParsedMessage } from "./messageUtils";
 
 type RobotState = {
   robot: Robot;
@@ -50,20 +50,14 @@ const useRobotStore = create<
             ([measurementKey, measurementValue]) => {
               const measurement =
                 robot.escs[escName].measurements[measurementKey];
-              measurement.values.push(measurementValue);
-              if (measurementValue < measurement.min) {
-                measurement.actualMin = measurementValue;
-              }
-              if (measurementValue > measurement.max) {
-                measurement.actualMax = measurementValue;
-              }
+              measurement.values = [measurementValue];
             },
           );
-          robot.escs[escName].timestamps.push(timestamp);
+          robot.escs[escName].timestamps = [timestamp];
         } else if (messageType === "input") {
           const { escData } = parsedMessage;
-          robot.escs[escName].inputs.timestamps.push(timestamp);
-          robot.escs[escName].inputs.values.push(escData[INPUT]);
+          robot.escs[escName].inputs.timestamps = [timestamp];
+          robot.escs[escName].inputs.values = [escData[INPUT]];
         } else if (messageType === "error") {
           robot.escs[escName].errors.push({ timestamp });
         }
@@ -74,30 +68,6 @@ const useRobotStore = create<
 export const useRobot = () => useRobotStore((state) => state.robot);
 export const useSetRobot = () => useRobotStore((state) => state.setRobot);
 export const useUpdateRobot = () => useRobotStore((state) => state.updateRobot);
-
-type MessagesState = {
-  messages: string[];
-};
-type MessagesActions = {
-  addMessage: (message: string) => void;
-};
-
-const useMessagesStore = create<
-  MessagesState & MessagesActions,
-  [["zustand/immer", never]]
->(
-  immer((set) => ({
-    messages: [],
-    addMessage: (message: string) =>
-      set((state) => {
-        state.messages = [message];
-      }),
-  })),
-);
-
-export const useMessages = () => useMessagesStore((state) => state.messages);
-export const useAddMessage = () =>
-  useMessagesStore((state) => state.addMessage);
 
 type AppState = {
   isFakeData: boolean;

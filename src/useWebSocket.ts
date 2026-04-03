@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { useIsFakeData } from "./store";
 
 export type HandleReceiveDataCallback = (data: string) => void;
 export type HandleReceiveDataCallbackRef =
@@ -6,8 +7,6 @@ export type HandleReceiveDataCallbackRef =
 
 export type HandleConnectCallback = () => void;
 export type HandleConnectCallbackRef = RefObject<HandleConnectCallback | null>;
-
-const USE_MOCK_WEBSOCKET = false;
 
 export const useWebSocket = (
   shouldAutoRetryConnection: boolean,
@@ -19,48 +18,61 @@ export const useWebSocket = (
   const [closeCodes, setCloseCodes] = useState<number[]>();
   const [retryCount, setRetryCount] = useState<number>(0);
 
+  const isFakeData = useIsFakeData();
+
   useEffect(() => {
     console.log("websocket setup start");
     connection.current = new WebSocket(
-      `ws://${USE_MOCK_WEBSOCKET ? "localhost" : "192.168.4.1"}:81`,
+      `ws://${isFakeData ? "localhost" : "192.168.4.1"}:81`,
       ["arduino"],
     );
     // const checkStatus = setInterval(() => {
     //   setStatus(connection.current?.readyState ?? null);
     // }, 100);
-    connection.current.addEventListener("open", () => {
+
+    const onOpen = () => {
       console.log("websocket open");
       connection.current?.send("Connect " + new Date());
       setStatus(connection.current?.readyState ?? null);
       // clearInterval(checkStatus);
       onConnect.current?.();
-    });
+    };
 
-    connection.current.addEventListener("error", (event) => {
+    connection.current.addEventListener("open", onOpen);
+
+    const onError = (event: Event) => {
       console.log(`websocket error`, event);
       setStatus(connection.current?.readyState ?? null);
-    });
+    };
 
-    connection.current.addEventListener("message", (event) => {
+    connection.current.addEventListener("error", onError);
+
+    const onMessage = (event: MessageEvent) => {
       // console.log(`websocket message: ${event.data}`);
       onHandleReceiveData.current?.(event.data);
       // setStatus(connection.current?.readyState ?? null);
-    });
+    };
 
-    connection.current.addEventListener("close", (event) => {
+    connection.current.addEventListener("message", onMessage);
+
+    const onClose = (event: CloseEvent) => {
       console.log("websocket close", event);
       setCloseCodes((codes) => [...(codes ? codes : []), event.code]);
       setStatus(connection.current?.readyState ?? null);
       // clearInterval(checkStatus);
-    });
+    };
+
+    connection.current.addEventListener("close", onClose);
 
     return () => {
-      if (connection.current?.readyState === WebSocket.OPEN) {
-        connection.current?.close();
-      }
+      connection.current?.removeEventListener("open", onOpen);
+      connection.current?.removeEventListener("error", onError);
+      connection.current?.removeEventListener("message", onMessage);
+      connection.current?.removeEventListener("close", onClose);
+      connection.current?.close();
       // clearInterval(checkStatus);
     };
-  }, [retryCount, onHandleReceiveData, onConnect]);
+  }, [retryCount, onHandleReceiveData, onConnect, isFakeData]);
 
   const retryConnection = () => {
     setRetryCount((count) => {

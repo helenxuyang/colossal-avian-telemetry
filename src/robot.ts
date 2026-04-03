@@ -181,3 +181,19 @@ export type EscName = string;
 // | typeof DRIVE_RIGHT_ESC
 // | typeof WEAPON_ESC;
 // | typeof ARM_ESC;
+
+export type RobotSnapshot = {
+  name: string;
+  escs: Record<EscName, ESCSnapshot>;
+  initialTimestamp: number | null;
+  matchMarkers: MatchMarker[];
+  unknownMessages: UnknownMessage[];
+};
+
+export type ESCSnapshot = {
+  name: EscName;
+  timestamp: number;
+  errors: EscError[];
+  measurements: Record<MeasurementName, number>;
+  input: number;
+};

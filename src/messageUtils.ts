@@ -11,7 +11,6 @@ import {
   WEAPON_ESC,
   type EscName,
   type Measurement,
-  type MeasurementName,
   type Robot,
 } from "./robot";
 
@@ -41,6 +40,8 @@ const escToIdMap: Record<EscName, EscId> = Object.entries(idToEscMap).reduce(
   },
   {} as Record<EscName, EscId>,
 );
+
+const ERROR_MARKER = "x";
 
 export type EscDataMessage = {
   messageType: "data";
@@ -170,7 +171,6 @@ export const parseMessage = (message: string): ParsedMessage => {
   const escId = splitData[0] as EscId;
   const escName = idToEscMap[escId];
 
-  const ERROR_MARKER = "x";
   if (splitData[1] === ERROR_MARKER) {
     const timestamp = Number(splitData[2]);
     return {
@@ -218,6 +218,10 @@ export const parseMessage = (message: string): ParsedMessage => {
   throw Error("invalid message");
 };
 
+export const stringifyMessage = (parsedMessage: ParsedMessage) => {
+  return JSON.stringify(Object.values(parsedMessage)); // [parsedMessage.messageType].join(",");
+};
+
 export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
   const newRobot = structuredClone(robot);
 
@@ -250,21 +254,15 @@ export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
   if (messageType === "data") {
     const { escData } = parsedMessage;
     Object.entries(escData).forEach(([measurementKey, measurementValue]) => {
-      const measurement =
-        newRobot.escs[escName].measurements[measurementKey as MeasurementName];
-      measurement.values.push(measurementValue);
-      if (measurementValue < measurement.min) {
-        measurement.actualMin = measurementValue;
-      }
-      if (measurementValue > measurement.max) {
-        measurement.actualMax = measurementValue;
-      }
+      newRobot.escs[escName].measurements[measurementKey].values = [
+        measurementValue,
+      ];
     });
-    newRobot.escs[escName].timestamps.push(timestamp);
+    newRobot.escs[escName].timestamps = [timestamp];
   } else if (messageType === "input") {
     const { escData } = parsedMessage;
-    newRobot.escs[escName].inputs.timestamps.push(timestamp);
-    newRobot.escs[escName].inputs.values.push(escData[INPUT]);
+    newRobot.escs[escName].inputs.timestamps = [timestamp];
+    newRobot.escs[escName].inputs.values = [escData[INPUT]];
   }
 
   return newRobot;

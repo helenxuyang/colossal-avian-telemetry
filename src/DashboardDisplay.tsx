@@ -4,31 +4,30 @@ import { GraphGrid } from "./GraphGrid";
 import { RobotImporter } from "./RobotImporter";
 import { RecordingControls } from "./RecordingControls";
 import { MatchControls } from "./MatchControls";
-import { CSVDownloader } from "./CSVWriter";
+import { CSVDownloader } from "./CSVDownloader";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DebugDisplay } from "./DebugDisplay";
 import {
   useIsFakeData,
-  useMessages,
+  useRobot,
+  useSetRobot,
   useToggleFakeData,
-  useUpdateRobot,
 } from "./store";
 import { getInitRobot } from "./storageUtils";
 import {
-  ALL_ESC_IDS,
-  idToEscMap,
-  generateMockESCMessage,
-  parseMessage,
-  type ParsedMessage,
   getUpdatedRobot,
+  parseMessage,
+  stringifyMessage,
 } from "./messageUtils";
-import { MockDataControls } from "./MockDataControls";
-import { ConnectedDataControls } from "./ConnectedDataControls";
 import { FullscreenButton } from "./FullscreenButton";
 import { RobotDisplay } from "./RobotDisplay";
-import type { Robot } from "./robot";
-import { extractLatestRobot } from "./dataUtils";
+import type {
+  HandleConnectCallback,
+  HandleReceiveDataCallback,
+} from "./useWebSocket";
+import { WebSocketConnector } from "./WebSocketConnector";
+import { flushSync } from "react-dom";
 
 const Layout = styled.div`
   display: flex;
@@ -59,67 +58,34 @@ const ControlsSection = styled.div`
   flex: 1;
 `;
 
-const intervalMs = 8;
-
 export const DashboardDisplay = () => {
-  const robotRef = useRef<Robot>(getInitRobot()); // all data
-  const [renderedRobot, setRenderedRobot] = useState<Robot>(getInitRobot()); // only what's rendered
-  const renderInterval = useRef<number | null>(null);
+  const robot = useRobot();
+  const setRobot = useSetRobot();
 
-  const updateRobot = useUpdateRobot();
-  const messages = useMessages();
-
+  const [messages, setMessages] = useState<string[]>([]);
+  const renderThrottle = useRef<number>(0);
   const isFakeData = useIsFakeData();
   const toggleFakeData = useToggleFakeData();
   const [isRecording, setIsRecording] = useState<boolean>(false);
 
+  const csvWorkerRef = useRef<Worker>(null);
+
   useEffect(() => {
-    renderInterval.current = setInterval(() => {
-      setRenderedRobot(extractLatestRobot(robotRef.current));
-    }, 200);
+    csvWorkerRef.current = new Worker(
+      new URL("./csvWorker.js", import.meta.url),
+      { type: "module" },
+    );
 
     return () => {
-      if (renderInterval.current) {
-        clearInterval(renderInterval.current);
-        renderInterval.current = null;
-      }
+      csvWorkerRef.current?.terminate();
     };
   }, []);
-
-  const [mockDataIntervalId, setMockDataIntervalId] = useState<number | null>(
-    null,
-  );
-
-  const startTime = useRef<number | null>(null);
-  const escIndex = useRef<number>(0);
-
-  const mockReceiveAndHandleMessage = useCallback(() => {
-    if (!startTime.current) {
-      return;
-    }
-    const escIds = ALL_ESC_IDS.filter((id) => {
-      const escName = idToEscMap[id];
-      return Object.keys(robotRef.current.escs).includes(escName);
-    });
-    const escId = escIds[escIndex.current];
-    const data = generateMockESCMessage(
-      startTime.current,
-      escId,
-      robotRef.current,
-    );
-    const parsedData = parseMessage(data);
-
-    escIndex.current =
-      escIndex.current >= escIds.length - 1 ? 0 : escIndex.current + 1;
-
-    updateRobot(parsedData);
-  }, [startTime, updateRobot]);
 
   const tabs: Tab[] = useMemo(
     () => [
       {
         name: "Live",
-        panelContent: <RobotDisplay renderedRobot={renderedRobot} />,
+        panelContent: <RobotDisplay />,
       },
       {
         name: "Graph",
@@ -130,47 +96,74 @@ export const DashboardDisplay = () => {
         panelContent: <ConfigDisplay />,
       },
     ],
-    [renderedRobot],
+    [],
   );
 
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
-    if (isFakeData) {
-      if (!startTime.current) {
-        startTime.current = Date.now();
-      }
-      setMockDataIntervalId(
-        setInterval(mockReceiveAndHandleMessage, intervalMs),
-      );
-    }
-  }, [isFakeData, mockReceiveAndHandleMessage]);
+  }, []);
 
   const handlePauseRecording = useCallback(() => {
     setIsRecording(false);
-    if (mockDataIntervalId) {
-      clearInterval(mockDataIntervalId);
-      setMockDataIntervalId(null);
-    } else if (renderInterval.current) {
-      clearInterval(renderInterval.current);
-    }
-  }, [mockDataIntervalId]);
+  }, []);
 
   const handleClearRecording = useCallback(() => {
-    robotRef.current = getInitRobot();
-    setRenderedRobot(getInitRobot());
-    startTime.current = null;
-  }, []);
+    setRobot(getInitRobot());
+  }, [setRobot]);
 
-  const handleUpdateRobot = useCallback((parsedMessage: ParsedMessage) => {
-    const updatedRobot = getUpdatedRobot(parsedMessage, robotRef.current);
-    robotRef.current = updatedRobot;
-  }, []);
+  const handleMessage = useCallback(
+    (data: string) => {
+      if (isRecording) {
+        const parsedMessage = parseMessage(data);
+
+        // Avian needs throttle
+        const RENDER_THROTTLE = 2;
+        if (renderThrottle.current > RENDER_THROTTLE) {
+          flushSync(() => {
+            setRobot(getUpdatedRobot(parsedMessage, robot));
+          });
+          renderThrottle.current = 0;
+        } else {
+          renderThrottle.current++;
+        }
+
+        // flushSync(() => {
+        //   setRobot(getUpdatedRobot(parsedMessage, robot));
+        // });
+
+        const MESSAGES_BATCH = 50;
+        if (messages.length && messages.length > MESSAGES_BATCH) {
+          csvWorkerRef.current?.postMessage(messages);
+          flushSync(() => {
+            setMessages([]);
+          });
+        } else {
+          flushSync(() => {
+            setMessages((messages) => [
+              ...messages,
+              stringifyMessage(parsedMessage),
+            ]);
+          });
+        }
+      }
+    },
+    [isRecording, messages, setRobot, robot],
+  );
+
+  // use ref so websocket doesn't re-render
+  const handleMessageCallback = useRef<HandleReceiveDataCallback>(null);
+  const handleConnectCallback =
+    useRef<HandleConnectCallback>(handleStartRecording);
+
+  useEffect(() => {
+    handleMessageCallback.current = handleMessage;
+  }, [handleMessage]);
 
   return (
     <Layout>
       <HeaderHolder>
-        <h1>{renderedRobot.name}</h1>
-        <MatchControls robot={renderedRobot} onStart={handleStartRecording} />
+        <h1>{robot.name}</h1>
+        <MatchControls robot={robot} onStart={handleStartRecording} />
       </HeaderHolder>
       <NavigationTabs tabs={tabs} />
       <ControlsGrid>
@@ -182,15 +175,10 @@ export const DashboardDisplay = () => {
           <FullscreenButton />
         </ControlsSection>
         <ControlsSection>
-          {isFakeData ? (
-            <MockDataControls startTime={startTime} />
-          ) : (
-            <ConnectedDataControls
-              isRecording={isRecording}
-              startRecording={() => setIsRecording(true)}
-              updateRobot={handleUpdateRobot}
-            />
-          )}
+          <WebSocketConnector
+            onReceiveData={handleMessageCallback}
+            onConnect={handleConnectCallback}
+          />
         </ControlsSection>
         <ControlsSection>
           <h2>Recording</h2>
@@ -203,12 +191,8 @@ export const DashboardDisplay = () => {
         </ControlsSection>
         <ControlsSection>
           <h2>Robot</h2>
-          <DebugDisplay robot={renderedRobot} />
-          <button
-            onClick={() =>
-              console.log({ rendered: renderedRobot, full: robotRef.current })
-            }
-          >
+          <DebugDisplay robot={robot} />
+          <button onClick={() => console.log(robot)}>
             console.log full robot data
           </button>
           {/* <button onClick={() => cacheRobotData(robot)}>
@@ -225,27 +209,13 @@ export const DashboardDisplay = () => {
         </ControlsSection>
         <ControlsSection>
           <h2>Messages</h2>
-          {messages.length > 0 ? (
-            <div>
-              <p>Latest:</p>
-              {messages.slice(-1).map((message) => (
-                <p>
-                  {message}{" "}
-                  {Number(
-                    `0x${message.substring(message.lastIndexOf(" ") + 1, message.length - 1)}`,
-                  )}
-                </p>
-              ))}
-            </div>
-          ) : (
-            "None"
-          )}
+          {messages.length}
         </ControlsSection>
         <ControlsSection>
           <h2>Import CSV</h2>
           <RobotImporter />
           <h2>Export CSV</h2>
-          <CSVDownloader robot={robotRef} />
+          <CSVDownloader />
         </ControlsSection>
       </ControlsGrid>
     </Layout>
