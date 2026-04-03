@@ -7,7 +7,6 @@ import { MatchControls } from "./MatchControls";
 import { CSVDownloader } from "./CSVDownloader";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DebugDisplay } from "./DebugDisplay";
 import {
   useIsFakeData,
   useRobot,
@@ -63,7 +62,7 @@ export const DashboardDisplay = () => {
   const setRobot = useSetRobot();
 
   const [messages, setMessages] = useState<string[]>([]);
-  const renderThrottle = useRef<number>(0);
+  // const renderThrottle = useRef<number>(0);
   const isFakeData = useIsFakeData();
   const toggleFakeData = useToggleFakeData();
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -116,20 +115,19 @@ export const DashboardDisplay = () => {
       if (isRecording) {
         const parsedMessage = parseMessage(data);
 
-        // Avian needs throttle
-        const RENDER_THROTTLE = 2;
-        if (renderThrottle.current > RENDER_THROTTLE) {
-          flushSync(() => {
-            setRobot(getUpdatedRobot(parsedMessage, robot));
-          });
-          renderThrottle.current = 0;
-        } else {
-          renderThrottle.current++;
-        }
+        // const RENDER_THROTTLE = 2;
+        // if (renderThrottle.current > RENDER_THROTTLE) {
+        //   flushSync(() => {
+        //     setRobot(getUpdatedRobot(parsedMessage, robot));
+        //   });
+        //   renderThrottle.current = 0;
+        // } else {
+        //   renderThrottle.current++;
+        // }
 
-        // flushSync(() => {
-        //   setRobot(getUpdatedRobot(parsedMessage, robot));
-        // });
+        flushSync(() => {
+          setRobot(getUpdatedRobot(parsedMessage, robot));
+        });
 
         const MESSAGES_BATCH = 50;
         if (messages.length && messages.length > MESSAGES_BATCH) {
@@ -157,6 +155,10 @@ export const DashboardDisplay = () => {
 
   useEffect(() => {
     handleMessageCallback.current = handleMessage;
+
+    return () => {
+      handleMessageCallback.current = null;
+    };
   }, [handleMessage]);
 
   return (
@@ -189,24 +191,7 @@ export const DashboardDisplay = () => {
             onClear={handleClearRecording}
           />
         </ControlsSection>
-        <ControlsSection>
-          <h2>Robot</h2>
-          <DebugDisplay robot={robot} />
-          <button onClick={() => console.log(robot)}>
-            console.log full robot data
-          </button>
-          {/* <button onClick={() => cacheRobotData(robot)}>
-            Cache robot data
-          </button>
-          <button
-            onClick={() => {
-              cacheRobotData(robot);
-              setRobot(combineRobotWithCache(robot));
-            }}
-          >
-            Fetch full robot
-          </button> */}
-        </ControlsSection>
+
         <ControlsSection>
           <h2>Messages</h2>
           {messages.length}

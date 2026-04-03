@@ -1,13 +1,10 @@
 import { mapEscs, mapMeasurements } from "./dataUtils";
-import type { Robot } from "./robot";
-
-type Props = {
-  robot: Robot;
-};
+import { useRobot } from "./store";
 
 const numValuesToShow = 5;
 
-export const DebugDisplay = ({ robot }: Props) => {
+export const DebugDisplay = () => {
+  const robot = useRobot();
   return (
     <details>
       <summary>Debug</summary>

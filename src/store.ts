@@ -19,7 +19,10 @@ const useRobotStore = create<
 >(
   immer((set) => ({
     robot: getInitRobot(),
-    setRobot: (robot: Robot) => set(() => ({ robot })),
+    setRobot: (robot: Robot) =>
+      set((state) => {
+        state.robot = robot;
+      }),
     updateRobot: (parsedMessage: ParsedMessage) =>
       set((state) => {
         const { messageType } = parsedMessage;
@@ -79,7 +82,10 @@ type AppActions = {
 const useAppStore = create<AppState & AppActions, [["zustand/immer", never]]>(
   immer((set) => ({
     isFakeData: false,
-    toggleFakeData: () => set((state) => ({ isFakeData: !state.isFakeData })),
+    toggleFakeData: () =>
+      set((state) => {
+        state.isFakeData = !state.isFakeData;
+      }),
   })),
 );
 
