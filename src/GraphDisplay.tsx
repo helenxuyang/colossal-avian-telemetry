@@ -66,19 +66,26 @@ export const GraphDisplay = ({ robot }: Props) => {
     endValue?: number;
   }>({});
 
-  const onZoom = useCallback(() => {
-    if (isAutoScrolling) {
-      setIsAutoScrolling(false);
-    }
-    setLastZoomValues({
-      // @ts-expect-error echarts is bad at types
-      startValue: graphRef.current?.getEchartsInstance().getOption().dataZoom[0]
-        .startValue,
-      // @ts-expect-error echarts is bad at types
-      endValue: graphRef.current?.getEchartsInstance().getOption().dataZoom[0]
-        .endValue,
-    });
-  }, [isAutoScrolling]);
+  const onZoom = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (event: any) => {
+      if (event.dataZoomId !== "xZoom") {
+        return;
+      }
+      if (isAutoScrolling) {
+        setIsAutoScrolling(false);
+      }
+      setLastZoomValues({
+        // @ts-expect-error echarts is bad at types
+        startValue: graphRef.current?.getEchartsInstance().getOption()
+          .dataZoom[0].startValue,
+        // @ts-expect-error echarts is bad at types
+        endValue: graphRef.current?.getEchartsInstance().getOption().dataZoom[0]
+          .endValue,
+      });
+    },
+    [isAutoScrolling],
+  );
 
   const onEvents = useMemo(() => ({ datazoom: onZoom }), [onZoom]);
 
@@ -199,6 +206,7 @@ export const GraphDisplay = ({ robot }: Props) => {
     grid: { bottom: 110, left: 100 },
     dataZoom: [
       {
+        id: "xZoom",
         type: "slider",
         show: true,
         xAxisIndex: [...Array(plotIds.length).keys()],

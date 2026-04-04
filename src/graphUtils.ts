@@ -170,8 +170,8 @@ export const getYAxis = (
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min: measurement.min, // Math.min(...measurement.values.filter((val) => !isNaN(val))),
-    max: measurement.max, // Math.max(...measurement.values.filter((val) => !isNaN(val))),
+    min: Math.min(...measurement.values.filter((val) => !isNaN(val))),
+    max: Math.max(...measurement.values.filter((val) => !isNaN(val))),
   };
   return axis;
 };
@@ -217,11 +217,9 @@ export const parsePlotData = (robot: Robot, plots: Plot[]) => {
   const inputYAxes = inputPlots.map(({ escName }) => {
     return getYAxis(robot, escName, INPUT);
   });
-  const inputSeries = inputPlots.map(({ escName }) => {
-    return {
-      ...getInputSeries(robot, escName),
-    };
-  });
+  const inputSeries = inputPlots.map(({ escName }) =>
+    getInputSeries(robot, escName),
+  );
 
   const powerPlots = plots.filter((plot) => plot.type === POWER);
   const powerXAxis = powerPlots.map(({ escName }) => {

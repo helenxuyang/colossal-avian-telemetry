@@ -120,7 +120,7 @@ export const importRobot = (
       (row[1] === "esc" || row[1] === "escName") &&
       row[2] === "timestamp"
     ) {
-      if (row.length === 4 && row[3] === INPUT) {
+      if (row.length === 4 && row[3] === "input") {
         currentSection = "input";
       } else if (row.length === 3) {
         currentSection = "error";
