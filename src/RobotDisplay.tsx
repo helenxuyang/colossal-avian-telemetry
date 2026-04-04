@@ -75,6 +75,10 @@ const HorizontalBarsHolder = styled.div`
   background: ${BACKGROUND};
 `;
 
+const FlexBar = styled(BarDisplay)`
+  flex: 1;
+`;
+
 export const RobotDisplay = () => {
   const robot = useRobot();
   const referenceEsc = Object.values(robot.escs)[0];
@@ -116,11 +120,11 @@ export const RobotDisplay = () => {
           <BarsHolder>
             <VoltageDisplay escs={robot.escs} />
             <HorizontalBarsHolder>
-              <BarDisplay
+              <FlexBar
                 measurement={currentMeasurement}
                 orientation="horizontal"
               />
-              <BarDisplay
+              <FlexBar
                 measurement={consumptionMeasurement}
                 orientation="horizontal"
               />

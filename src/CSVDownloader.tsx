@@ -8,9 +8,11 @@ const getRowFromLine = (line: string) => {
 const getSectionHeader = (type: string, row: string[], robot: Robot) => {
   if (type === "data") {
     const escName = row[1];
-    const measurementNames = Object.values(
-      robot.escs[escName].measurements,
-    ).map((measurement) => measurement.name);
+    const measurementNames = robot.escs[escName]
+      ? Object.values(robot.escs[escName].measurements).map(
+          (measurement) => measurement.name,
+        )
+      : [...Array(row.length - 3).keys()].map((num) => `value${num}`);
 
     return ["type", "esc", "timestamp", ...measurementNames];
   }

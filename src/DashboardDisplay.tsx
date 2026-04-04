@@ -203,6 +203,7 @@ export const DashboardDisplay = () => {
             onReceiveData={handleMessageCallback}
             onConnect={handleConnectCallback}
           />
+          Messages: {messages.length}
         </ControlsSection>
         <ControlsSection>
           <h2>Recording</h2>
@@ -212,11 +213,6 @@ export const DashboardDisplay = () => {
             onPause={handlePauseRecording}
             onClear={handleClearRecording}
           />
-        </ControlsSection>
-
-        <ControlsSection>
-          <h2>Messages</h2>
-          {messages.length}
         </ControlsSection>
         <ControlsSection>
           <h2>Import CSV</h2>

@@ -44,7 +44,7 @@ export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
 
   return (
     <div>
-      <h3>Connection</h3>
+      <h2>Connection</h2>
       <Status>
         {status === null ? "none" : connectionMap[status as WebSocketStatus]}
       </Status>
