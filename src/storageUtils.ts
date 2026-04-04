@@ -56,15 +56,6 @@ const getDefaultMeasurementConfigs = (): Record<
   MeasurementConfig
 > => {
   return {
-    [RPM]: {
-      name: RPM,
-      min: 0,
-      max: 20000,
-      shouldShow: true,
-    },
-    [VOLTAGE]: { name: VOLTAGE, min: 16, max: 26, shouldShow: true },
-    [CURRENT]: { name: CURRENT, min: 0, max: 100, shouldShow: true },
-    [CONSUMPTION]: { name: CONSUMPTION, min: 0, max: 3000, shouldShow: false },
     [TEMPERATURE]: {
       name: TEMPERATURE,
       min: 25,
@@ -75,6 +66,15 @@ const getDefaultMeasurementConfigs = (): Record<
         orange: 75,
         red: 85,
       },
+    },
+    [VOLTAGE]: { name: VOLTAGE, min: 16, max: 26, shouldShow: true },
+    [CURRENT]: { name: CURRENT, min: 0, max: 100, shouldShow: true },
+    [CONSUMPTION]: { name: CONSUMPTION, min: 0, max: 3000, shouldShow: false },
+    [RPM]: {
+      name: RPM,
+      min: 0,
+      max: 20000,
+      shouldShow: true,
     },
   };
 };

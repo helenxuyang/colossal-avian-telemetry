@@ -1,3 +1,12 @@
+const initCSV = async () => {
+  const root = await navigator.storage.getDirectory();
+  const fileHandle = await root.getFileHandle("data.csv", { create: true });
+  const writable = await fileHandle.createWritable({ keepExistingData: false });
+  await writable.close();
+};
+
+initCSV();
+
 self.onmessage = async (e: MessageEvent<string[]>) => {
   try {
     const root = await navigator.storage.getDirectory();

@@ -10,7 +10,6 @@ import {
   VOLTAGE,
   WEAPON_ESC,
   type EscName,
-  type Measurement,
   type Robot,
 } from "./robot";
 
@@ -172,7 +171,7 @@ export const parseMessage = (message: string): ParsedMessage => {
   const escName = idToEscMap[escId];
 
   if (splitData[1] === ERROR_MARKER) {
-    const timestamp = Number(splitData[2]);
+    const timestamp = Number("0x" + splitData[2]);
     return {
       messageType: "error",
       escName,
@@ -257,6 +256,7 @@ export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
   }
 
   if (messageType === "error") {
+    console.log("error", timestamp);
     newRobot.escs[escName].errors.push({ timestamp });
     return newRobot;
   }
@@ -276,99 +276,4 @@ export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
   }
 
   return newRobot;
-};
-
-export const generateMockValue = (measurement: Measurement) => {
-  const { min, max, values } = measurement;
-  const previousValue = values.at(-1);
-  if (!previousValue) {
-    const randomValue = Math.round(Math.random() * (max - min) + min);
-    return randomValue;
-  }
-  const sign = Math.random() > 0.5 ? 1 : -1;
-
-  const randomValue = Math.round(
-    Math.min(max, Math.max(min, previousValue + 1 * sign)),
-  );
-  return randomValue;
-};
-
-export const generateMockValueTwoByteHex = (num: number) => {
-  const highByte = ((num & Number("0xFF00")) >> 8).toString(16);
-  const lowByte = (num & Number("0x00FF")).toString(16);
-  const combined = `${highByte} ${lowByte}`;
-  return combined;
-};
-
-export const ALL_ESC_IDS = [...escDataIds, ...escInputIds];
-
-export const generateMockESCMessage = (
-  startTime: number,
-  escId: EscId,
-  robot: Robot,
-) => {
-  const escName = idToEscMap[escId];
-  if (!escName) {
-    throw Error("generated mock message with invalid ESC ID");
-  }
-  const esc = robot.escs[escName];
-  if (!esc) {
-    throw Error("generated mock message with ESC ID that robot does not have");
-  }
-
-  const messageComponents = [];
-  const timestamp = Date.now() - startTime;
-
-  if (escDataIds.includes(escId as EscDataId)) {
-    // component 0: temp
-    const mockTemp = generateMockValue(esc.measurements[TEMPERATURE]).toString(
-      16,
-    );
-    messageComponents.push(mockTemp);
-
-    // component 1-2: voltage
-    const mockVoltage = generateMockValue(esc.measurements[VOLTAGE]) * 100;
-    const mockVoltageHex = generateMockValueTwoByteHex(mockVoltage);
-    messageComponents.push(mockVoltageHex);
-
-    // component 3-4: current
-    const mockCurrent = generateMockValue(esc.measurements[CURRENT]) * 100;
-    const mockCurrentHex = generateMockValueTwoByteHex(mockCurrent);
-    messageComponents.push(mockCurrentHex);
-
-    // component 5-6: consumption
-    const mockConsumption = generateMockValue(esc.measurements[CONSUMPTION]);
-    const mockConsumptionHex = generateMockValueTwoByteHex(mockConsumption);
-    messageComponents.push(mockConsumptionHex);
-
-    // component 7-8: RPM
-    const mockRPM =
-      (generateMockValue(esc.measurements[RPM]) / 100) *
-      (escName === WEAPON_ESC || escName === ARM_ESC ? 7 : 6);
-    const mockRPMHex = generateMockValueTwoByteHex(mockRPM);
-    messageComponents.push(mockRPMHex);
-
-    // component 9: checksum (ignore for now)
-    messageComponents.push("00");
-
-    // component 10: timestamp
-    messageComponents.push(timestamp.toString(16));
-  } else if (escInputIds.includes(escId as EscInputId)) {
-    // component 1: input
-    const mockInput = (generateMockValue(esc.inputs) + 300) * 5;
-    messageComponents.push(mockInput.toString(16));
-    // component 2: timestamp
-    messageComponents.push(timestamp.toString(16));
-  }
-
-  const message = `<${escId} ${messageComponents.join(" ")}>`;
-
-  return message;
-};
-
-export const getMockEscError = (startTime: number, escName?: EscName) => {
-  const escId: EscId = escName ? escToIdMap[escName] : "a";
-  const timestamp = Date.now() - startTime;
-
-  return `<${escId} x ${timestamp}>`;
 };

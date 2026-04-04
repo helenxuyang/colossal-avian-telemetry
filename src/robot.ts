@@ -86,13 +86,17 @@ export const getInitEscMeasurements = ({
   maxConsumption?: number;
 }): MeasurementMap => {
   return {
-    [RPM]: {
-      name: RPM,
-      unit: "RPM",
-      min: 0,
-      max: rpmMax,
+    [TEMPERATURE]: {
+      name: TEMPERATURE,
+      unit: "°C",
+      min: 25,
+      max: 100,
       values: [],
-      highlightThreshold: rpmHighlight,
+      colorThresholds: {
+        gold: 68,
+        orange: 75,
+        red: 85,
+      },
       shouldShow: true,
     },
     [VOLTAGE]: {
@@ -103,6 +107,7 @@ export const getInitEscMeasurements = ({
       values: [],
       shouldShow: true,
     },
+
     [CURRENT]: {
       name: CURRENT,
       unit: "A",
@@ -119,17 +124,13 @@ export const getInitEscMeasurements = ({
       values: [],
       shouldShow: false,
     },
-    [TEMPERATURE]: {
-      name: TEMPERATURE,
-      unit: "°C",
-      min: 25,
-      max: 100,
+    [RPM]: {
+      name: RPM,
+      unit: "RPM",
+      min: 0,
+      max: rpmMax,
       values: [],
-      colorThresholds: {
-        gold: 68,
-        orange: 75,
-        red: 85,
-      },
+      highlightThreshold: rpmHighlight,
       shouldShow: true,
     },
   };
