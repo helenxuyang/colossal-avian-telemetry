@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { getInitRobot } from "./storageUtils";
-import { INPUT, type Robot } from "./robot";
+import { INPUT, type MatchMarker, type Robot } from "./robot";
 import { immer } from "zustand/middleware/immer";
 import { type ParsedMessage } from "./messageUtils";
 
@@ -11,6 +11,7 @@ type RobotState = {
 type RobotActions = {
   setRobot: (robot: RobotState["robot"]) => void;
   updateRobot: (parsedMessage: ParsedMessage) => void;
+  addMatchMarker: (marker: MatchMarker) => void;
 };
 
 const useRobotStore = create<
@@ -65,12 +66,18 @@ const useRobotStore = create<
           robot.escs[escName].errors.push({ timestamp });
         }
       }),
+    addMatchMarker: (marker: MatchMarker) =>
+      set((state) => {
+        state.robot.matchMarkers.push(marker);
+      }),
   })),
 );
 
 export const useRobot = () => useRobotStore((state) => state.robot);
 export const useSetRobot = () => useRobotStore((state) => state.setRobot);
 export const useUpdateRobot = () => useRobotStore((state) => state.updateRobot);
+export const useAddMatchMarker = () =>
+  useRobotStore((state) => state.addMatchMarker);
 
 type AppState = {
   isFakeData: boolean;

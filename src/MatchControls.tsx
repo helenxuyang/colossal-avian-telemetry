@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { ButtonsHolder } from "./styles";
 import styled from "styled-components";
 import type { Robot } from "./robot";
+import { useAddMatchMarker } from "./store";
 
 type FightStatus = "INACTIVE" | "FIGHTING" | "PAUSED";
 
@@ -21,6 +22,8 @@ export const MatchControls = ({ robot, onStart }: Props) => {
   const [fightStatus, setFightStatus] = useState<FightStatus>("INACTIVE");
   const [matchTimeSec, setMatchTimeSec] = useState<number>(MATCH_LENGTH);
   const timerRef = useRef<number>(null);
+
+  const addMatchMarker = useAddMatchMarker();
 
   const min = Math.floor(matchTimeSec / 60);
   const sec = matchTimeSec % 60;
@@ -43,7 +46,7 @@ export const MatchControls = ({ robot, onStart }: Props) => {
   };
 
   const handleStart = (isResume: boolean = false) => {
-    robot.matchMarkers.push({
+    addMatchMarker({
       type: isResume ? "RESUME" : "START",
       timestamp: getCurrentTimestamp(),
     });
@@ -53,7 +56,7 @@ export const MatchControls = ({ robot, onStart }: Props) => {
   };
 
   const handlePause = () => {
-    robot.matchMarkers.push({
+    addMatchMarker({
       type: "PAUSE",
       timestamp: getCurrentTimestamp(),
     });
@@ -62,7 +65,7 @@ export const MatchControls = ({ robot, onStart }: Props) => {
   };
 
   const handleEnd = () => {
-    robot.matchMarkers.push({
+    addMatchMarker({
       type: "END",
       timestamp: getCurrentTimestamp(),
     });
