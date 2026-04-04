@@ -71,6 +71,27 @@ export const getMeasurementOrInput = (
     : robot.escs[esc].measurements[key];
 };
 
+export const getSeriesColor = (measurementName: PlotMeasurementName) => {
+  switch (measurementName) {
+    case "Temp":
+      return "darkred";
+    case "RPM":
+      return "darkorange";
+    case "Voltage":
+      return "goldenrod";
+    case "Current":
+      return "darkgreen";
+    case "Consumption":
+      return "blue";
+    case "Power":
+      return "purple";
+    case "Input":
+      return "skyblue";
+    default:
+      return "black";
+  }
+};
+
 export const getSeries = (
   robot: Robot,
   escName: EscName,
@@ -101,6 +122,9 @@ export const getSeries = (
     data: seriesData,
     // showSymbol: false,
     symbolSize: 2,
+    itemStyle: {
+      color: getSeriesColor(measurementName),
+    },
   };
   return series;
 };
@@ -145,14 +169,15 @@ export const getInputSeries = (robot: Robot, escName: EscName) => {
   return series;
 };
 
+// TODO: power isn't showing up, not sure why
 export const getPowerSeries = (robot: Robot, escName: EscName) => {
   const timestamps = robot.escs[escName].timestamps;
   const esc = robot.escs[escName];
   const voltage = esc.measurements[VOLTAGE];
   const current = esc.measurements[CURRENT];
-  const values = voltage.values.map(
-    (val, index) => val * current.values[index],
-  );
+  const values = voltage.values
+    .map((val, index) => val * current.values[index])
+    .filter((val) => !isNaN(val));
   const seriesData = [
     ...timestamps.map((time, index) => {
       return [time, values[index]];
@@ -183,16 +208,22 @@ export const getXAxis = (timestamps: number[]) => {
   return axis;
 };
 
+const yAxisSettings = {
+  axisLine: { onZero: false },
+  axisLabel: { fontSize: 10 },
+  nameTextStyle: {
+    fontSize: 10,
+  },
+};
 export const getYAxis = (
   robot: Robot,
   escName: EscName,
   measurementName: PlotMeasurementName,
 ) => {
-  const esc = robot.escs[escName];
   const measurement = getMeasurementOrInput(robot, escName, measurementName);
   const axis = {
     type: "value",
-    name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
+    name: `${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
     min:
       measurementName === INPUT
         ? measurement.min
@@ -201,6 +232,7 @@ export const getYAxis = (
       measurementName === INPUT
         ? measurement.max
         : Math.max(...measurement.values.filter((val) => !isNaN(val))),
+    ...yAxisSettings,
   };
   return axis;
 };
@@ -214,9 +246,10 @@ export const getPowerYAxis = (robot: Robot, escName: EscName) => {
     .map((val) => Number(val.toFixed(2)));
   const axis = {
     type: "value",
-    name: `${esc.abbreviation}-W`,
+    name: "W",
     min: Math.min(...values.filter((val) => !isNaN(val))),
     max: Math.max(...values.filter((val) => !isNaN(val))),
+    ...yAxisSettings,
   };
   return axis;
 };

@@ -131,7 +131,7 @@ export const GraphDisplay = ({ robot }: Props) => {
       ? [defaultYAxis]
       : plotDataOptions.yAxis.map((yAxis, index) => ({
           ...yAxis,
-          offset: index > 1 ? index * 50 : 0,
+          offset: index > 1 ? (index - 1) * 40 : 0,
         }))),
     ...(hasOnlyPower ? plotDataOptions.powerYAxis : []),
   ];
