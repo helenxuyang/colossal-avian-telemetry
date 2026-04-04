@@ -1,6 +1,7 @@
 import { ConsumptionDonut } from "./ConsumptionDonut";
 import { calculateTotal } from "./dataUtils";
-import { HorizontalBarDisplay } from "./HorizontalBarDisplay";
+import { BarDisplay } from "./BarDisplay";
+import type { Measurement } from "./robot";
 import {
   TOTAL_CURRENT,
   TOTAL_CONSUMPTION,
@@ -25,18 +26,6 @@ const ESCGrid = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-`;
-
-const SmallEscSection = styled(ESCDisplay)`
-  flex: 1;
-`;
-
-const MediumEscSection = styled(ESCDisplay)`
-  flex: 2;
-`;
-
-const LargeEscSection = styled(ESCDisplay)`
-  flex: 3;
 `;
 
 const RobotSection = styled.div`
@@ -98,6 +87,24 @@ export const RobotDisplay = () => {
   const totalCurrent = calculateTotal(CURRENT, robot.escs);
   const totalConsumption = calculateTotal(CONSUMPTION, robot.escs);
 
+  const currentMeasurement: Measurement = {
+    name: TOTAL_CURRENT,
+    values: [totalCurrent],
+    min: minCurrent,
+    max: maxCurrent,
+    unit: "A",
+    shouldShow: true,
+  };
+
+  const consumptionMeasurement: Measurement = {
+    name: TOTAL_CONSUMPTION,
+    values: [totalConsumption],
+    min: minConsumption,
+    max: maxConsumption,
+    unit: "mAh",
+    shouldShow: true,
+  };
+
   return (
     <Layout>
       <RobotSection>
@@ -109,17 +116,13 @@ export const RobotDisplay = () => {
           <BarsHolder>
             <VoltageDisplay escs={robot.escs} />
             <HorizontalBarsHolder>
-              <HorizontalBarDisplay
-                name={TOTAL_CURRENT}
-                value={totalCurrent}
-                min={minCurrent}
-                max={maxCurrent}
+              <BarDisplay
+                measurement={currentMeasurement}
+                orientation="horizontal"
               />
-              <HorizontalBarDisplay
-                name={TOTAL_CONSUMPTION}
-                value={totalConsumption}
-                min={minConsumption}
-                max={maxConsumption}
+              <BarDisplay
+                measurement={consumptionMeasurement}
+                orientation="horizontal"
               />
             </HorizontalBarsHolder>
           </BarsHolder>
@@ -139,10 +142,10 @@ export const RobotDisplay = () => {
       </RobotSection>
       <ESCSection>
         <ESCGrid>
-          <MediumEscSection esc={robot.escs[DRIVE_LEFT_ESC]} />
-          <LargeEscSection esc={robot.escs[WEAPON_ESC]} />
-          <MediumEscSection esc={robot.escs[DRIVE_RIGHT_ESC]} />
-          <SmallEscSection esc={robot.escs[ARM_ESC]} />
+          <ESCDisplay esc={robot.escs[DRIVE_LEFT_ESC]} />
+          <ESCDisplay esc={robot.escs[WEAPON_ESC]} />
+          <ESCDisplay esc={robot.escs[DRIVE_RIGHT_ESC]} />
+          <ESCDisplay esc={robot.escs[ARM_ESC]} />
         </ESCGrid>
       </ESCSection>
     </Layout>

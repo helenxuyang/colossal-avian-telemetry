@@ -219,7 +219,17 @@ export const parseMessage = (message: string): ParsedMessage => {
 };
 
 export const stringifyMessage = (parsedMessage: ParsedMessage) => {
-  return JSON.stringify(Object.values(parsedMessage)); // [parsedMessage.messageType].join(",");
+  if (
+    parsedMessage.messageType === "data" ||
+    parsedMessage.messageType === "input"
+  ) {
+    const { messageType, escName, timestamp, escData } = parsedMessage;
+    return [messageType, escName, timestamp, ...Object.values(escData)].join(
+      ",",
+    );
+  } else {
+    return Object.values(parsedMessage).join(",");
+  }
 };
 
 export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {

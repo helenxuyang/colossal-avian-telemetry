@@ -26,7 +26,6 @@ import type {
   HandleReceiveDataCallback,
 } from "./useWebSocket";
 import { WebSocketConnector } from "./WebSocketConnector";
-import { flushSync } from "react-dom";
 
 const Layout = styled.div`
   display: flex;
@@ -62,6 +61,13 @@ export const DashboardDisplay = () => {
   const setRobot = useSetRobot();
 
   const [messages, setMessages] = useState<string[]>([]);
+  const robotRef = useRef(robot);
+  const messagesRef = useRef<string[]>(messages);
+  const pendingRobotRef = useRef<ReturnType<typeof getUpdatedRobot> | null>(
+    null,
+  );
+  const pendingMessagesRef = useRef<string[]>([]);
+  const rafRef = useRef<number | null>(null);
   // const renderThrottle = useRef<number>(0);
   const isFakeData = useIsFakeData();
   const toggleFakeData = useToggleFakeData();
@@ -70,13 +76,28 @@ export const DashboardDisplay = () => {
   const csvWorkerRef = useRef<Worker>(null);
 
   useEffect(() => {
+    robotRef.current = robot;
+  }, [robot]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
     csvWorkerRef.current = new Worker(
       new URL("./csvWorker.js", import.meta.url),
       { type: "module" },
     );
-
     return () => {
       csvWorkerRef.current?.terminate();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
     };
   }, []);
 
@@ -112,40 +133,41 @@ export const DashboardDisplay = () => {
 
   const handleMessage = useCallback(
     (data: string) => {
-      if (isRecording) {
-        const parsedMessage = parseMessage(data);
+      if (!isRecording) return;
 
-        // const RENDER_THROTTLE = 2;
-        // if (renderThrottle.current > RENDER_THROTTLE) {
-        //   flushSync(() => {
-        //     setRobot(getUpdatedRobot(parsedMessage, robot));
-        //   });
-        //   renderThrottle.current = 0;
-        // } else {
-        //   renderThrottle.current++;
-        // }
+      const parsedMessage = parseMessage(data);
+      const baseRobot = pendingRobotRef.current ?? robotRef.current;
+      pendingRobotRef.current = getUpdatedRobot(parsedMessage, baseRobot);
+      pendingMessagesRef.current.push(stringifyMessage(parsedMessage));
 
-        flushSync(() => {
-          setRobot(getUpdatedRobot(parsedMessage, robot));
-        });
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          if (pendingRobotRef.current !== null) {
+            setRobot(pendingRobotRef.current);
+            robotRef.current = pendingRobotRef.current;
+            pendingRobotRef.current = null;
+          }
 
-        const MESSAGES_BATCH = 50;
-        if (messages.length && messages.length > MESSAGES_BATCH) {
-          csvWorkerRef.current?.postMessage(messages);
-          flushSync(() => {
+          const nextMessages = [
+            ...messagesRef.current,
+            ...pendingMessagesRef.current,
+          ];
+          const MESSAGES_BATCH = 50;
+          if (nextMessages.length > MESSAGES_BATCH) {
+            csvWorkerRef.current?.postMessage(nextMessages);
             setMessages([]);
-          });
-        } else {
-          flushSync(() => {
-            setMessages((messages) => [
-              ...messages,
-              stringifyMessage(parsedMessage),
-            ]);
-          });
-        }
+            messagesRef.current = [];
+          } else {
+            setMessages(nextMessages);
+            messagesRef.current = nextMessages;
+          }
+
+          pendingMessagesRef.current = [];
+          rafRef.current = null;
+        });
       }
     },
-    [isRecording, messages, setRobot, robot],
+    [isRecording, setRobot],
   );
 
   // use ref so websocket doesn't re-render

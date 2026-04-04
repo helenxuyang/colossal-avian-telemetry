@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { type Measurement } from "./robot";
 import { getLatestValue, getColor, getLatestValueDisplay } from "./dataUtils";
-import { useMemo } from "react";
+import { useEffect, useRef } from "react";
 
 type Props = {
   outerMeasurement: Measurement;
@@ -10,34 +10,23 @@ type Props = {
   className?: string;
 };
 
-const GraphDisplay = styled.div`
-  position: relative;
-`;
-
 const OuterLabel = styled.p`
   font-size: 30px;
   font-weight: bold;
   white-space: nowrap;
+  margin: 0 0 10px 0;
 `;
 
-const Arc = styled.svg<{ $strokeWidth: number }>`
-  stroke-width: ${({ $strokeWidth }) => $strokeWidth};
-  fill: none;
-  max-width: 100%;
+const CanvasWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 400px;
 `;
 
-const ArcFill = styled.path<{ $color: string }>`
-  stroke: ${({ $color }) => $color};
-`;
-
-const TargetMarkerHolder = styled.div`
-  position: absolute;
-  top: 0;
-`;
-
-const InnerArcHolder = styled.div`
-  position: absolute;
-  top: 0;
+const Canvas = styled.canvas`
+  width: 100%;
+  height: auto;
+  display: block;
 `;
 
 const InnerLabel = styled.p`
@@ -48,156 +37,234 @@ const InnerLabel = styled.p`
   margin: 0 auto;
   font-size: 24px;
   font-weight: bold;
+  pointer-events: none;
 `;
 
-const convertValueToCoord = (
-  value: number,
-  min: number,
-  max: number,
-  displaySize: number,
+const drawArc = (
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
   radius: number,
+  startAngle: number,
+  endAngle: number,
+  color: string,
+  strokeWidth: number,
+  anticlockwise = false,
 ) => {
-  const percent = Math.min((value - min) / (max - min), 1);
-  const angle = (1 - percent) * Math.PI;
-  const x = radius * Math.cos(angle);
-  const y = radius * Math.sin(angle);
-  const translatedX = displaySize / 2 + x;
-  const translatedY = displaySize / 2 - y;
-  return {
-    x: translatedX,
-    y: translatedY,
-  };
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, startAngle, endAngle, anticlockwise);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = strokeWidth;
+  ctx.stroke();
 };
 
-const svgWidth = 400;
-const svgHeight = svgWidth / 2;
+const width = 300;
+const height = width / 2;
 
-const outerStrokeWidth = 75;
-const outerDiameter = svgWidth;
-const outerRadius = outerDiameter / 2;
+const outerStrokeWidth = 50;
+const outerRadius = width / 2 - outerStrokeWidth / 2;
+const canvasHeight = height;
 
 const innerScale = 0.6;
-const innerDiameter = outerDiameter * innerScale;
-const innerRadius = innerDiameter / 2;
-
-const outerStart = `0 ${svgHeight}`;
-const outerBaseEnd = `${svgWidth} ${svgHeight}`;
-
-const innerStart = `${outerRadius - innerRadius} ${svgHeight}`;
-const innerBaseEnd = `${svgWidth - (outerRadius - innerRadius)} ${svgHeight}`;
-
-const viewBoxOffset = outerStrokeWidth / 2;
-const viewBox = `-${viewBoxOffset} -${viewBoxOffset} ${svgWidth + 2 * viewBoxOffset} ${svgHeight + viewBoxOffset}`;
+const innerRadius = outerRadius * innerScale;
 
 export const ArcDisplay = ({
   outerMeasurement: outer,
   innerMeasurement: inner,
   className,
 }: Props) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const outerDataRef = useRef({
+    value: getLatestValue(outer.values),
+    min: outer.min,
+    max: outer.max,
+    color: getColor(outer),
+    target: outer.highlightThreshold ?? 0,
+  });
+  const innerDataRef = useRef({
+    value: getLatestValue(inner.values),
+    min: inner.min,
+    max: inner.max,
+    color: getColor(inner),
+  });
+
   const outerValue = getLatestValue(outer.values);
-
-  const { x: outerArcX, y: outerArcY } = convertValueToCoord(
-    outerValue,
-    outer.min,
-    outer.max,
-    svgWidth,
-    outerRadius,
-  );
-
   const innerValue = getLatestValue(inner.values);
-
-  const { x: innerArcX, y: innerArcY } = convertValueToCoord(
-    innerValue,
-    inner.min,
-    inner.max,
-    svgWidth,
-    innerRadius,
-  );
-
   const outerColor = getColor(outer);
   const innerColor = getColor(inner);
-
   const target = outer.highlightThreshold ?? 0;
-  const onePercent = (outer.max - outer.min) / 100;
-  const targetStart = target - onePercent / 2;
-  const targetEnd = target + onePercent / 2;
-  const { x: targetStartX, y: targetStartY } = useMemo(
-    () =>
-      convertValueToCoord(
-        targetStart,
-        outer.min,
-        outer.max,
-        svgWidth,
-        outerRadius,
-      ),
-    [outer.max, outer.min, targetStart],
-  );
 
-  const { x: targetEndX, y: targetEndY } = useMemo(
-    () =>
-      convertValueToCoord(
-        targetEnd,
-        outer.min,
-        outer.max,
-        svgWidth,
+  useEffect(() => {
+    outerDataRef.current = {
+      value: outerValue,
+      min: outer.min,
+      max: outer.max,
+      color: outerColor,
+      target,
+    };
+    innerDataRef.current = {
+      value: innerValue,
+      min: inner.min,
+      max: inner.max,
+      color: innerColor,
+    };
+  }, [
+    outerValue,
+    innerValue,
+    outer.min,
+    outer.max,
+    outerColor,
+    inner.min,
+    inner.max,
+    innerColor,
+    target,
+  ]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const centerX = width / 2;
+    const centerY = outerRadius + outerStrokeWidth / 2;
+
+    const render = () => {
+      const outerData = outerDataRef.current;
+      const innerData = innerDataRef.current;
+
+      ctx.clearRect(0, 0, width, canvasHeight);
+
+      drawArc(
+        ctx,
+        centerX,
+        centerY,
         outerRadius,
-      ),
-    [outer.max, outer.min, targetEnd],
-  );
+        Math.PI,
+        2 * Math.PI,
+        "white",
+        outerStrokeWidth,
+        false,
+      );
+      const outerPercent = Math.max(
+        Math.min(
+          (outerData.value - outerData.min) / (outerData.max - outerData.min),
+          1,
+        ),
+        0,
+      );
+      drawArc(
+        ctx,
+        centerX,
+        centerY,
+        outerRadius,
+        Math.PI,
+        Math.PI + outerPercent * Math.PI,
+        outerData.color,
+        outerStrokeWidth,
+        false,
+      );
+
+      if (outerData.target > 0) {
+        const onePercent = (outerData.max - outerData.min) / 100;
+        const targetStart = outerData.target - onePercent / 2;
+        const targetEnd = outerData.target + onePercent / 2;
+        const targetStartAngle =
+          Math.PI +
+          Math.max(
+            Math.min(
+              (targetStart - outerData.min) / (outerData.max - outerData.min),
+              1,
+            ),
+            0,
+          ) *
+            Math.PI;
+        const targetEndAngle =
+          Math.PI +
+          Math.max(
+            Math.min(
+              (targetEnd - outerData.min) / (outerData.max - outerData.min),
+              1,
+            ),
+            0,
+          ) *
+            Math.PI;
+        drawArc(
+          ctx,
+          centerX,
+          centerY,
+          outerRadius,
+          targetStartAngle,
+          targetEndAngle,
+          "darkgreen",
+          outerStrokeWidth,
+          false,
+        );
+      }
+
+      drawArc(
+        ctx,
+        centerX,
+        centerY,
+        innerRadius,
+        Math.PI,
+        2 * Math.PI,
+        "white",
+        outerStrokeWidth / 2,
+        false,
+      );
+      const innerPercent = Math.max(
+        Math.min(
+          (innerData.value - innerData.min) / (innerData.max - innerData.min),
+          1,
+        ),
+        0,
+      );
+      drawArc(
+        ctx,
+        centerX,
+        centerY,
+        innerRadius,
+        Math.PI,
+        Math.PI + innerPercent * Math.PI,
+        innerData.color,
+        outerStrokeWidth / 2,
+        false,
+      );
+
+      animationRef.current = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={className}>
       <OuterLabel>{getLatestValueDisplay(outer)}</OuterLabel>
-      <GraphDisplay className="graph-display">
-        <Arc
-          width={svgWidth}
-          height={svgHeight}
-          viewBox={viewBox}
-          $strokeWidth={outerStrokeWidth}
-        >
-          <ArcFill
-            d={`M ${outerStart} A ${outerRadius} ${outerRadius} 0 0 1 ${outerBaseEnd}`}
-            $color="white"
-          />
-          <ArcFill
-            d={`M ${outerStart} A ${outerRadius} ${outerRadius} 0 0 1 ${outerArcX} ${outerArcY}`}
-            $color={outerColor}
-          />
-        </Arc>
-        {target > 0 && (
-          <TargetMarkerHolder className="target-marker-holder">
-            <Arc
-              width={svgWidth}
-              height={svgHeight}
-              viewBox={viewBox}
-              $strokeWidth={outerStrokeWidth}
-            >
-              <ArcFill
-                d={`M ${targetStartX} ${targetStartY} A ${outerRadius} ${outerRadius} 0 0 1 ${targetEndX} ${targetEndY}`}
-                $color="darkgreen"
-              />
-            </Arc>
-          </TargetMarkerHolder>
-        )}
-        <InnerArcHolder>
-          <Arc
-            width={svgWidth}
-            height={svgHeight}
-            viewBox={viewBox}
-            $strokeWidth={outerStrokeWidth / 2}
-          >
-            <ArcFill
-              d={`M ${innerStart} A ${innerRadius} ${innerRadius} 0 0 1 ${innerBaseEnd}`}
-              $color="white"
-            />
-            <ArcFill
-              d={`M ${innerStart} A ${innerRadius} ${innerRadius} 0 0 1 ${innerArcX} ${innerArcY}`}
-              $color={innerColor}
-            />
-          </Arc>
-        </InnerArcHolder>
+      <CanvasWrapper>
+        <Canvas
+          ref={canvasRef}
+          style={{
+            width: width,
+            height: height,
+          }}
+        />
         <InnerLabel>{getLatestValueDisplay(inner)}</InnerLabel>
-      </GraphDisplay>
+      </CanvasWrapper>
     </div>
   );
 };
