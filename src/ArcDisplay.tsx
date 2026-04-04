@@ -10,15 +10,9 @@ type Props = {
   className?: string;
 };
 
-const OuterLabel = styled.p`
-  font-size: 30px;
-  font-weight: bold;
-  white-space: nowrap;
-  margin: 0 0 10px 0;
-`;
-
 const CanvasWrapper = styled.div`
-  position: relative;
+  display: flex;
+  justify-content: center;
   width: 100%;
   max-width: 400px;
 `;
@@ -27,17 +21,6 @@ const Canvas = styled.canvas`
   width: 100%;
   height: auto;
   display: block;
-`;
-
-const InnerLabel = styled.p`
-  position: absolute;
-  bottom: 10%;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  font-size: 24px;
-  font-weight: bold;
-  pointer-events: none;
 `;
 
 const drawArc = (
@@ -59,7 +42,7 @@ const drawArc = (
 };
 
 const width = 300;
-const height = width / 2;
+const height = width / 2 + 50;
 
 const outerStrokeWidth = 50;
 const outerRadius = width / 2 - outerStrokeWidth / 2;
@@ -75,6 +58,8 @@ export const ArcDisplay = ({
 }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
+  const outerMeasurementRef = useRef(outer);
+  const innerMeasurementRef = useRef(inner);
   const outerDataRef = useRef({
     value: getLatestValue(outer.values),
     min: outer.min,
@@ -96,6 +81,8 @@ export const ArcDisplay = ({
   const target = outer.highlightThreshold ?? 0;
 
   useEffect(() => {
+    outerMeasurementRef.current = outer;
+    innerMeasurementRef.current = inner;
     outerDataRef.current = {
       value: outerValue,
       min: outer.min,
@@ -135,7 +122,7 @@ export const ArcDisplay = ({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const centerX = width / 2;
-    const centerY = outerRadius + outerStrokeWidth / 2;
+    const centerY = outerRadius + outerStrokeWidth / 2 + 50;
 
     const render = () => {
       const outerData = outerDataRef.current;
@@ -240,6 +227,24 @@ export const ArcDisplay = ({
         false,
       );
 
+      // Draw outer label
+      ctx.fillStyle = "black";
+      ctx.font = "bold 30px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        getLatestValueDisplay(outerMeasurementRef.current),
+        centerX,
+        35,
+      );
+
+      // Draw inner label
+      ctx.font = "bold 24px system-ui";
+      ctx.fillText(
+        getLatestValueDisplay(innerMeasurementRef.current),
+        centerX,
+        canvasHeight - 10,
+      );
+
       animationRef.current = requestAnimationFrame(render);
     };
 
@@ -254,7 +259,6 @@ export const ArcDisplay = ({
 
   return (
     <div className={className}>
-      <OuterLabel>{getLatestValueDisplay(outer)}</OuterLabel>
       <CanvasWrapper>
         <Canvas
           ref={canvasRef}
@@ -263,7 +267,6 @@ export const ArcDisplay = ({
             height: height,
           }}
         />
-        <InnerLabel>{getLatestValueDisplay(inner)}</InnerLabel>
       </CanvasWrapper>
     </div>
   );
