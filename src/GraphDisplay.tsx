@@ -192,9 +192,9 @@ export const GraphDisplay = ({ robot }: Props) => {
             robot.escs[escName].measurements[measurementOrInputName].unit ??
             null;
         }
-        return [params.value[1], unit, `(${params.value[0] / 1000} sec)`]
-          .filter(Boolean)
-          .join(" ");
+        return [params.value[1], unit, `(${params.value[0] / 1000} sec)`].join(
+          " ",
+        );
       },
       textStyle: {
         fontSize: 10,
@@ -362,6 +362,7 @@ export const GraphDisplay = ({ robot }: Props) => {
             option={option}
             notMerge={true}
             onEvents={onEvents}
+            style={{ height: "500px", width: "100%" }}
           />
           <AutoscrollHolder>
             <span>

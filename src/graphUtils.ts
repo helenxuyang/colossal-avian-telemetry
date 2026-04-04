@@ -80,8 +80,11 @@ export const getSeries = (
     measurementName === INPUT
       ? robot.escs[escName].inputs
       : robot.escs[escName].measurements[measurementName];
+
+  const timestamps = robot.escs[escName].timestamps.filter(
+    (_, index) => !isNaN(measurement.values[index]),
+  );
   const values = measurement.values.filter((val) => !isNaN(val));
-  const timestamps = robot.escs[escName].timestamps; // TODO: remove timestamps for NaNs too
 
   if (!timestamps) {
     return {};
@@ -103,10 +106,30 @@ export const getSeries = (
 };
 
 export const getInputSeries = (robot: Robot, escName: EscName) => {
-  const { timestamps, values } = robot.escs[escName].inputs;
+  let { timestamps, values } = robot.escs[escName].inputs;
+  const { min, max } = robot.escs[escName].inputs;
+
   if (!timestamps) {
     return {};
   }
+
+  timestamps = robot.escs[escName].timestamps.filter(
+    (_, index) => !isNaN(values[index]),
+  );
+  values = values.filter((val) => !isNaN(val));
+
+  const spikeFilterThreshold = 1.5;
+  timestamps = timestamps.filter((_, index) => {
+    const val = values[index];
+    return (
+      val >= min * spikeFilterThreshold && val <= max * spikeFilterThreshold
+    );
+  });
+  values = values.filter(
+    (val) =>
+      val >= min * spikeFilterThreshold && val <= max * spikeFilterThreshold,
+  );
+
   const seriesData = [
     ...timestamps.map((time, index) => {
       return [time, values[index]];
@@ -170,8 +193,14 @@ export const getYAxis = (
   const axis = {
     type: "value",
     name: `${esc.abbreviation}-${measurement.unit.length > 0 ? measurement.unit : measurementName}`,
-    min: Math.min(...measurement.values.filter((val) => !isNaN(val))),
-    max: Math.max(...measurement.values.filter((val) => !isNaN(val))),
+    min:
+      measurementName === INPUT
+        ? measurement.min
+        : Math.min(...measurement.values.filter((val) => !isNaN(val))),
+    max:
+      measurementName === INPUT
+        ? measurement.max
+        : Math.max(...measurement.values.filter((val) => !isNaN(val))),
   };
   return axis;
 };
