@@ -131,7 +131,7 @@ export const GraphDisplay = ({ robot }: Props) => {
       ? [defaultYAxis]
       : plotDataOptions.yAxis.map((yAxis, index) => ({
           ...yAxis,
-          offset: index > 1 ? (index - 1) * 40 : 0,
+          offset: index > 1 ? (index - 1) * 45 : 0,
         }))),
     ...(hasOnlyPower ? plotDataOptions.powerYAxis : []),
   ];
@@ -362,7 +362,7 @@ export const GraphDisplay = ({ robot }: Props) => {
             option={option}
             notMerge={true}
             onEvents={onEvents}
-            style={{ height: "500px", width: "100%" }}
+            style={{ height: "700px", width: "100%" }}
           />
           <AutoscrollHolder>
             <span>

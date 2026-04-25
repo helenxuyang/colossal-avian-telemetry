@@ -86,7 +86,7 @@ export const getSeriesColor = (measurementName: PlotMeasurementName) => {
     case "Power":
       return "purple";
     case "Input":
-      return "skyblue";
+      return "gray";
     default:
       return "black";
   }
@@ -165,6 +165,9 @@ export const getInputSeries = (robot: Robot, escName: EscName) => {
     name: `${escName} ${INPUT}`,
     data: seriesData,
     symbolSize: 2,
+    itemStyle: {
+      color: getSeriesColor(INPUT),
+    },
   };
   return series;
 };
@@ -214,6 +217,7 @@ const yAxisSettings = {
   nameTextStyle: {
     fontSize: 10,
   },
+  splitNumber: 10,
 };
 export const getYAxis = (
   robot: Robot,
