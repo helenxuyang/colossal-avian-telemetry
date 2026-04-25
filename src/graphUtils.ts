@@ -137,9 +137,7 @@ export const getInputSeries = (robot: Robot, escName: EscName) => {
     return {};
   }
 
-  timestamps = robot.escs[escName].timestamps.filter(
-    (_, index) => !isNaN(values[index]),
-  );
+  timestamps = timestamps.filter((_, index) => !isNaN(values[index]));
   values = values.filter((val) => !isNaN(val));
 
   const spikeFilterThreshold = 1.5;
