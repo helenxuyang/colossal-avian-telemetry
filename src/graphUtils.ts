@@ -33,7 +33,11 @@ type ErrorPlot = {
 };
 
 export type Plot = DataPlot | InputPlot | PowerPlot | ErrorPlot;
-export type PlotMeasurementName = MeasurementName | typeof POWER | typeof INPUT;
+export type PlotMeasurementName =
+  | MeasurementName
+  | typeof POWER
+  | typeof INPUT
+  | typeof ERROR;
 
 export const stringifyPlot = (plot: Plot) => {
   if (plot.type === "data") {

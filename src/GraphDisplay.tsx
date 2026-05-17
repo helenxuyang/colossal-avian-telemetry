@@ -1,21 +1,7 @@
 import ReactECharts from "echarts-for-react";
-import {
-  ERROR,
-  INPUT,
-  POWER,
-  type EscName,
-  type MeasurementName,
-  type Robot,
-} from "./robot";
+import { ERROR, INPUT, POWER, type Robot } from "./robot";
 import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  type SelectChangeEvent,
-  Select,
-  OutlinedInput,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from "@mui/material";
+
 import styled from "styled-components";
 import { StatusDot } from "./StatusDot";
 import {
@@ -24,22 +10,7 @@ import {
   stringifyPlot,
   type Plot,
 } from "./graphUtils";
-
-const DropdownsHolder = styled.div`
-  display: flex;
-  gap: 4px;
-  @media (max-width: 500px) {
-    flex-direction: column;
-  }
-`;
-
-const StyledSelectHolder = styled(FormControl)`
-  width: 100%;
-`;
-
-const StyledSelect = styled(Select)`
-  height: 40px;
-`;
+import { PlotPill } from "./PlotPill";
 
 const AutoscrollHolder = styled.div`
   display: flex;
@@ -53,14 +24,30 @@ const AutoscrollHolder = styled.div`
   }
 `;
 
+const PillHolder = styled.div`
+  display: flex;
+  gap: 2px;
+  margin: 2px;
+  align-items: center;
+`;
+
 type Props = {
   robot: Robot;
 };
 
 export const GraphDisplay = ({ robot }: Props) => {
   const graphRef = useRef<ReactECharts>(null);
-  const [plotIds, setPlotIds] = useState<Plot[]>([]);
-  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(true);
+  const [plotIds, setPlotIds] = useState<Plot[]>(
+    Object.keys(robot.escs).length > 0
+      ? [
+          {
+            escName: Object.values(robot.escs)[0].name,
+            type: INPUT,
+          },
+        ]
+      : [],
+  );
+  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
   const [lastZoomValues, setLastZoomValues] = useState<{
     startValue?: number;
     endValue?: number;
@@ -247,52 +234,6 @@ export const GraphDisplay = ({ robot }: Props) => {
     animation: false,
   };
 
-  const handleDropdownChange = useCallback(
-    (event: SelectChangeEvent<unknown>) => {
-      const {
-        target: { value },
-      } = event;
-      const ids =
-        typeof value === "string" ? value.split(",") : (value as string[]);
-
-      const plots = ids.map((id) => {
-        const components = id.split("-");
-        const escName = components[0] as EscName;
-        const typeOrMeasurement = components[1] as
-          | typeof INPUT
-          | typeof ERROR
-          | typeof POWER
-          | MeasurementName;
-
-        if (typeOrMeasurement === INPUT) {
-          return {
-            escName,
-            type: INPUT,
-          };
-        } else if (typeOrMeasurement === ERROR) {
-          return {
-            escName,
-            type: ERROR,
-          };
-        } else if (typeOrMeasurement === POWER) {
-          return {
-            escName,
-            type: POWER,
-          };
-        } else {
-          return {
-            escName,
-            type: "data",
-            measurementName: typeOrMeasurement,
-          };
-        }
-      });
-
-      setPlotIds(plots as Plot[]);
-    },
-    [],
-  );
-
   const toggleAutoScrolling = useCallback(() => {
     if (isAutoScrolling) {
       setLastZoomValues({
@@ -305,56 +246,63 @@ export const GraphDisplay = ({ robot }: Props) => {
     setIsAutoScrolling((scrolling) => !scrolling);
   }, [autoscrollStart, isAutoScrolling, referenceTimestamps]);
 
-  const MenuProps = {
-    PaperProps: {
-      style: {
-        maxHeight: 300,
-        width: 250,
-      },
-    },
-  };
-
   return (
     <div>
-      <DropdownsHolder>
-        {Object.values(robot.escs).map((esc) => {
-          const inputId = `${esc.name}-${INPUT}`;
-          const powerId = `${esc.name}-${POWER}`;
-          const errorId = `${esc.name}-${ERROR}`;
-          return (
-            <StyledSelectHolder key={esc.name}>
-              <InputLabel>{esc.name}</InputLabel>
-              <StyledSelect
-                multiple
-                value={plotIds.map((plot) => stringifyPlot(plot))}
-                onChange={handleDropdownChange}
-                input={<OutlinedInput label={esc.name} />}
-                MenuProps={MenuProps}
-              >
-                {[
-                  ...Object.values(esc.measurements).map((measurement) => {
-                    const id = `${esc.name}-${measurement.name}`;
-                    return (
-                      <MenuItem key={id} value={id}>
-                        {measurement.name}
-                      </MenuItem>
-                    );
-                  }),
-                  <MenuItem key={inputId} value={inputId}>
-                    {INPUT}
-                  </MenuItem>,
-                  <MenuItem key={powerId} value={powerId}>
-                    {POWER}
-                  </MenuItem>,
-                  <MenuItem key={errorId} value={errorId}>
-                    Errors
-                  </MenuItem>,
-                ]}
-              </StyledSelect>
-            </StyledSelectHolder>
-          );
-        })}
-      </DropdownsHolder>
+      {Object.values(robot.escs).map((esc) => {
+        const plots = [
+          ...Object.values(esc.measurements)
+            .map((measurement) => {
+              return measurement.name;
+            })
+            .map((name) => ({
+              escName: esc.name,
+              type: "data",
+              measurementName: name,
+            })),
+          {
+            escName: esc.name,
+            type: INPUT,
+          },
+          {
+            escName: esc.name,
+            type: POWER,
+          },
+          {
+            escName: esc.name,
+            type: ERROR,
+          },
+        ] as Plot[]; // TODO: figure out types
+
+        return (
+          <PillHolder key={esc.name}>
+            <strong>{esc.name}: </strong>
+            {plots.map((plot) => {
+              const isSelected =
+                plotIds.filter(
+                  (plotId) => stringifyPlot(plotId) === stringifyPlot(plot),
+                ).length > 0;
+              return (
+                <PlotPill
+                  name={plot.type === "data" ? plot.measurementName : plot.type}
+                  isSelected={isSelected}
+                  onClick={() => {
+                    if (isSelected) {
+                      setPlotIds((ids) =>
+                        ids.filter(
+                          (plotId) =>
+                            stringifyPlot(plotId) !== stringifyPlot(plot),
+                        ),
+                      );
+                    } else {
+                      setPlotIds((ids) => [...ids, plot]);
+                    }
+                  }}
+                />
+              );
+            })}
+          </PillHolder>
+        );
+      })}
       {plotIds.length > 0 && (
         <div>
           <ReactECharts

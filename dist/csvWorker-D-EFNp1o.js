@@ -1,0 +1,2 @@
+(function(){"use strict";(async()=>await(await(await(await navigator.storage.getDirectory()).getFileHandle("data.csv",{create:!0})).createWritable({keepExistingData:!1})).close())(),self.onmessage=async e=>{try{const a=await(await navigator.storage.getDirectory()).getFileHandle("data.csv"),i=await a.createWritable({keepExistingData:!0}),o=await a.getFile();await i.write({type:"write",position:o.size,data:e.data.map(r=>r+`
+`).join("")}),await i.close()}catch(t){console.log("error writing to CSV",t)}}})();
