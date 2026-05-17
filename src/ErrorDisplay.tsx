@@ -4,5 +4,11 @@ import { WarningText } from "./styles";
 type Props = { errors: ESC["errors"] };
 
 export const ErrorDisplay = ({ errors }: Props) => {
-  return <WarningText>ERRORS: {errors.length}</WarningText>;
+  return (
+    errors.length > 0 && (
+      <WarningText>
+        ERRORS: {errors.length} Last: {errors.at(-1)?.code}
+      </WarningText>
+    )
+  );
 };

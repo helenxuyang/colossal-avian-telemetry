@@ -31,7 +31,10 @@ export const getMockRobotWithData = () => {
   robot.escs[DRIVE_RIGHT_ESC].inputs.timestamps = [5, 8];
   robot.escs[DRIVE_RIGHT_ESC].inputs.values = [-100, -100];
 
-  robot.escs[WEAPON_ESC].errors = [{ timestamp: 11 }, { timestamp: 12 }];
+  robot.escs[WEAPON_ESC].errors = [
+    { code: 1, timestamp: 11 },
+    { code: 2, timestamp: 12 },
+  ];
 
   robot.matchMarkers = [
     {

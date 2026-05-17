@@ -58,7 +58,7 @@ export type DerivedValueName = (typeof ALL_DERIVED_VALUES)[number];
 type MeasurementMap = Record<string, Measurement>;
 type EscError = {
   timestamp: number;
-  // TODO: might have error codes or something later
+  code: number;
 };
 
 export type ESC = {

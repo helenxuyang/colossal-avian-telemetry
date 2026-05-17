@@ -63,7 +63,8 @@ const useRobotStore = create<
           robot.escs[escName].inputs.timestamps = [timestamp];
           robot.escs[escName].inputs.values = [escData[INPUT]];
         } else if (messageType === "error") {
-          robot.escs[escName].errors.push({ timestamp });
+          const { code } = parsedMessage;
+          robot.escs[escName].errors.push({ code, timestamp });
         }
       }),
     addMatchMarker: (marker: MatchMarker) =>

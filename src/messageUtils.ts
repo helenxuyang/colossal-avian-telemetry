@@ -67,6 +67,7 @@ export type EscInputMessage = {
 export type EscErrorMessage = {
   messageType: "error";
   escName: EscName;
+  code: number;
   timestamp: number;
 };
 
@@ -171,10 +172,12 @@ export const parseMessage = (message: string): ParsedMessage => {
   const escName = idToEscMap[escId];
 
   if (splitData[1] === ERROR_MARKER) {
-    const timestamp = Number("0x" + splitData[2]);
+    const code = Number("0x" + splitData[2]);
+    const timestamp = Number("0x" + splitData[3]);
     return {
       messageType: "error",
       escName,
+      code,
       timestamp,
     };
   }
@@ -257,7 +260,8 @@ export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
 
   if (messageType === "error") {
     console.log("error", timestamp);
-    newRobot.escs[escName].errors.push({ timestamp });
+    const { code } = parsedMessage;
+    newRobot.escs[escName].errors.push({ code, timestamp });
     return newRobot;
   }
 

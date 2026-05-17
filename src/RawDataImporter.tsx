@@ -98,8 +98,8 @@ export const RawDataImporter = () => {
       robot.escs[escName].inputs.timestamps.push(timestamp);
       robot.escs[escName].inputs.values.push(escData[INPUT]);
     } else if (messageType === "error") {
-      const { escName, timestamp } = message;
-      robot.escs[escName].errors.push({ timestamp });
+      const { escName, timestamp, code } = message;
+      robot.escs[escName].errors.push({ code, timestamp });
     }
   };
 

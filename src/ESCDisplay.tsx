@@ -89,7 +89,7 @@ export const ESCDisplay = ({ esc, className }: Props) => {
           <InputDisplay measurement={esc.inputs} orientation={barOrientation} />
         )}
       </DisplayLayout>
-      {esc.errors.length > 0 && <ErrorDisplay errors={esc.errors} />}
+      {<ErrorDisplay errors={esc.errors} />}
     </DisplayHolder>
   );
 };

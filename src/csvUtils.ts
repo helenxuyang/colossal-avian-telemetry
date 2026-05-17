@@ -173,7 +173,10 @@ export const importRobot = (
       row[0] === "error" &&
       robot.escs[row[1]]
     ) {
-      robot.escs[row[1]].errors.push({ timestamp: Number(row[2]) });
+      robot.escs[row[1]].errors.push({
+        code: Number(row[2]),
+        timestamp: Number(row[3]),
+      });
       return;
     }
 
