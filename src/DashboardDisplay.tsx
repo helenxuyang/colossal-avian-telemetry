@@ -26,6 +26,7 @@ import type {
   HandleReceiveDataCallback,
 } from "./useWebSocket";
 import { WebSocketConnector } from "./WebSocketConnector";
+import { RawDataImporter } from "./RawDataImporter";
 
 const Layout = styled.div`
   display: flex;
@@ -217,6 +218,8 @@ export const DashboardDisplay = () => {
         <ControlsSection>
           <h2>Import CSV</h2>
           <RobotImporter />
+          <h2>Import raw</h2>
+          <RawDataImporter />
           <h2>Export CSV</h2>
           <CSVDownloader />
         </ControlsSection>
