@@ -40,7 +40,7 @@ const escToIdMap: Record<EscName, EscId> = Object.entries(idToEscMap).reduce(
   {} as Record<EscName, EscId>,
 );
 
-const ERROR_MARKER = "x";
+const ERROR_MARKER = "!";
 
 export type EscDataMessage = {
   messageType: "data";
@@ -103,8 +103,11 @@ export const getUnknownMessageReason = (message: string): string | null => {
     return "message does not have valid ESC ID";
   }
 
-  if (components[1] === "x") {
+  if (components[1] === "!") {
     if (isNaN(Number("0x" + components[2]))) {
+      return "message has invalid error code";
+    }
+    if (isNaN(Number("0x" + components[3]))) {
       return "message has invalid timestamp";
     }
   } else {
@@ -146,7 +149,8 @@ export const parseMessage = (message: string): ParsedMessage => {
 
   Error:
   ESC ID (a, b, c, d)
-  "x" 
+  "!"
+  Error code
   Timestamp
 
   Data conversions:
