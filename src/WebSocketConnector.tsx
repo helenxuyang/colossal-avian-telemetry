@@ -30,7 +30,7 @@ const connectionMap: Record<WebSocketStatus, string> = {
 
 export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
   const [shouldAutoRetryConnection, setShouldAutoRetryConnection] =
-    useState<boolean>(false);
+    useState<boolean>(true);
 
   const { connection, status, closeCodes, retryConnection } = useWebSocket(
     shouldAutoRetryConnection,
