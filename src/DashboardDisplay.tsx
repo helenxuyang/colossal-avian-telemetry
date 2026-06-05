@@ -227,6 +227,21 @@ export const DashboardDisplay = () => {
           <h2>Export CSV</h2>
           <CSVDownloader />
         </ControlsSection>
+        <ControlsSection>
+          <div>
+            <h2>Unknown Messages</h2>
+            <p>Count: {robot.unknownMessages.length}</p>
+            <p>Last: {robot.unknownMessages.at(-1)?.message ?? "none"}</p>
+            <details>
+              <summary>All</summary>
+              <p>
+                {robot.unknownMessages
+                  .map((unknown) => unknown.message)
+                  .join(", ")}
+              </p>
+            </details>
+          </div>
+        </ControlsSection>
       </ControlsGrid>
     </Layout>
   );

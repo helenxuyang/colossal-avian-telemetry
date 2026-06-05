@@ -12,7 +12,7 @@ import {
   CONSUMPTION,
   CURRENT,
 } from "./robot";
-import { BACKGROUND, SMALL_VIEWPORT, WarningText } from "./styles";
+import { BACKGROUND, SMALL_VIEWPORT } from "./styles";
 import { VoltageDisplay } from "./VoltageDisplay";
 import styled from "styled-components";
 import { ESCDisplay } from "./ESCDisplay";
@@ -132,19 +132,6 @@ export const RobotDisplay = () => {
           </BarsHolder>
           <LayoutColumn>
             <ConsumptionDonut escs={robot.escs} />
-            {robot.unknownMessages.length > 0 && (
-              <div>
-                <h3>Unknown Messages</h3>
-                <WarningText>
-                  <p>{robot.unknownMessages.length}</p>
-                  <p>
-                    {robot.unknownMessages
-                      .map((unknown) => unknown.message)
-                      .join(", ")}
-                  </p>
-                </WarningText>
-              </div>
-            )}
           </LayoutColumn>
         </RobotLayout>
       </RobotSection>

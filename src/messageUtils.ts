@@ -81,7 +81,7 @@ export const getUnknownMessageReason = (message: string): string | null => {
   if (typeof message !== "string") {
     return "message is not string";
   }
-  if (PONG_MESSAGE === "pong") {
+  if (message === PONG_MESSAGE) {
     return null;
   }
   const components = message.slice(1, message.length - 1).split(" ");
@@ -92,6 +92,10 @@ export const getUnknownMessageReason = (message: string): string | null => {
   if (message[0] !== "<") {
     return "message missing start marker";
   }
+  if (message[message.length - 1] !== ">") {
+    return "message missing end marker";
+  }
+
   const id = components[0];
   if (
     !escDataIds.includes(id as EscDataId) &&
@@ -100,6 +104,7 @@ export const getUnknownMessageReason = (message: string): string | null => {
     return "message does not have valid ESC ID";
   }
 
+  // errors
   if (components[1] === "!") {
     if (isNaN(Number("0x" + components[2]))) {
       return "message has invalid error code";
@@ -107,16 +112,15 @@ export const getUnknownMessageReason = (message: string): string | null => {
     if (isNaN(Number("0x" + components[3]))) {
       return "message has invalid timestamp";
     }
-  } else {
+  }
+
+  // ESC data or input
+  else {
     for (let i = 1; i < components.length - 1; i++) {
       if (isNaN(Number("0x" + components[i]))) {
         return `message has invalid component ${components[i]}`;
       }
     }
-  }
-
-  if (message[message.length - 1] !== ">") {
-    return "message missing end marker";
   }
 
   return null;
@@ -167,6 +171,7 @@ export const parseMessage = (message: string): ParsedMessage => {
       reason: unknownErrorReason,
     };
   }
+  console.log(message, unknownErrorReason);
 
   const splitData = message.slice(1, message.length - 1).split(" ");
   const escId = splitData[0] as EscId;
@@ -189,28 +194,50 @@ export const parseMessage = (message: string): ParsedMessage => {
     const rpmFactor = 1 / 7;
     const timestamp = Number(values[10]);
 
+    const escData = {
+      [TEMPERATURE]: values[0],
+      [VOLTAGE]: Number((mergeBytes(values[1], values[2]) / 100).toFixed(2)),
+      [CURRENT]: Number((mergeBytes(values[3], values[4]) / 100).toFixed(2)),
+      [CONSUMPTION]: mergeBytes(values[5], values[6]),
+      [RPM]: Math.round(mergeBytes(values[7], values[8]) * 100 * rpmFactor),
+    };
+
+    for (const value in Object.keys(escData)) {
+      if (isNaN(Number(value))) {
+        return {
+          messageType: "unknown",
+          message,
+          reason: "ESC data NaN when parsed",
+        };
+      }
+    }
+
     const parsedMessage: ParsedMessage = {
       messageType: "data",
       escName,
       timestamp,
-      escData: {
-        [TEMPERATURE]: values[0],
-        [VOLTAGE]: Number((mergeBytes(values[1], values[2]) / 100).toFixed(2)),
-        [CURRENT]: Number((mergeBytes(values[3], values[4]) / 100).toFixed(2)),
-        [CONSUMPTION]: mergeBytes(values[5], values[6]),
-        [RPM]: Math.round(mergeBytes(values[7], values[8]) * 100 * rpmFactor),
-      },
+      escData,
     };
     return parsedMessage;
   } else if (escInputIds.includes(escId as EscInputId)) {
     const value = values[0];
     const timestamp = values[1];
+    const input = Math.round(0.2 * value - 300); // scale from [1000, 2000] -> [-100, 100]
+
+    if (isNaN(Number(input))) {
+      return {
+        messageType: "unknown",
+        message,
+        reason: "input NaN when parsed",
+      };
+    }
+
     const parsedMessage: ParsedMessage = {
       messageType: "input",
       escName,
       timestamp,
       escData: {
-        [INPUT]: Math.round(0.2 * value - 300), // scale from [1000, 2000] -> [-100, 100]
+        [INPUT]: input,
       },
     };
     return parsedMessage;
