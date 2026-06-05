@@ -1,5 +1,6 @@
 import { useRobot } from "./store";
 import type { Robot } from "./robot";
+import { useEffect, useState } from "react";
 
 const getRowFromLine = (line: string) => {
   return line.split(",");
@@ -139,10 +140,26 @@ const getCsvText = (text: string, robot: Robot) => {
 
 export const CSVDownloader = () => {
   const robot = useRobot();
+  const [hasUserSaved, setHasUserSaved] = useState<boolean>(false);
+
+  useEffect(() => {
+    const confirmExit = (event: BeforeUnloadEvent) => {
+      if (!hasUserSaved) {
+        event.preventDefault();
+        return "Exit without saving?"; // this string won't actually get used, browser will use its own messaging
+      }
+    };
+    window.addEventListener("beforeunload", confirmExit);
+
+    return () => {
+      window.removeEventListener("beforeunload", confirmExit);
+    };
+  }, [hasUserSaved]);
 
   return (
     <button
       onClick={async () => {
+        setHasUserSaved(true);
         const root = await navigator.storage.getDirectory();
         const fileHandle = await root.getFileHandle("data.csv");
         const file = await fileHandle.getFile();
