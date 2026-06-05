@@ -4,7 +4,8 @@ import { BarDisplay } from "./BarDisplay";
 import { ArcDisplay } from "./ArcDisplay";
 import { Container, MEDIUM_VIEWPORT } from "./styles";
 import { ErrorDisplay } from "./ErrorDisplay";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import beepAudio from "./assets/beep.wav";
 
 const useMediaQuery = (query: string) => {
   const [matches, setMatches] = useState(() =>
@@ -59,15 +60,33 @@ const InputDisplay = styled(BarDisplay)`
     background-color: unset;
   }
 `;
-type Props = { esc?: ESC; className?: string };
+type Props = { esc?: ESC; className?: string; shouldPlayRPMAlert?: boolean };
 
-export const ESCDisplay = ({ esc, className }: Props) => {
+export const ESCDisplay = ({ esc, className, shouldPlayRPMAlert }: Props) => {
   const isMobileViewport = useMediaQuery(`(max-width: ${MEDIUM_VIEWPORT}px)`);
   const barOrientation = isMobileViewport ? "horizontal" : "vertical";
+  const rpmAlertAudioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (!esc) {
+      return;
+    }
+    const rpm = esc.measurements[RPM];
+    if (!rpm || !rpm.highlightThreshold) {
+      return;
+    }
+    const rpmValue = rpm.values.at(-1) ?? 0;
+    if (rpmValue >= rpm.highlightThreshold) {
+      rpmAlertAudioRef.current?.play();
+    } else {
+      rpmAlertAudioRef.current?.pause();
+    }
+  }, [esc]);
 
   if (!esc) {
     return null;
   }
+
   return (
     <DisplayHolder className={className}>
       <h3>{esc.name}</h3>
@@ -85,6 +104,9 @@ export const ESCDisplay = ({ esc, className }: Props) => {
               innerMeasurement={esc.measurements[CURRENT]}
             />
           )}
+        {esc.measurements[RPM].shouldShow && shouldPlayRPMAlert && (
+          <audio ref={rpmAlertAudioRef} src={beepAudio} autoPlay loop></audio>
+        )}
         {esc.inputs.shouldShow && (
           <InputDisplay measurement={esc.inputs} orientation={barOrientation} />
         )}

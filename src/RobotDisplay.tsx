@@ -151,7 +151,7 @@ export const RobotDisplay = () => {
       <ESCSection>
         <ESCGrid>
           <ESCDisplay esc={robot.escs[DRIVE_LEFT_ESC]} />
-          <ESCDisplay esc={robot.escs[WEAPON_ESC]} />
+          <ESCDisplay esc={robot.escs[WEAPON_ESC]} shouldPlayRPMAlert />
           <ESCDisplay esc={robot.escs[DRIVE_RIGHT_ESC]} />
           <ESCDisplay esc={robot.escs[ARM_ESC]} />
         </ESCGrid>
