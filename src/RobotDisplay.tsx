@@ -134,10 +134,14 @@ export const RobotDisplay = () => {
             <ConsumptionDonut escs={robot.escs} />
             {robot.unknownMessages.length > 0 && (
               <div>
-                <h3>Errors</h3>
+                <h3>Unknown Messages</h3>
                 <WarningText>
-                  <p>Unknown messages: {robot.unknownMessages.length}</p>
-                  <p>First: {robot.unknownMessages[0].message}</p>
+                  <p>{robot.unknownMessages.length}</p>
+                  <p>
+                    {robot.unknownMessages
+                      .map((unknown) => unknown.message)
+                      .join(", ")}
+                  </p>
                 </WarningText>
               </div>
             )}

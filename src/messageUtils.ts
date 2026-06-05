@@ -32,13 +32,6 @@ export const idToEscMap: Record<EscId, EscName> = {
   y: WEAPON_ESC,
   z: ARM_ESC,
 };
-const escToIdMap: Record<EscName, EscId> = Object.entries(idToEscMap).reduce(
-  (acc, [key, val]) => {
-    acc[val] = key as EscId;
-    return acc;
-  },
-  {} as Record<EscName, EscId>,
-);
 
 const ERROR_MARKER = "!";
 
@@ -83,9 +76,13 @@ export type ParsedMessage =
   | EscErrorMessage
   | UnknownMessage;
 
+export const PONG_MESSAGE = "pong";
 export const getUnknownMessageReason = (message: string): string | null => {
   if (typeof message !== "string") {
     return "message is not string";
+  }
+  if (PONG_MESSAGE === "pong") {
+    return null;
   }
   const components = message.slice(1, message.length - 1).split(" ");
 
@@ -189,10 +186,7 @@ export const parseMessage = (message: string): ParsedMessage => {
   const values = splitData.slice(1).map((entry) => Number("0x" + entry));
 
   if (escDataIds.includes(escId as EscDataId)) {
-    const rpmFactor =
-      escId === escToIdMap[WEAPON_ESC] || escId === escToIdMap[ARM_ESC]
-        ? 1 / 7
-        : 1 / 6;
+    const rpmFactor = 1 / 7;
     const timestamp = Number(values[10]);
 
     const parsedMessage: ParsedMessage = {

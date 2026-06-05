@@ -26,15 +26,15 @@ export const useWebSocket = (
       `ws://${isFakeData ? "localhost" : "192.168.4.1"}:81`,
       ["arduino"],
     );
-    // const checkStatus = setInterval(() => {
-    //   setStatus(connection.current?.readyState ?? null);
-    // }, 100);
+    const checkStatus = setInterval(() => {
+      setStatus(connection.current?.readyState ?? null);
+    }, 100);
 
     const onOpen = () => {
       console.log("websocket open");
       connection.current?.send("Connect " + new Date());
       setStatus(connection.current?.readyState ?? null);
-      // clearInterval(checkStatus);
+      clearInterval(checkStatus);
       onConnect.current?.();
     };
 
@@ -48,9 +48,13 @@ export const useWebSocket = (
     connection.current.addEventListener("error", onError);
 
     const onMessage = (event: MessageEvent) => {
-      // console.log(`websocket message: ${event.data}`);
-      onHandleReceiveData.current?.(event.data);
-      // setStatus(connection.current?.readyState ?? null);
+      if (event.data === "pong") {
+        console.log("websocket pong");
+      } else {
+        // console.log(`websocket message: ${event.data}`);
+        onHandleReceiveData.current?.(event.data);
+        setStatus(connection.current?.readyState ?? null);
+      }
     };
 
     connection.current.addEventListener("message", onMessage);
@@ -59,7 +63,7 @@ export const useWebSocket = (
       console.log("websocket close", event);
       setCloseCodes((codes) => [...(codes ? codes : []), event.code]);
       setStatus(connection.current?.readyState ?? null);
-      // clearInterval(checkStatus);
+      clearInterval(checkStatus);
     };
 
     connection.current.addEventListener("close", onClose);
@@ -70,7 +74,7 @@ export const useWebSocket = (
       connection.current?.removeEventListener("message", onMessage);
       connection.current?.removeEventListener("close", onClose);
       connection.current?.close();
-      // clearInterval(checkStatus);
+      clearInterval(checkStatus);
     };
   }, [retryCount, onHandleReceiveData, onConnect, isFakeData]);
 

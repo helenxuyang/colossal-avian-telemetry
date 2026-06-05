@@ -66,6 +66,13 @@ export const WebSocketConnector = ({ onReceiveData, onConnect }: Props) => {
         {status === WebSocket.CLOSED && (
           <button onClick={retryConnection}>Retry connection</button>
         )}
+        <button
+          onClick={() => {
+            connection.current?.send("ping");
+          }}
+        >
+          Send ping
+        </button>
       </Controls>
     </div>
   );
