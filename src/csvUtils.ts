@@ -88,15 +88,27 @@ export const importRobot = (
     if (timestampRows.length === 0) {
       return;
     }
-    const minTimestamp = Math.min(
-      ...timestampRows.map((row) => Number(row[2])),
-    );
+
+    let minTimestamp = Infinity;
+    for (let i = 0; i < timestampRows.length; i++) {
+      const row = timestampRows[i];
+      const timestamp = Number(row[2]);
+      if (timestamp < minTimestamp) {
+        minTimestamp = timestamp;
+      }
+    }
+
     if (minTimestamp === 0 || !Number.isFinite(minTimestamp)) {
       return;
     }
-    timestampRows.forEach((row) => {
+    // timestampRows.forEach((row) => {
+    //   row[2] = String(Number(row[2]) - minTimestamp);
+    // });
+
+    for (let i = 0; i < timestampRows.length; i++) {
+      const row = timestampRows[i];
       row[2] = String(Number(row[2]) - minTimestamp);
-    });
+    }
   };
 
   normalizeTimestamps(csvData);

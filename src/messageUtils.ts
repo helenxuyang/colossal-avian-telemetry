@@ -215,7 +215,13 @@ export const parseMessage = (message: string): ParsedMessage => {
     };
     return parsedMessage;
   }
-  throw Error("invalid message");
+
+  console.log(`invalid message ${message}`);
+  return {
+    messageType: "unknown",
+    message,
+    reason: "unknown",
+  };
 };
 
 export const stringifyMessage = (parsedMessage: ParsedMessage) => {

@@ -17,6 +17,7 @@ import { getInitRobot } from "./storageUtils";
 import {
   getUpdatedRobot,
   parseMessage,
+  PONG_MESSAGE,
   stringifyMessage,
 } from "./messageUtils";
 import { FullscreenButton } from "./FullscreenButton";
@@ -135,6 +136,9 @@ export const DashboardDisplay = () => {
   const handleMessage = useCallback(
     (data: string) => {
       if (!isRecording) return;
+      if (data === PONG_MESSAGE) {
+        return;
+      }
 
       const parsedMessage = parseMessage(data);
       const baseRobot = pendingRobotRef.current ?? robotRef.current;

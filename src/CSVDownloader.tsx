@@ -37,35 +37,12 @@ const getSectionHeader = (type: string, row: string[], robot: Robot) => {
   return ["type", "esc", "timestamp"];
 };
 
-const normalizeMessageTimestamps = (rows: string[][]) => {
-  const timestampRows = rows.filter(
-    (row) =>
-      ["data", "input", "error", "matchMarker"].includes(row[0]) &&
-      row.length > 2 &&
-      !Number.isNaN(Number(row[2])),
-  );
-  if (timestampRows.length === 0) {
-    return;
-  }
-
-  const minTimestamp = Math.min(...timestampRows.map((row) => Number(row[2])));
-  if (!Number.isFinite(minTimestamp) || minTimestamp === 0) {
-    return;
-  }
-
-  timestampRows.forEach((row) => {
-    row[2] = String(Number(row[2]) - minTimestamp);
-  });
-};
-
 const getCsvText = (text: string, robot: Robot) => {
   const rows = text
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .map(getRowFromLine);
-
-  normalizeMessageTimestamps(rows);
 
   const escRows = rows.filter(
     (row) => row.length >= 3 && ["data", "input", "error"].includes(row[0]),

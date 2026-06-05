@@ -68,11 +68,19 @@ export const useWebSocket = (
 
     connection.current.addEventListener("close", onClose);
 
+    const onOffline = () => {
+      console.log("offline???");
+      connection.current?.close();
+    };
+
+    window.addEventListener("offline", onOffline);
+
     return () => {
       connection.current?.removeEventListener("open", onOpen);
       connection.current?.removeEventListener("error", onError);
       connection.current?.removeEventListener("message", onMessage);
       connection.current?.removeEventListener("close", onClose);
+      window.removeEventListener("offline", onOffline);
       connection.current?.close();
       clearInterval(checkStatus);
     };
