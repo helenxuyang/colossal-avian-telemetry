@@ -136,6 +136,21 @@ export const CSVDownloader = () => {
   return (
     <button
       onClick={async () => {
+        const now = new Date();
+
+        const dateOptions: Intl.DateTimeFormatOptions = {
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        };
+
+        const formattedDate = new Intl.DateTimeFormat(
+          "en-US",
+          dateOptions,
+        ).format(now);
+
         setHasUserSaved(true);
         const root = await navigator.storage.getDirectory();
         const fileHandle = await root.getFileHandle("data.csv");
@@ -146,7 +161,7 @@ export const CSVDownloader = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = file.name;
+        a.download = `${formattedDate}-${robot.name}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       }}
