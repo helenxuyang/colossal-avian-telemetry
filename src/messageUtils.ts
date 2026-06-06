@@ -17,6 +17,9 @@ export const mergeBytes = (byte1: number, byte2: number) => {
   return (byte1 << 8) + byte2;
 };
 
+export const convertHexStrToNum = (hexStr: string): number =>
+  Number("0x" + hexStr);
+
 const escDataIds = ["a", "b", "c"] as const;
 const escInputIds = ["w", "x", "y", "z"] as const;
 type EscDataId = (typeof escDataIds)[number];
@@ -106,10 +109,10 @@ export const getUnknownMessageReason = (message: string): string | null => {
 
   // errors
   if (components[1] === "!") {
-    if (isNaN(Number("0x" + components[2]))) {
+    if (isNaN(convertHexStrToNum(components[2]))) {
       return "message has invalid error code";
     }
-    if (isNaN(Number("0x" + components[3]))) {
+    if (isNaN(convertHexStrToNum(components[3]))) {
       return "message has invalid timestamp";
     }
   }
@@ -117,13 +120,39 @@ export const getUnknownMessageReason = (message: string): string | null => {
   // ESC data or input
   else {
     for (let i = 1; i < components.length - 1; i++) {
-      if (isNaN(Number("0x" + components[i]))) {
+      if (isNaN(convertHexStrToNum(components[i]))) {
         return `message has invalid component ${components[i]}`;
       }
     }
   }
 
   return null;
+};
+
+// checksum function from KISS telem protocol doc
+const updateCRC8 = (crc: number, crcSeed: number): number => {
+  let crcU = crc ^ crcSeed;
+  for (let i = 0; i < 8; i++) {
+    crcU = crcU & 0x80 ? 0x07 ^ (crcU << 1) : crcU << 1;
+
+    crcU &= 0xff;
+  }
+  return crcU;
+};
+
+// checksum function from KISS telem protocol doc
+const calculateChecksum = (buf: Uint8Array): number => {
+  let crc = 0;
+  for (let i = 0; i < buf.length; i++) {
+    crc = updateCRC8(buf[i], crc);
+  }
+  return crc;
+};
+
+export const validateChecksum = (data: number[], checksum: number): boolean => {
+  const bytes = new Uint8Array(data);
+  const calculatedChecksum = calculateChecksum(bytes);
+  return calculatedChecksum === checksum;
 };
 
 export const parseMessage = (message: string): ParsedMessage => {
@@ -140,7 +169,7 @@ export const parseMessage = (message: string): ParsedMessage => {
   Byte 6: Consumption low byte
   Byte 7: Rpm high byte
   Byte 8: Rpm low byte
-  Byte 9: Checksum (ignore for now)
+  Checksum
   Timestamp
 
   ESC input data: 
@@ -159,7 +188,7 @@ export const parseMessage = (message: string): ParsedMessage => {
   voltage: / 100, in V
   current: / 100, in A
   consumption: as-is, in mAh
-  rpm: * 100, then divide by 6 for drive, divide by 7 for arm/weapon
+  rpm: * 100, divide by 7
   time since start: as-is, in ms
  */
 
@@ -173,13 +202,15 @@ export const parseMessage = (message: string): ParsedMessage => {
   }
   console.log(message, unknownErrorReason);
 
+  // remove < and >
   const splitData = message.slice(1, message.length - 1).split(" ");
+
   const escId = splitData[0] as EscId;
   const escName = idToEscMap[escId];
 
   if (splitData[1] === ERROR_MARKER) {
-    const code = Number("0x" + splitData[2]);
-    const timestamp = Number("0x" + splitData[3]);
+    const code = convertHexStrToNum(splitData[2]);
+    const timestamp = convertHexStrToNum(splitData[3]);
     return {
       messageType: "error",
       escName,
@@ -188,11 +219,22 @@ export const parseMessage = (message: string): ParsedMessage => {
     };
   }
 
-  const values = splitData.slice(1).map((entry) => Number("0x" + entry));
-
+  // drop ESC ID from start
+  const values = splitData.slice(1).map((entry) => convertHexStrToNum(entry));
   if (escDataIds.includes(escId as EscDataId)) {
     const rpmFactor = 1 / 7;
     const timestamp = Number(values[10]);
+
+    const escDataValues = values.slice(0, 9);
+    const checksum = convertHexStrToNum(splitData[10]);
+
+    if (!validateChecksum(escDataValues, checksum)) {
+      return {
+        messageType: "unknown",
+        message,
+        reason: "invalid checksum",
+      };
+    }
 
     const escData = {
       [TEMPERATURE]: values[0],
@@ -290,8 +332,9 @@ export const getUpdatedRobot = (parsedMessage: ParsedMessage, robot: Robot) => {
   }
 
   if (messageType === "error") {
-    console.log("error", timestamp);
     const { code } = parsedMessage;
+    console.log("error", timestamp, code);
+
     newRobot.escs[escName].errors.push({ code, timestamp });
     return newRobot;
   }

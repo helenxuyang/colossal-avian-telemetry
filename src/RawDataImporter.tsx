@@ -70,7 +70,6 @@ export const RawDataImporter = () => {
     rawLines.forEach((line) => {
       const parsedMessage = parseMessage(line);
 
-      console.log("parsed", parsedMessage);
       updateRobot(robot, parsedMessage);
     });
     setRobot(robot);
