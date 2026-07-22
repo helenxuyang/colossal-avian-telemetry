@@ -1,2 +1,0 @@
-pnpm build
-git add dist/index.html
