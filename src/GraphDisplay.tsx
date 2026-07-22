@@ -128,7 +128,7 @@ export const GraphDisplay = ({ robot }: Props) => {
       return {
         ...series,
         yAxisIndex: index,
-        xAxisIndex: index,
+        xAxisIndex: 0,
       };
     }),
     ...plotDataOptions.errorSeries,
@@ -233,6 +233,8 @@ export const GraphDisplay = ({ robot }: Props) => {
     },
     animation: false,
   };
+
+  console.log({ option, finalXAxis, finalSeries });
 
   const toggleAutoScrolling = useCallback(() => {
     if (isAutoScrolling) {
