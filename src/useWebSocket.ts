@@ -24,7 +24,6 @@ export const useWebSocket = (
     console.log("websocket setup start");
     connection.current = new WebSocket(
       `ws://${isFakeData ? "localhost" : "192.168.4.1"}:81`,
-      ["arduino"],
     );
     const checkStatus = setInterval(() => {
       setStatus(connection.current?.readyState ?? null);
